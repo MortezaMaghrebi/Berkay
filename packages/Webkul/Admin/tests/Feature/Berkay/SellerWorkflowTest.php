@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Storage;
 use Webkul\Berkay\Repositories\ArticleRepository;
 use Webkul\Berkay\Repositories\SellerCatalogRepository;
 use Webkul\Berkay\Repositories\SellerCategoryRepository;
+use Webkul\Berkay\Repositories\SellerOverviewRepository;
 use Webkul\Category\Repositories\CategoryRepository;
 
 beforeEach(function () {
@@ -75,4 +76,19 @@ it('validates and sanitizes AI article JSON without saving or publishing it', fu
     expect($response->json('data.body'))->toContain('<h2>')->not->toContain('<script', 'onclick', '<img');
     expect(app(ArticleRepository::class)->all()->count())->toBe($count);
     $this->postJson(route('admin.berkay.articles.parse'), ['payload' => '{bad json'])->assertUnprocessable();
+});
+
+it('shows real order counts for this store without counting unrelated orders', function () {
+    $overview = app(SellerOverviewRepository::class);
+    $before = $overview->orderCounts();
+    $this->createOrder(['status' => 'completed', 'channel_id' => core()->getCurrentChannel()->id]);
+    $this->createOrder(['status' => 'pending', 'channel_id' => null]);
+    $after = $overview->orderCounts();
+
+    expect($after['completed'])->toBe($before['completed'] + 1)
+        ->and($after['pending'])->toBe($before['pending']);
+
+    $this->loginAsAdminWithPermissions(['berkay', 'berkay.overview']);
+    $this->get(route('admin.berkay.index'))->assertOk()
+        ->assertDontSee(trans('berkay::app.refresh.order-overview'));
 });

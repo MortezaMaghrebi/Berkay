@@ -10,11 +10,11 @@
 <x-shop::layouts :has-feature="false">
     <x-slot:title>{{ ($channel->home_seo['meta_title'] ?? '') ?: trans('berkay::app.brand') }}</x-slot>
     <div class="bk-home">
-        <section class="bk-hero">
-            <div class="bk-hero-copy">
-                <h1>{{ $heroTitle }}</h1>
+        <section class="bk-hero" aria-labelledby="bk-hero-title">
+            <div class="bk-hero-copy"><p class="bk-hero-signature">{{ core()->getConfigData('berkay.store.identity.name') ?: trans('berkay::app.brand') }}</p>
+                <h1 id="bk-hero-title">{{ $heroTitle }}</h1>
                 <p>{{ core()->getConfigData('berkay.store.identity.hero_description') ?: trans('berkay::app.hero-subtitle') }}</p>
-                <a class="bk-button" href="{{ route('shop.search.index') }}">{{ trans('berkay::app.catalog') }} <span aria-hidden="true">←</span></a>
+                <a class="bk-button" href="{{ route('shop.search.index') }}">{{ trans('berkay::app.catalog') }} <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg></a>
             </div>
             <div class="bk-hero-photo"><img src="{{ asset('berkay/hero-v2.webp') }}" width="900" height="900" fetchpriority="high" alt="{{ trans('berkay::app.tagline-default') }}"></div>
         </section>
@@ -69,7 +69,7 @@
             :src="route('shop.api.products.index', ['new' => 1])"
             :navigation-link="route('shop.search.index', ['new' => 1])"
         />
-        <section class="bk-magazine-promo">
+        <section class="bk-magazine-promo"><div class="bk-magazine-symbol" aria-hidden="true"><svg width="72" height="72" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M9 12h20l5 4 5-4h16v39H39l-5 4-5-4H9zM34 16v39M16 22h10m-10 8h10m-10 8h10m16-16h7m-7 8h7m-7 8h7"/></svg></div>
             <h2>{{ trans('berkay::app.magazine') }}</h2>
             <p>{{ trans('berkay::app.magazine-description') }}</p>
             <a href="{{ route('shop.berkay.magazine.index') }}">{{ trans('berkay::app.read') }} ←</a>

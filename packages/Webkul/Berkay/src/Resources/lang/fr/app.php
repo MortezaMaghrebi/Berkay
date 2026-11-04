@@ -218,4 +218,16 @@ return [
         'auto-help' => 'Leave blank to generate URL, excerpt and SEO automatically. Choose Published for immediate publication.',
         'prompt-template' => 'برای مجلهٔ فارسی فروشگاه برکای یک مقالهٔ کاربردی دربارهٔ «{topic}» بنویس. مخاطب خریدار معمولی محصولات چرمی است. متن دقیق و روان باشد؛ ادعای پزشکی، آمار، تضمین، نام محصول، قیمت یا لینک ساختگی ننویس. فقط یک شیء JSON معتبر و بدون توضیح یا حصار کد برگردان. ساختار دقیق: {"title":"عنوان جذاب و روشن","slug":"short-english-slug","category":"نام دسته مقاله","excerpt":"خلاصهٔ مستقل حداکثر ۲۵۰ نویسه","body":"HTML مقالهٔ حداقل ۶۰۰ کلمه با مقدمه، تیترهای h2 و h3، پاراگراف و فهرست؛ بدون script، iframe، style، تصویر یا منابع خارجی","meta_title":"عنوان سئو حداکثر ۶۰ نویسه","meta_description":"توضیح سئو حداکثر ۱۵۵ نویسه"}. همهٔ مقدارها رشته باشند. از تیترهای مفید، نکته‌های عملی و جمع‌بندی کوتاه استفاده کن. صحت ادعاهای تخصصی باید قابل بررسی باشد.',
     ],
+    'refresh' => [
+        'view-store' => 'View store',
+        'order-overview' => 'Store order overview',
+        'waiting-payment' => 'Awaiting payment',
+        'processing-orders' => 'In progress',
+        'completed-orders' => 'Completed orders',
+        'start-product' => 'Create a product',
+        'step-product' => 'Prepare your product',
+        'step-payment' => 'Check the payment',
+        'step-shipping' => 'Prepare and ship',
+        'before-selling' => 'Before accepting orders',
+    ],
 ];
