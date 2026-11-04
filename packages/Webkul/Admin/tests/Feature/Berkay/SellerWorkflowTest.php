@@ -1,0 +1,78 @@
+<?php
+
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Webkul\Berkay\Repositories\ArticleRepository;
+use Webkul\Berkay\Repositories\SellerCatalogRepository;
+use Webkul\Berkay\Repositories\SellerCategoryRepository;
+use Webkul\Category\Repositories\CategoryRepository;
+
+beforeEach(function () {
+    Storage::fake(config('filesystems.default'));
+    $root = core()->getCurrentChannel()->root_category_id;
+    $this->sellerCategory = app(CategoryRepository::class)->create([
+        'name' => 'Seller category', 'slug' => 'seller-test-category', 'parent_id' => $root,
+        'position' => 1, 'status' => 1, 'display_mode' => 'products_and_description', 'locale' => 'fa',
+    ]);
+});
+
+it('lets a permitted seller create a product with automatic SKU and Persian prices', function () {
+    $this->loginAsAdminWithPermissions(['catalog', 'catalog.products', 'catalog.products.create', 'catalog.products.edit']);
+    $this->get(route('admin.berkay.simple_product.create'))->assertOk();
+    $response = $this->post(route('admin.berkay.simple_product.store'), [
+        'name' => 'کیف آزمایشی فروشنده', 'price' => '۲۵۰٬۰۰۰', 'quantity' => '۳',
+        'category_id' => $this->sellerCategory->id, 'status' => 1,
+        'images' => [UploadedFile::fake()->image('bag.jpg')],
+    ]);
+    $response->assertSessionHasNoErrors()->assertRedirect();
+    $product = app(SellerCatalogRepository::class)->listing('کیف آزمایشی فروشنده')->first();
+    expect($product)->not->toBeNull()->and($product->sku)->toStartWith('BK-')
+        ->and((float) $product->price)->toBe(250000.0)
+        ->and($product->images)->toHaveCount(1)
+        ->and($product->inventories->sum('qty'))->toBe(3);
+    $this->get(route('admin.berkay.simple_product.edit', $product->id))->assertOk();
+    $this->put(route('admin.berkay.simple_product.update', $product->id), [
+        'name' => 'کیف آزمایشی فروشنده', 'price' => '۳۰۰۰۰۰', 'quantity' => '۲',
+        'category_id' => $this->sellerCategory->id, 'status' => 1,
+    ])->assertSessionHasNoErrors()->assertRedirect();
+    expect($product->fresh()->images)->toHaveCount(1)
+        ->and((float) $product->fresh()->price)->toBe(300000.0)
+        ->and($product->fresh()->sku)->toBe($product->sku);
+});
+
+it('rejects product writes from a seller with read-only access', function () {
+    $this->loginAsAdminWithPermissions(['catalog', 'catalog.products']);
+    $this->get(route('admin.berkay.simple_product.index'))->assertOk();
+    $this->post(route('admin.berkay.simple_product.store'), [])->assertUnauthorized();
+});
+
+it('creates and edits categories without position or URL fields and rejects a cycle', function () {
+    $this->loginAsAdminWithPermissions(['catalog', 'catalog.categories', 'catalog.categories.create', 'catalog.categories.edit']);
+    $this->post(route('admin.berkay.simple_category.store'), [
+        'name' => 'زیرمجموعه نمونه', 'parent_id' => $this->sellerCategory->id, 'status' => 1,
+        'image' => UploadedFile::fake()->image('category.jpg'),
+    ])->assertSessionHasNoErrors()->assertRedirect();
+    $child = app(SellerCategoryRepository::class)->findWhere(['parent_id' => $this->sellerCategory->id])->first();
+    expect($child)->not->toBeNull()->and($child->logo_path)->not->toBeNull();
+    $photo = $child->logo_path;
+    $this->put(route('admin.berkay.simple_category.update', $child->id), [
+        'name' => 'نام تازه', 'parent_id' => $this->sellerCategory->id, 'status' => 1,
+    ])->assertSessionHasNoErrors()->assertRedirect();
+    expect($child->fresh()->logo_path)->toBe($photo);
+    $this->put(route('admin.berkay.simple_category.update', $this->sellerCategory->id), [
+        'name' => 'Parent', 'parent_id' => $child->id, 'status' => 1,
+    ])->assertSessionHasErrors('parent_id');
+});
+
+it('validates and sanitizes AI article JSON without saving or publishing it', function () {
+    $this->loginAsAdminWithPermissions(['berkay', 'berkay.articles', 'berkay.articles.create']);
+    $payload = ['title' => 'Article', 'slug' => 'ai-test', 'category' => 'Care', 'excerpt' => 'Summary',
+        'body' => '<h2>Useful heading</h2><p onclick="alert(1)">Article</p><script>alert(1)</script><img src="https://example.com/tracker">',
+        'meta_title' => 'SEO title', 'meta_description' => 'SEO description'];
+    $count = app(ArticleRepository::class)->all()->count();
+    $response = $this->postJson(route('admin.berkay.articles.parse'), ['payload' => json_encode($payload)]);
+    $response->assertOk()->assertJsonPath('data.slug', 'ai-test');
+    expect($response->json('data.body'))->toContain('<h2>')->not->toContain('<script', 'onclick', '<img');
+    expect(app(ArticleRepository::class)->all()->count())->toBe($count);
+    $this->postJson(route('admin.berkay.articles.parse'), ['payload' => '{bad json'])->assertUnprocessable();
+});

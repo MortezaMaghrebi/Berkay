@@ -1,0 +1,150 @@
+<?php
+
+namespace Webkul\Shop\Http\Controllers\API;
+
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Event;
+use Webkul\MagicAI\Facades\MagicAI;
+use Webkul\Product\Repositories\ProductRepository;
+use Webkul\Product\Repositories\ProductReviewAttachmentRepository;
+use Webkul\Product\Repositories\ProductReviewRepository;
+use Webkul\Shop\Http\Resources\ProductReviewResource;
+
+class ReviewController extends APIController
+{
+    /**
+     * Create a controller instance.
+     *
+     * @return void
+     */
+    public function __construct(
+        protected ProductRepository $productRepository,
+        protected ProductReviewRepository $productReviewRepository,
+        protected ProductReviewAttachmentRepository $productReviewAttachmentRepository
+    ) {}
+
+    /**
+     * Pending review status.
+     */
+    const STATUS_PENDING = 'pending';
+
+    /**
+     * Approved review status.
+     */
+    const STATUS_APPROVED = 'approved';
+
+    /**
+     * Product listings.
+     */
+    public function index(int $id): JsonResource
+    {
+        $product = $this->productRepository
+            ->findOrFail($id)
+            ->reviews()
+            ->where('status', self::STATUS_APPROVED)
+            ->paginate(8);
+
+        if (core()->getConfigData('catalog.products.review.censoring_reviewer_name')) {
+            $product->getCollection()->transform(function ($review) {
+                $review->name = $this->censorReviewerName($review->name);
+
+                return $review;
+            });
+        }
+
+        return ProductReviewResource::collection($product);
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(int $id): JsonResource
+    {
+        if (
+            ! auth()->guard('customer')->check()
+            && ! core()->getConfigData('catalog.products.review.guest_review')
+        ) {
+            abort(403, trans('shop::app.errors.403.title'));
+        }
+
+        $this->productRepository->findOrFail($id);
+
+        $this->validate(request(), [
+            'title' => 'required|string|max:255',
+            'comment' => 'required|string|max:5000',
+            'name' => [auth()->guard('customer')->check() ? 'nullable' : 'required', 'string', 'max:255'],
+            'rating' => 'required|numeric|min:1|max:5',
+            'attachments' => 'array|max:5',
+            'attachments.*' => 'file|mimetypes:image/*,video/*|max:10240',
+        ]);
+
+        $data = array_merge(request()->only([
+            'title',
+            'comment',
+            'rating',
+        ]), [
+            'attachments' => request()->file('attachments') ?? [],
+            'status' => self::STATUS_PENDING,
+            'product_id' => $id,
+        ]);
+
+        $data['name'] = auth()->guard('customer')->user()?->name ?? request()->input('name');
+        $data['customer_id'] = auth()->guard('customer')->id() ?? null;
+
+        Event::dispatch('customer.review.create.before', $id);
+
+        $review = $this->productReviewRepository->create($data);
+
+        $this->productReviewAttachmentRepository->upload($data['attachments'], $review);
+
+        Event::dispatch('customer.review.create.after', $review);
+
+        return new JsonResource([
+            'message' => trans('shop::app.products.view.reviews.success'),
+        ]);
+    }
+
+    /**
+     * Translate the specified resource in storage.
+     */
+    public function translate(int $productId, int $reviewId): JsonResponse
+    {
+        if (
+            ! core()->getConfigData('magic_ai.general.settings.enabled')
+            || ! core()->getConfigData('magic_ai.storefront_features.review_translation.enabled')
+        ) {
+            return new JsonResponse([
+                'message' => trans('shop::app.errors.403.title'),
+            ], 403);
+        }
+
+        $review = $this->productReviewRepository->find($reviewId);
+
+        if ($review?->status !== self::STATUS_APPROVED) {
+            return new JsonResponse([
+                'message' => trans('shop::app.products.view.reviews.empty-review'),
+            ], 400);
+        }
+
+        try {
+            return new JsonResponse([
+                'content' => MagicAI::translate($review->comment, core()->getCurrentLocale()->name),
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'message' => trans('shop::app.errors.500.title'),
+            ], 500);
+        }
+    }
+
+    /**
+     * Censoring the reviewer name.
+     */
+    private function censorReviewerName(string $name): string
+    {
+        return collect(explode(' ', $name))
+            ->map(fn ($part) => mb_substr($part, 0, 1).str_repeat('*', max(mb_strlen($part) - 1, 0)))
+            ->join(' ');
+    }
+}
