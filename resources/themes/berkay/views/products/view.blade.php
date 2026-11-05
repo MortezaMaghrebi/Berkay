@@ -69,6 +69,13 @@
         </div>
     @endif
 
+    <section class="bk-product-intro" data-product-id="{{ $product->id }}">
+        <p class="bk-product-signature">{{ core()->getConfigData('berkay.store.identity.name') ?: trans('berkay::app.brand') }}</p>
+        <h1 id="bk-editable-name">{{ $product->name }}</h1>
+        <a href="#bk-product-buy">{{ trans('berkay::app.storefront-editor.buy') }} <span aria-hidden="true">↓</span></a>
+    </section>
+    <div id="bk-product-editor-tools"></div>
+    <div id="bk-product-buy"></div>
     <!-- Product Information Vue Component -->
     <v-product>
         <x-shop::shimmer.products.view />
@@ -302,9 +309,9 @@
                                 {!! view_render_event('bagisto.shop.products.name.before', ['product' => $product]) !!}
 
                                 <div class="flex justify-between gap-4">
-                                    <h1 class="wrap-break-word text-3xl font-medium max-sm:text-xl" v-pre>
+                                    <h2 class="wrap-break-word text-3xl font-medium max-sm:text-xl" v-pre>
                                         {{ $product->name }}
-                                    </h1>
+                                    </h2>
 
                                     @if (core()->getConfigData('customer.settings.wishlist.wishlist_option'))
                                         <div

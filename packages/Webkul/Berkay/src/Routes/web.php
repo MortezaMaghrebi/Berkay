@@ -10,11 +10,17 @@ use Webkul\Berkay\Http\Controllers\Admin\SimpleCatalogController;
 use Webkul\Berkay\Http\Controllers\Shop\ContentSitemapController;
 use Webkul\Berkay\Http\Controllers\Shop\CustomRequestController;
 use Webkul\Berkay\Http\Controllers\Shop\MagazineController;
+use Webkul\Berkay\Http\Controllers\Shop\StorefrontEditorController;
 use Webkul\Berkay\Http\Controllers\Shop\TorobController;
 use Webkul\Berkay\Http\Controllers\Shop\ZarinpalController;
+use Webkul\Berkay\Http\Middleware\ProductEditorAccess;
 use Webkul\Core\Http\Middleware\NoCacheMiddleware;
 
 Route::middleware(['web', 'shop'])->group(function () {
+    Route::get('berkay/editor-session', [StorefrontEditorController::class, 'session'])->middleware(NoCacheMiddleware::class)->name('shop.berkay.editor_session');
+    Route::get(config('app.admin_url').'/berkay/storefront/products/{id}/editor', [StorefrontEditorController::class, 'editor'])->whereNumber('id')->middleware([NoCacheMiddleware::class, ProductEditorAccess::class])->name('shop.berkay.full_editor');
+    Route::put(config('app.admin_url').'/berkay/storefront/products/{id}/editor', [StorefrontEditorController::class, 'saveEditor'])->whereNumber('id')->middleware([NoCacheMiddleware::class, ProductEditorAccess::class, 'throttle:30,1'])->name('shop.berkay.full_editor.update');
+    Route::patch('berkay/products/{id}/inline', [StorefrontEditorController::class, 'update'])->whereNumber('id')->middleware([NoCacheMiddleware::class, 'throttle:30,1'])->name('shop.berkay.inline_product');
     Route::get('content-sitemap.xml', [ContentSitemapController::class, 'index'])->name('shop.berkay.content_sitemap');
     Route::get('magazine', [MagazineController::class, 'index'])->name('shop.berkay.magazine.index');
     Route::get('magazine/{slug}', [MagazineController::class, 'show'])->name('shop.berkay.magazine.show');

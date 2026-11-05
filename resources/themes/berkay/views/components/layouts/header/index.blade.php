@@ -15,6 +15,7 @@
             <button type="submit" aria-label="{{ trans('berkay::app.search') }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button>
         </form>
         <div class="bk-account-actions">
+            <span id="bk-staff-access" data-session-url="{{ route('shop.berkay.editor_session') }}" data-labels="{{ json_encode(trans('berkay::app.storefront-editor')) }}"></span>
             <a href="{{ auth()->guard('customer')->check() ? route('shop.customers.account.profile.index') : route('shop.customer.session.create') }}">{{ trans('berkay::app.account') }}</a>
             @include('shop::checkout.cart.mini-cart')
         </div>

@@ -1,6 +1,20 @@
 <?php
 
 return [
+    'storefront-editor' => [
+        'admin-panel' => 'Admin panel',
+        'inline-edit' => 'Edit on page',
+        'full-edit' => 'Full product editor',
+        'save' => 'Save changes',
+        'cancel' => 'Cancel',
+        'close' => 'Close editor',
+        'refresh' => 'Show changes on page',
+        'hint' => 'Edit the title and short description here. Use the full editor for images, price, stock, categories, variants and SEO.',
+        'failed' => 'Unable to save. Check the form and connection.',
+        'loading' => 'Saving…',
+        'details' => 'A closer look',
+        'buy' => 'Explore and buy',
+    ],
     'reference-photos' => 'Reference photos (optional)',
     'reference-photos-help' => 'Select up to 5 JPG, PNG or WebP photos, up to 4 MB each. Only authorized store staff can view them. Reselect files if the form reports an error.',
     'editorial' => [

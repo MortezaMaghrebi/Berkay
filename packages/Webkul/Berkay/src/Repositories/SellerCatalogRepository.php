@@ -13,6 +13,22 @@ use Webkul\Product\Services\Search\SearchEngineManager;
 
 class SellerCatalogRepository extends ProductRepository
 {
+    /** Update selected text attributes without syncing media, stock or relations. */
+    public function saveInlineText(int $id, array $data): mixed
+    {
+        $product = $this->storeProduct($id);
+        $saved = DB::transaction(function () use ($product, $data) {
+            Event::dispatch('catalog.product.update.before', $product);
+            $saved = parent::update($data + ['channel' => core()->getCurrentChannel()->code, 'locale' => core()->getCurrentLocale()->code], $product->id, ['name', 'short_description']);
+            Event::dispatch('catalog.product.update.after', $saved);
+
+            return $saved;
+        });
+        app(SearchEngineManager::class)->indexer()->indexBatch([$saved->fresh()]);
+
+        return $saved;
+    }
+
     /** Find store-owned parent products with an optional name or SKU search. */
     public function listing(string $search = ''): LengthAwarePaginator
     {
