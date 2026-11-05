@@ -108,3 +108,5 @@ html{-webkit-text-size-adjust:100%}
 .bk-category-menu summary>span{display:none!important}
 @media(hover:hover) and (pointer:fine){.bk-category-menu:not([open]):hover summary{background:#efe4d6;border-color:#cdb99e}.bk-category-menu:hover summary{color:var(--bk-leather)}}
 @media(hover:hover) and (pointer:fine){.bk-category-menu[open]:hover summary{background:#593721;color:#fff;border-color:#593721}}
+.bk-footer{margin-top:clamp(64px,7vw,112px)}
+@media(max-width:640px){.bk-footer{margin-top:56px}}
