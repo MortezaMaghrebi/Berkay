@@ -1,6 +1,14 @@
 <?php
 
 return [
+    'product-story' => [
+        'eyebrow' => 'The product story',
+        'title' => 'A closer look',
+        'details' => 'Another perspective',
+        'specifications' => 'Product specifications',
+        'product' => 'Product name',
+        'sku' => 'Product code',
+    ],
     'users' => [
         'search-action' => 'Search',
         'title' => 'User management',

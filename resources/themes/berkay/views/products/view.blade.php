@@ -81,6 +81,8 @@
         <x-shop::shimmer.products.view />
     </v-product>
 
+    @include('shop::products.view.story')
+
     <!-- Information Section -->
     <div class="1180:mt-20">
         <div class="max-1180:hidden">

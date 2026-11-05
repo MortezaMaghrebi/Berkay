@@ -1,6 +1,14 @@
 <?php
 
 return [
+    'product-story' => [
+        'eyebrow' => 'روایت محصول',
+        'title' => 'نگاهی نزدیک‌تر، انتخابی آگاهانه‌تر',
+        'details' => 'از زاویه‌ای دیگر',
+        'specifications' => 'مشخصات محصول',
+        'product' => 'نام محصول',
+        'sku' => 'کد محصول',
+    ],
     'users' => [
         'search-action' => 'جست‌وجو',
         'title' => 'مدیریت کاربران',
