@@ -21,7 +21,7 @@
     </div>
     <nav class="bk-navigation" aria-label="{{ trans('berkay::app.catalog') }}">
         <details class="bk-category-menu">
-            <summary>{{ trans('berkay::app.seller.catalog-menu') }} <span aria-hidden="true">⌄</span></summary>
+            <summary>{{ trans('berkay::app.seller.catalog-menu') }}</summary>
             <div class="bk-mega-menu">
                 @forelse ($navigationCategories as $category)
                     <div>
