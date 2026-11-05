@@ -230,4 +230,11 @@ return [
         'step-shipping' => 'Prepare and ship',
         'before-selling' => 'Before accepting orders',
     ],
+    'storefront' => [
+        'loading-cart' => 'Loading your cart…',
+        'cart-load-failed' => 'Your cart could not be loaded. Check your connection and try again.',
+        'retry' => 'Try again',
+        'close-panel' => 'Close panel',
+        'panel' => 'Store panel',
+    ],
 ];
