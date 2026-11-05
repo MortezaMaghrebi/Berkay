@@ -74,7 +74,7 @@
                 leave-to-class="opacity-0"
             >
                 <div
-                    class="fixed inset-0 z-20 bg-gray-500/50"
+                    class="bk-drawer-overlay fixed inset-0 bg-gray-500/50"
                     :class="{'bk-drawer-instant': instantMotion}"
                     aria-hidden="true"
                     @click="close"
