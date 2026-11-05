@@ -131,6 +131,10 @@
 
             {!! view_render_event('bagisto.shop.layout.content.after') !!}
 
+            @if (core()->getConfigData('catalog.products.settings.compare_option') && ! request()->routeIs('shop.compare.index'))
+                <a class="bk-compare-shortcut" href="{{ route('shop.compare.index') }}">{{ trans('shop::app.compare.title') }}</a>
+            @endif
+
 
             <!-- Page Services Blade Component -->
             @if ($hasFeature)

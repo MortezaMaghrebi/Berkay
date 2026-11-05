@@ -1,171 +1,41 @@
-<!-- SEO Meta Content -->
-@push('meta')
-    <meta name="description" content="@lang('shop::app.compare.title')"/>
-
-    <meta name="keywords" content="@lang('shop::app.compare.title')"/>
-@endPush
-
-<x-shop::layouts>
-    <!-- Page Title -->
-    <x-slot:title>
-        @lang('shop::app.compare.title')
-    </x-slot>
-
-    <!-- Breadcrumb -->
-    @if ((core()->getConfigData('general.general.breadcrumbs.shop')))
-        <div class="mt-5 flex justify-center max-lg:hidden">
-            {!! view_render_event('bagisto.shop.customers.account.compare.breadcrumbs.before') !!}
-
-            <div class="flex items-center gap-x-2.5">
-                <x-shop::breadcrumbs name="compare" />
-            </div>
-
-            {!! view_render_event('bagisto.shop.customers.account.compare.breadcrumbs.after') !!}
-        </div>
-    @endif
-
-    <!-- Compare Component -->
-    <div class="container mt-8 px-15 max-lg:px-8 max-md:mt-7 max-md:px-0">
-        <a class="bk-button bk-compare-browse" href="{{ route('shop.search.index') }}">{{ trans('berkay::app.all-products') }}</a>
-        <v-compare>
-            <!-- Shimmer Effect -->
-            <x-shop::shimmer.compare :attributeCount="count($comparableAttributes)" />
-        </v-compare>
-    </div>
-
+<x-shop::layouts :has-feature="false">
+    <x-slot:title>{{ trans('shop::app.compare.title') }}</x-slot:title>
+    <section class="bk-compare-page">
+        <v-compare></v-compare>
+    </section>
     @pushOnce('scripts')
-        <script
-            type="text/x-template"
-            id="v-compare-template"
-        >
+        <script type="text/x-template" id="v-compare-template">
             <div>
-                {!! view_render_event('bagisto.shop.customers.account.compare.before') !!}
-
-                <div v-if="! isLoading">
-                    <div class="flex items-center justify-between max-md:px-4">
-
-                        {!! view_render_event('bagisto.shop.customers.account.compare.title.before') !!}
-
-                        <h1 class="text-2xl font-medium max-sm:text-base">
-                            @lang('shop::app.compare.title')
-                        </h1>
-
-                        {!! view_render_event('bagisto.shop.customers.account.compare.title.after') !!}
-
-                        {!! view_render_event('bagisto.shop.customers.account.compare.remove_all.before') !!}
-
-                        <button
-                            type="button"
-                            class="secondary-button flex items-center gap-x-2.5 whitespace-nowrap border-zinc-200 px-5 py-3 font-normal max-md:rounded-lg max-md:px-3 max-md:text-xs max-sm:py-1.5 focus-visible:ring-2 focus-visible:ring-navyBlue focus-visible:outline-hidden rounded-2xl"
-                            v-if="items.length"
-                            @click="removeAll"
-                        >
-                            <span class="icon-bin text-2xl max-md:hidden"></span>
-
-                            @lang('shop::app.compare.delete-all')
-                        </button>
-
-                        {!! view_render_event('bagisto.shop.customers.account.compare.remove_all.after') !!}
-                    </div>
-
-                    <div
-                        class="journal-scroll mt-16 grid overflow-auto max-md:mt-7"
-                        v-if="items.length"
-                    >
-                        <template v-for="attribute in comparableAttributes">
-                            <!-- Product Card -->
-                            <div
-                                class="flex max-w-full items-center border-b border-zinc-200"
-                                v-if="attribute.code == 'product'"
-                            >
-                                {!! view_render_event('bagisto.shop.customers.account.compare.attribute_name.before') !!}
-
-                                <div class="min-w-76 max-w-full max-md:grid max-md:h-full max-md:min-w-40 max-md:items-center max-md:bg-gray-200 max-sm:min-w-27.5">
-                                    <p class="text-sm font-medium max-md:pl-4">
-                                        @{{ attribute.name ?? attribute.admin_name }}
-                                    </p>
-                                </div>
-
-                                {!! view_render_event('bagisto.shop.customers.account.compare.attribute_name.after') !!}
-
-                                <div class="flex gap-3 border-zinc-200 max-md:gap-0 max-md:border-0 ltr:border-l rtl:border-r">
-                                    <div
-                                        class="relative w-77.75 max-w-77.75 px-5 max-md:w-60 max-md:px-2.5 max-sm:w-47.5"
-                                        v-for="product in items"
-                                    >
-                                        <button
-                                            type="button"
-                                            class="icon-cancel absolute top-5 z-1 flex h-7.5 w-7.5 cursor-pointer items-center justify-center rounded-md border border-zinc-200 bg-white text-2xl max-md:top-10 max-md:h-6 max-md:w-6 max-md:rounded-full max-md:text-sm ltr:right-10 max-md:ltr:right-4 rtl:left-10 max-md:rtl:left-4 focus-visible:ring-2 focus-visible:ring-navyBlue focus-visible:outline-hidden"
-                                            aria-label="@lang('shop::app.checkout.cart.index.remove')"
-                                            @click="remove(product.id)"
-                                        ></button>
-
-                                        <x-shop::products.card class="[&_span.icon-compare]:hidden" />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {!! view_render_event('bagisto.shop.customers.account.compare.comparable_attribute.before') !!}
-
-                            <!-- Comparable Attributes -->
-                            <div
-                                class="flex max-w-full items-center border-b border-zinc-200"
-                                v-else
-                            >
-                                <div class="min-w-76 max-w-full max-md:grid max-md:h-full max-md:min-w-40 max-md:items-center max-md:bg-gray-200 max-sm:min-w-27.5">
-                                    <p class="text-sm font-medium max-md:pl-4">
-                                        @{{ attribute.name ?? attribute.admin_name }}
-                                    </p>
-                                </div>
-
-                                <div class="flex gap-3 border-zinc-200 max-md:gap-0 max-md:border-0 ltr:border-l rtl:border-r">
-                                    <div
-                                        class="w-77.75 max-w-77.75 p-5 max-md:w-60 max-md:px-2.5 max-sm:w-47.5"
-                                        v-for="(product, index) in items"
-                                    >
-                                        <p
-                                            class="break-all text-sm"
-                                            v-html="product[attribute.code] ?? 'N/A'"
-                                        >
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {!! view_render_event('bagisto.shop.customers.account.compare.comparable_attribute.after') !!}
-                        </template>
-                    </div>
-
-                    <div
-                        class="m-auto grid w-full place-content-center items-center justify-items-center py-32 text-center"
-                        v-else
-                    >
-                        <img
-                            class="max-sm:h-25 max-sm:w-25"
-                            src="{{ bagisto_asset('images/thank-you.png') }}"
-                            alt="@lang('shop::app.compare.empty-text')"
-                            loading="lazy"
-                            decoding="async"
-                        />
-
-                        <p
-                            class="text-xl max-sm:text-sm"
-                            role="heading"
-                        >
-                            @lang('shop::app.compare.empty-text')
-                        </p>
-                    </div>
+                <div class="bk-compare-heading">
+                    <h1>{{ trans('shop::app.compare.title') }}</h1>
+                    <a class="bk-button" href="{{ route('shop.search.index') }}">{{ trans('berkay::app.all-products') }}</a>
+                    <button v-if="items.length" type="button" @click="removeAll">{{ trans('shop::app.compare.delete-all') }}</button>
                 </div>
-
-                <div v-else>
-                    <!---- Shimmer Effect -->
-                    <x-shop::shimmer.compare :attributeCount="count($comparableAttributes)" />
+                <p v-if="isLoading" role="status" aria-busy="true" aria-label="{{ trans('shop::app.compare.title') }}">…</p>
+                <div v-else-if="items.length" class="bk-compare-scroll" tabindex="0" aria-label="{{ trans('shop::app.compare.title') }}">
+                    <table class="bk-compare-table" :style="{width: (160 + items.length * 240) + 'px'}">
+                        <thead><tr>
+                            <th scope="col">{{ trans('shop::app.compare.title') }}</th>
+                            <th v-for="product in items" :key="product.id" scope="col">
+                                <button type="button" class="bk-compare-remove" @click="remove(product.id)">{{ trans('shop::app.checkout.cart.index.remove') }}</button>
+                                <a :href="'{{ route('shop.product_or_category.index', ':slug') }}'.replace(':slug', product.url_key)">
+                                    <img :src="product.base_image.medium_image_url" :alt="product.name" width="180" height="180">
+                                    <span v-text="product.name"></span>
+                                </a>
+                                <p v-text="product.min_price"></p>
+                            </th>
+                        </tr></thead>
+                        <tbody>
+                            <tr v-for="attribute in comparableAttributes.filter(a => !['product', 'name', 'price'].includes(a.code))" :key="attribute.code">
+                                <th scope="row" v-text="attribute.name || attribute.admin_name"></th>
+                                <td v-for="product in items" :key="product.id" v-text="plainText(product[attribute.code])"></td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-
-                {!! view_render_event('bagisto.shop.customers.account.compare.after') !!}
+                <p v-else class="bk-compare-empty">{{ trans('shop::app.compare.empty-text') }}</p>
             </div>
         </script>
-
         <script type="module">
             app.component("v-compare", {
                 template: '#v-compare-template',
@@ -190,6 +60,7 @@
                 },
 
                 methods: {
+                    plainText(value) { if (value == null || value === '') return '—'; const doc = new DOMParser().parseFromString(String(value), 'text/html'); return doc.body.textContent || '—'; },
                     getItems() {
                         let productIds = [];
 
@@ -205,7 +76,7 @@
                             .then(response => {
                                 this.isLoading = false;
 
-                                this.items = response.data.data;
+                                this.items = response.data.data?.data ?? response.data.data;
                             })
                             .catch(error => { this.isLoading = false; this.$emitter.emit('add-flash', { type: 'error', message: @json(trans('shop::app.compare.remove-error')) }); });
                     },
@@ -231,13 +102,13 @@
                                         'product_id': productId,
                                     })
                                     .then(response => {
-                                        this.items = response.data.data;
+                                        this.items = response.data.data?.data ?? response.data.data;
 
                                         this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
 
                                     })
                                     .catch(error => {
-                                        this.$emitter.emit('add-flash', { type: 'error', message: response.data.message });
+                                        this.$emitter.emit('add-flash', { type: 'error', message: error.response?.data?.message ?? @json(trans('shop::app.compare.remove-error')) });
                                     });
                             }
                         });
@@ -262,7 +133,7 @@
                                     .then(response => {
                                         this.items = [];
 
-                                        this.$emitter.emit('add-flash', { type: 'success', message: response.data.data.message });
+                                        this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
                                     })
                                     .catch(error => { this.isLoading = false; this.$emitter.emit('add-flash', { type: 'error', message: @json(trans('shop::app.compare.remove-error')) }); });
                             }
@@ -276,7 +147,7 @@
                             return [];
                         }
 
-                        return JSON.parse(value);
+                        try { const ids = JSON.parse(value); return Array.isArray(ids) ? ids : []; } catch { return []; }
                     },
                 }
             });
