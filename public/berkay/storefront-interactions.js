@@ -8,6 +8,25 @@
     document.querySelectorAll('.bk-category-menu').forEach(menu => {
         const trigger = menu.querySelector('summary');
         const panel = menu.querySelector('.bk-mega-menu');
+        let hoverCloseTimer;
+
+        if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+            menu.addEventListener('pointerenter', event => {
+                if (event.pointerType !== 'mouse') return;
+
+                window.clearTimeout(hoverCloseTimer);
+                menu.open = true;
+            });
+
+            menu.addEventListener('pointerleave', event => {
+                if (event.pointerType !== 'mouse' || menu.contains(event.relatedTarget)) return;
+
+                hoverCloseTimer = window.setTimeout(() => {
+                    if (!menu.contains(document.activeElement)) menu.open = false;
+                }, 120);
+            });
+        }
+
         menu.addEventListener('toggle', () => {
             panel.getAnimations().forEach(animation => animation.cancel());
             if (menu.open && root.dataset.bkInput === 'pointer' && !reducedMotion.matches) {

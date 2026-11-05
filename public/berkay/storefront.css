@@ -106,4 +106,4 @@ html{-webkit-text-size-adjust:100%}
 .bk-category-menu[open] summary>span{transform:translateY(2px) rotate(225deg)}
 
 .bk-category-menu summary>span{display:none!important}
-@media(hover:hover) and (pointer:fine){.bk-category-menu:not([open]):hover>.bk-mega-menu{display:grid}.bk-category-menu:not([open]):hover summary{background:#efe4d6;border-color:#cdb99e}.bk-category-menu:hover summary{color:var(--bk-leather)}}
+@media(hover:hover) and (pointer:fine){.bk-category-menu:not([open]):hover summary{background:#efe4d6;border-color:#cdb99e}.bk-category-menu:hover summary{color:var(--bk-leather)}}
