@@ -161,7 +161,7 @@
                                             </td>
 
                                             <td data-value="@lang('shop::app.customers.account.orders.view.information.product-name')">
-                                                {{ $item->name }}
+                                                @include('shop::customers.account.orders.product-link', ['item' => $item])
 
                                                 @if (isset($item->additional['attributes']))
                                                     <div>
@@ -551,16 +551,7 @@
                                 @foreach ($order->items as $item)
                                     <div class="rounded-md rounded-t-none border border-t-0 bg-white px-4 py-2">
                                         <p class="pb-2 text-sm font-medium">
-                                            @if ($item?->product?->url_key)
-                                                <a
-                                                    href="{{ route('shop.product_or_category.index', $item->product->url_key) }}"
-                                                    class="text-navyBlue hover:underline"
-                                                >
-                                                    {{ $item->name }}
-                                                </a>
-                                            @else
-                                                {{ $item->name }}
-                                            @endif
+                                            @include('shop::customers.account.orders.product-link', ['item' => $item])
 
                                             @if (isset($item->additional['attributes']))
                                                 <div>
@@ -716,7 +707,7 @@
                         </x-shop::accordion>
 
                         <!--Summary -->
-                        <div 
+                        <div
                             class="w-full rounded-md bg-gray-100"
                             v-pre
                         >
@@ -977,7 +968,7 @@
                                             @foreach ($invoice->items as $item)
                                                 <div class="rounded-md rounded-t-none border border-t-0 bg-white px-4 py-2">
                                                     <p class="pb-2 text-sm font-medium">
-                                                        {{ $item->name }}
+                                                        @include('shop::customers.account.orders.product-link', ['item' => $item])
                                                     </p>
 
                                                     @if (isset($item->additional['attributes']))
@@ -1266,7 +1257,7 @@
                                                         </td>
 
                                                         <td data-value="@lang('shop::app.customers.account.orders.view.invoices.product-name')">
-                                                            {{ $item->name }}
+                                                            @include('shop::customers.account.orders.product-link', ['item' => $item])
 
                                                             @if (isset($item->additional['attributes']))
                                                                 <div>
@@ -1517,7 +1508,7 @@
                                                         </td>
 
                                                         <td data-value="@lang('shop::app.customers.account.orders.view.shipments.product-name')">
-                                                            {{ $item->name }}
+                                                            @include('shop::customers.account.orders.product-link', ['item' => $item])
 
                                                             @if (isset($item->additional['attributes']))
                                                                 <div>
@@ -1569,7 +1560,7 @@
                                             @foreach ($shipment->items as $item)
                                                 <div class="rounded-md rounded-t-none border border-t-0 bg-white px-4 py-2">
                                                     <p class="pb-2 text-sm font-medium">
-                                                        {{ $item->name }}
+                                                        @include('shop::customers.account.orders.product-link', ['item' => $item])
                                                     </p>
 
                                                     <div class="grid gap-1.5 text-xs font-medium">
@@ -1655,7 +1646,7 @@
                                                     </td>
 
                                                     <td data-value="@lang('shop::app.customers.account.orders.view.refunds.product-name')">
-                                                        {{ $item->name }}
+                                                        @include('shop::customers.account.orders.product-link', ['item' => $item])
 
                                                         @if (isset($item->additional['attributes']))
                                                             <div>
@@ -1748,7 +1739,7 @@
                                         @foreach ($invoice->items as $item)
                                             <div class="rounded-md rounded-t-none border border-t-0 bg-white px-4 py-2">
                                                 <p class="pb-2 text-sm font-medium">
-                                                    {{ $item->name }}
+                                                    @include('shop::customers.account.orders.product-link', ['item' => $item])
                                                 </p>
 
                                                 <div class="grid gap-1.5 text-xs font-medium">

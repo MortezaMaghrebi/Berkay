@@ -114,3 +114,5 @@ html{-webkit-text-size-adjust:100%}
 #main{background:#fff!important}
 #app{background:#fff}.bk-drawer-overlay{z-index:9999}
 .bk-drawer-panel{z-index:10000}
+.bk-account-mobile-menu{display:none}.bk-order-product-link{color:var(--bk-leather);text-decoration:underline;text-underline-offset:4px}
+@media(max-width:767px){.bk-account-mobile-menu{display:block;margin:20px 16px 0;border:1px solid var(--bk-line);border-radius:8px;background:#fff}.bk-account-mobile-menu>summary{padding:14px 18px;cursor:pointer;font-weight:650;color:var(--bk-leather)}.bk-account-mobile-menu>.panel-side{padding:12px 18px;min-width:0;max-height:65vh;overflow:auto}}
