@@ -37,6 +37,9 @@
         </details>
         <a href="{{ route('shop.search.index') }}">{{ trans('berkay::app.all-products') }}</a>
         <a href="{{ route('shop.berkay.magazine.index') }}">{{ trans('berkay::app.magazine') }}</a>
+        @if (core()->getConfigData('catalog.products.settings.compare_option'))
+            <a href="{{ route('shop.compare.index') }}">{{ trans('shop::app.compare.title') }}</a>
+        @endif
         @if (core()->getConfigData('berkay.store.identity.custom_orders'))
             <a href="{{ route('shop.berkay.custom_order.create') }}">{{ trans('berkay::app.custom-orders') }}</a>
         @endif
