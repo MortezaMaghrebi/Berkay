@@ -101,3 +101,6 @@ html{-webkit-text-size-adjust:100%}
 @media(hover:hover) and (pointer:fine){.bk-category-menu summary:hover{background:#efe4d6;border-color:#cdb99e}.bk-category-menu[open] summary:hover{background:#593721;color:white}.bk-mega-menu>div>a:first-child:hover{background:#eee1d0}.bk-mega-menu .bk-subcategory:hover{background:#faf7f2}}
 @media(max-width:1000px){.bk-category-menu{align-self:center}.bk-mega-menu{grid-template-columns:repeat(2,minmax(0,1fr));max-height:min(65dvh,520px);overflow:auto;overscroll-behavior:contain}}
 @media(max-width:640px){.bk-category-menu summary{min-height:40px;padding-inline:10px;gap:7px;font-size:12px}.bk-category-menu summary::before{font-size:13px}.bk-mega-menu{position:absolute;inset-inline:0;width:min(100%,calc(100vw - 32px));grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:12px;border-radius:0 0 10px 10px}.bk-mega-menu>div{padding:5px}.bk-mega-menu>div>a:first-child{font-size:13px}.bk-mega-menu .bk-subcategory{font-size:12px}}
+.bk-category-menu summary>span{width:9px;height:9px;border:solid currentColor;border-width:0 1.6px 1.6px 0;transform:translateY(-2px) rotate(45deg);transition:transform 180ms var(--bk-ease-out)}
+.bk-category-menu summary>span::after{content:none}
+.bk-category-menu[open] summary>span{transform:translateY(2px) rotate(225deg)}
