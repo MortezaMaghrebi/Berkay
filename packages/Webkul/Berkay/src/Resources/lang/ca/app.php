@@ -2,6 +2,9 @@
 
 return [
     'brand' => 'Berkay',
+    'home-meta-title' => 'Buy Leather Bags and Leather Goods | Berkay',
+    'home-meta-description' => 'Shop leather bags for women and men, including crossbody bags, handbags and wallets at Berkay. Browse selected styles and new arrivals.',
+    'home-meta-keywords' => "buy leather bag, women's leather bag, men's leather bag, leather crossbody bag, leather wallet",
     'operations' => 'Berkay operations',
     'magazine' => 'Magazine',
     'custom-orders' => 'Custom orders',

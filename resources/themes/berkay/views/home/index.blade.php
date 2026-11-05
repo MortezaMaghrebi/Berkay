@@ -4,11 +4,12 @@
     $heroTitle = core()->getConfigData('berkay.store.identity.hero_title') ?: trans('berkay::app.hero-default');
 @endphp
 @push('meta')
-    <meta name="description" content="{{ $channel->home_seo['meta_description'] ?? trans('berkay::app.hero-subtitle') }}">
+    <meta name="description" content="{{ ($channel->home_seo['meta_description'] ?? '') ?: trans('berkay::app.home-meta-description') }}">
+    <meta name="keywords" content="{{ ($channel->home_seo['meta_keywords'] ?? '') ?: trans('berkay::app.home-meta-keywords') }}">
     <link rel="canonical" href="{{ route('shop.home.index') }}">
 @endpush
 <x-shop::layouts :has-feature="false">
-    <x-slot:title>{{ ($channel->home_seo['meta_title'] ?? '') ?: trans('berkay::app.brand') }}</x-slot>
+    <x-slot:title>{{ ($channel->home_seo['meta_title'] ?? '') ?: trans('berkay::app.home-meta-title') }}</x-slot>
     <div class="bk-home">
         <section class="bk-hero" aria-labelledby="bk-hero-title">
             <div class="bk-hero-copy"><p class="bk-hero-signature">{{ core()->getConfigData('berkay.store.identity.name') ?: trans('berkay::app.brand') }}</p>
