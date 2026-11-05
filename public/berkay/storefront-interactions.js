@@ -11,6 +11,13 @@
         let hoverCloseTimer;
 
         if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+            trigger.addEventListener('click', event => {
+                if (event.detail > 0) {
+                    event.preventDefault();
+                    menu.open = true;
+                }
+            });
+
             menu.addEventListener('pointerenter', event => {
                 if (event.pointerType !== 'mouse') return;
 
