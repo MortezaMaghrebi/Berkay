@@ -455,21 +455,7 @@
                                 <div class="mt-10 flex gap-9 max-md:mt-4 max-md:flex-wrap max-sm:justify-center max-sm:gap-3">
                                     {!! view_render_event('bagisto.shop.products.view.compare.before', ['product' => $product]) !!}
 
-                                    <div
-                                        class="flex cursor-pointer items-center justify-center gap-2.5 max-sm:gap-1.5 max-sm:text-base"
-                                        role="button"
-                                        tabindex="0"
-                                        @click="is_buy_now=0; addToCompare({{ $product->id }})"
-                                    >
-                                        @if (core()->getConfigData('catalog.products.settings.compare_option'))
-                                            <span
-                                                class="icon-compare text-2xl"
-                                                role="presentation"
-                                            ></span>
 
-                                            @lang('shop::app.products.view.compare')
-                                        @endif
-                                    </div>
 
                                     {!! view_render_event('bagisto.shop.products.view.compare.after', ['product' => $product]) !!}
                                 </div>
@@ -685,51 +671,7 @@
                         }
                     },
 
-                    addToCompare(productId) {
-                        /**
-                         * This will handle for customers.
-                         */
-                        if (this.isCustomer) {
-                            this.$axios.post('{{ route("shop.api.compare.store") }}', {
-                                    'product_id': productId
-                                })
-                                .then(response => {
-                                    this.$emitter.emit('add-flash', { type: 'success', message: response.data.data.message });
-                                })
-                                .catch(error => {
-                                    if ([400, 422].includes(error.response.status)) {
-                                        this.$emitter.emit('add-flash', { type: 'warning', message: error.response.data.data.message });
 
-                                        return;
-                                    }
-
-                                    this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message});
-                                });
-
-                            return;
-                        }
-
-                        /**
-                         * This will handle for guests.
-                         */
-                        let existingItems = this.getStorageValue(this.getCompareItemsStorageKey()) ?? [];
-
-                        if (existingItems.length) {
-                            if (! existingItems.includes(productId)) {
-                                existingItems.push(productId);
-
-                                this.setStorageValue(this.getCompareItemsStorageKey(), existingItems);
-
-                                this.$emitter.emit('add-flash', { type: 'success', message: "@lang('shop::app.products.view.add-to-compare')" });
-                            } else {
-                                this.$emitter.emit('add-flash', { type: 'warning', message: "@lang('shop::app.products.view.already-in-compare')" });
-                            }
-                        } else {
-                            this.setStorageValue(this.getCompareItemsStorageKey(), [productId]);
-
-                            this.$emitter.emit('add-flash', { type: 'success', message: "@lang('shop::app.products.view.add-to-compare')" });
-                        }
-                    },
 
                     updateQty(quantity, id) {
                         this.isLoading = true;

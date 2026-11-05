@@ -100,16 +100,7 @@
 
                         {!! view_render_event('bagisto.shop.components.products.card.compare_option.before') !!}
 
-                        @if (core()->getConfigData('catalog.products.settings.compare_option'))
-                            <span
-                                class="icon-compare absolute top-10 flex h-6 w-6 items-center justify-center rounded-full border border-zinc-200 bg-white text-lg sm:hidden ltr:right-1.5 rtl:left-1.5"
-                                role="button"
-                                aria-label="@lang('shop::app.components.products.card.add-to-compare')"
-                                tabindex="0"
-                                @click="addToCompare(product.id)"
-                            >
-                            </span>
-                        @endif
+
 
                         {!! view_render_event('bagisto.shop.components.products.card.compare_option.after') !!}
 
@@ -173,16 +164,7 @@
 
                     {!! view_render_event('bagisto.shop.components.products.card.compare_option.before') !!}
 
-                    @if (core()->getConfigData('catalog.products.settings.compare_option'))
-                        <span
-                            class="icon-compare cursor-pointer p-2.5 text-2xl max-sm:hidden"
-                            role="button"
-                            aria-label="@lang('shop::app.components.products.card.add-to-compare')"
-                            tabindex="0"
-                            @click="addToCompare(product.id)"
-                        >
-                        </span>
-                    @endif
+
 
                     {!! view_render_event('bagisto.shop.components.products.card.compare_option.after') !!}
                 </div>
@@ -247,16 +229,7 @@
 
                         {!! view_render_event('bagisto.shop.components.products.card.compare_option.before') !!}
 
-                        @if (core()->getConfigData('catalog.products.settings.compare_option'))
-                            <span
-                                class="icon-compare absolute top-16 flex h-7.5 w-7.5 cursor-pointer items-center justify-center rounded-md bg-white text-2xl ltr:right-5 rtl:left-5"
-                                role="button"
-                                aria-label="@lang('shop::app.components.products.card.add-to-compare')"
-                                tabindex="0"
-                                @click="addToCompare(product.id)"
-                            >
-                            </span>
-                        @endif
+
 
                         {!! view_render_event('bagisto.shop.components.products.card.compare_option.after') !!}
                     </div>
@@ -361,52 +334,7 @@
                         }
                 },
 
-                addToCompare(productId) {
-                    /**
-                     * This will handle for customers.
-                     */
-                    if (this.isCustomer) {
-                        this.$axios.post('{{ route("shop.api.compare.store") }}', {
-                                'product_id': productId
-                            })
-                            .then(response => {
-                                this.$emitter.emit('add-flash', { type: 'success', message: response.data.data.message });
-                            })
-                            .catch(error => {
-                                if ([400, 422].includes(error.response.status)) {
-                                    this.$emitter.emit('add-flash', { type: 'warning', message: error.response.data.data.message });
 
-                                    return;
-                                }
-
-                                this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message});
-                            });
-
-                        return;
-                    }
-
-                    /**
-                     * This will handle for guests.
-                     */
-                    let items = this.getStorageValue() ?? [];
-
-                    if (items.length) {
-                        if (! items.includes(productId)) {
-                            items.push(productId);
-
-                            localStorage.setItem('compare_items', JSON.stringify(items));
-
-                            this.$emitter.emit('add-flash', { type: 'success', message: "@lang('shop::app.components.products.card.add-to-compare-success')" });
-                        } else {
-                            this.$emitter.emit('add-flash', { type: 'warning', message: "@lang('shop::app.components.products.card.already-in-compare')" });
-                        }
-                    } else {
-                        localStorage.setItem('compare_items', JSON.stringify([productId]));
-
-                        this.$emitter.emit('add-flash', { type: 'success', message: "@lang('shop::app.components.products.card.add-to-compare-success')" });
-
-                    }
-                },
 
                 getStorageValue(key) {
                     let value = localStorage.getItem('compare_items');
