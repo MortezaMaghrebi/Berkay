@@ -4,6 +4,7 @@ namespace Webkul\Berkay\Providers;
 
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use Webkul\Berkay\Console\Commands\PublishStarterContent;
 use Webkul\Berkay\Console\Commands\SetupStore;
 use Webkul\Berkay\Listeners\OrderSmsListener;
 
@@ -40,7 +41,7 @@ class BerkayServiceProvider extends ServiceProvider
         });
         Event::listen('checkout.order.save.after', [OrderSmsListener::class, 'created']);
         Event::listen('sales.order.update-status.after', [OrderSmsListener::class, 'statusChanged']);
-        $this->commands([SetupStore::class]);
+        $this->commands([SetupStore::class, PublishStarterContent::class]);
 
         $this->loadMigrationsFrom(__DIR__.'/../Database/Migrations');
         $this->loadViewsFrom(__DIR__.'/../Resources/views', 'berkay');

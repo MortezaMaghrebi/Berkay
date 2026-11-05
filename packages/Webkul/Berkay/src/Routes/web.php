@@ -7,6 +7,7 @@ use Webkul\Berkay\Http\Controllers\Admin\ArticleImportController;
 use Webkul\Berkay\Http\Controllers\Admin\IntegrationController;
 use Webkul\Berkay\Http\Controllers\Admin\OperationsController;
 use Webkul\Berkay\Http\Controllers\Admin\SimpleCatalogController;
+use Webkul\Berkay\Http\Controllers\Shop\ContentSitemapController;
 use Webkul\Berkay\Http\Controllers\Shop\CustomRequestController;
 use Webkul\Berkay\Http\Controllers\Shop\MagazineController;
 use Webkul\Berkay\Http\Controllers\Shop\TorobController;
@@ -14,6 +15,7 @@ use Webkul\Berkay\Http\Controllers\Shop\ZarinpalController;
 use Webkul\Core\Http\Middleware\NoCacheMiddleware;
 
 Route::middleware(['web', 'shop'])->group(function () {
+    Route::get('content-sitemap.xml', [ContentSitemapController::class, 'index'])->name('shop.berkay.content_sitemap');
     Route::get('magazine', [MagazineController::class, 'index'])->name('shop.berkay.magazine.index');
     Route::get('magazine/{slug}', [MagazineController::class, 'show'])->name('shop.berkay.magazine.show');
     Route::get('custom-order', [CustomRequestController::class, 'create'])->name('shop.berkay.custom_order.create');

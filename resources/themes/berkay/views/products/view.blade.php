@@ -13,6 +13,10 @@
 
 <!-- SEO Meta Content -->
 @push('meta')
+    <link rel="canonical" href="{{ route('shop.product_or_category.index', $product->url_key) }}">
+    @if (str_starts_with((string) $product->sku, 'BK-SAMPLE-') && ! in_array(request()->getHost(), ['localhost', '127.0.0.1', '::1']))
+        <meta name="robots" content="noindex, follow">
+    @endif
     <meta name="description" content="{{ trim($product->meta_description) != "" ? $product->meta_description : \Illuminate\Support\Str::limit(strip_tags($product->description), 120, '') }}"/>
 
     <meta name="keywords" content="{{ $product->meta_keywords }}"/>

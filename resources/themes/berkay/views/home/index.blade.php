@@ -75,5 +75,6 @@
             <p>{{ trans('berkay::app.magazine-description') }}</p>
             <a href="{{ route('shop.berkay.magazine.index') }}">{{ trans('berkay::app.read') }} ←</a>
         </section>
+        @include('berkay::shop.home-guides')
     </div>
 </x-shop::layouts>

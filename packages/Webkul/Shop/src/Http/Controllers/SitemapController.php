@@ -66,6 +66,7 @@ class SitemapController extends Controller
             '',
             'Content-Signal: search=yes, ai-train=no, ai-input=no',
             'Sitemap: '.$baseUrl.'/sitemap.xml',
+            'Sitemap: '.$baseUrl.'/content-sitemap.xml',
             '',
         ];
 
