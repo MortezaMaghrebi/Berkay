@@ -19,6 +19,8 @@ class ArticleRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'max:255'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'cover_alt' => ['nullable', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:180', 'regex:/^[\pL\pN]+(?:-[\pL\pN]+)*$/u', Rule::unique('berkay_articles', 'slug')->ignore($this->route('id'))],
             'category' => ['nullable', 'string', 'max:120'],
             'excerpt' => ['nullable', 'string', 'max:600'],

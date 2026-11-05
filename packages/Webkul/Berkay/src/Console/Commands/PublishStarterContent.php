@@ -19,8 +19,14 @@ class PublishStarterContent extends Command
         $content = json_decode(file_get_contents(__DIR__.'/../../Resources/content/starter-articles.json'), true, 512, JSON_THROW_ON_ERROR);
 
         foreach ($content as $article) {
-            if (! $articles->findOneByField('slug', $article['slug'])) {
+            $previousBodyHash = $article['previous_body_sha256'] ?? null;
+            unset($article['previous_body_sha256']);
+            $existing = $articles->findOneByField('slug', $article['slug']);
+
+            if (! $existing) {
                 $articles->create(array_merge($article, ['status' => 'published', 'published_at' => now()]));
+            } elseif ($previousBodyHash && hash_equals($previousBodyHash, hash('sha256', $existing->body))) {
+                $articles->update(['body' => $article['body']], $existing->id);
             }
         }
 

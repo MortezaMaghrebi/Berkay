@@ -7,14 +7,9 @@
     <section class="bk-section">
         <h1>{{ trans('berkay::app.magazine') }}</h1>
         <p class="bk-lead">{{ trans('berkay::app.magazine-description') }}</p>
-        <div class="bk-editorial-grid">
+        <div class="bk-story-grid">
             @forelse ($articles as $article)
-                <article class="bk-editorial-card">
-                    <p>{{ $article->category }}</p>
-                    <h2><a href="{{ route('shop.berkay.magazine.show', $article->slug) }}">{{ $article->title }}</a></h2>
-                    <p>{{ $article->excerpt }}</p>
-                    <a href="{{ route('shop.berkay.magazine.show', $article->slug) }}">{{ trans('berkay::app.read') }} ←</a>
-                </article>
+                @include('berkay::shop.magazine.card', ['entry' => $article])
             @empty
                 <p>{{ trans('berkay::app.empty-articles') }}</p>
             @endforelse

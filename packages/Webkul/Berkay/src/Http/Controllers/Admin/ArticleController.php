@@ -76,6 +76,12 @@ class ArticleController extends Controller
     protected function sanitized(ArticleRequest $request): array
     {
         $data = $request->validated();
+        unset($data['cover_image']);
+
+        if ($request->hasFile('cover_image')) {
+            $data['cover_path'] = $request->file('cover_image')->store('berkay/articles', 'public');
+        }
+
         $data['body'] = clean_content($data['body']);
 
         if ($data['status'] === 'published') {

@@ -28,11 +28,19 @@
                 <p id="ai-message" role="status" aria-live="polite"></p>
             </details>
         @endif
-        <form class="bk-form bk-article-form" method="post" action="{{ $article ? route('admin.berkay.articles.update', $article->id) : route('admin.berkay.articles.store') }}">
+        <form class="bk-form bk-article-form" method="post" enctype="multipart/form-data" action="{{ $article ? route('admin.berkay.articles.update', $article->id) : route('admin.berkay.articles.store') }}">
             @csrf
             @if ($article) @method('PUT') @endif
             <label for="title">{{ trans('berkay::app.title') }}</label>
             <input id="title" name="title" value="{{ old('title', $article?->title) }}" required maxlength="255">
+            <label for="cover_image">{{ trans('berkay::app.editorial.cover') }}</label>
+            @if ($article)
+                <img src="{{ $article->cover_url }}" alt="{{ $article->cover_alt ?: $article->title }}" style="width:240px;aspect-ratio:3/2;object-fit:cover;border-radius:8px">
+            @endif
+            <input id="cover_image" name="cover_image" type="file" accept="image/jpeg,image/png,image/webp">
+            <p>{{ trans('berkay::app.editorial.cover-help') }}</p>
+            <label for="cover_alt">{{ trans('berkay::app.editorial.cover-alt') }}</label>
+            <input id="cover_alt" name="cover_alt" value="{{ old('cover_alt', $article?->cover_alt) }}" maxlength="255">
             <label for="body">{{ trans('berkay::app.body') }}</label>
             <textarea id="body" name="body" rows="16" required>{{ old('body', $article?->body) }}</textarea>
             <label for="category">{{ trans('berkay::app.category') }}</label>

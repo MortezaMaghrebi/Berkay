@@ -20,6 +20,9 @@ class MagazineController extends Controller
     /** Render an article that is publicly available. */
     public function show(string $slug): View
     {
-        return view('berkay::shop.magazine.show', ['article' => $this->articles->publishedBySlug($slug)]);
+        return view('berkay::shop.magazine.show', [
+            'article' => $this->articles->publishedBySlug($slug),
+            'related' => $this->articles->published()->getCollection()->where('slug', '!=', $slug)->take(3),
+        ]);
     }
 }

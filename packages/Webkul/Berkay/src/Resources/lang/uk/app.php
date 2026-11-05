@@ -1,6 +1,16 @@
 <?php
 
 return [
+    'editorial' => [
+        'cover' => 'Article cover image',
+        'cover-alt' => 'Image description',
+        'cover-help' => 'Landscape JPG, PNG or WebP up to 4 MB. A magazine illustration is used when no image is selected.',
+        'contents' => 'In this article',
+        'minutes' => 'min read',
+        'related' => 'Read next',
+        'illustration' => 'Berkay magazine illustration',
+        'updated' => 'Last updated',
+    ],
     'brand' => 'Berkay',
     'home-meta-title' => 'Buy Leather Bags and Leather Goods | Berkay',
     'home-meta-description' => 'Shop leather bags for women and men, including crossbody bags, handbags and wallets at Berkay. Browse selected styles and new arrivals.',
