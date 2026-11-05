@@ -13,6 +13,11 @@ class ProductEditorAccess
     public function handle(Request $request, Closure $next): Response
     {
         abort_unless(auth()->guard('admin')->check(), 401);
+        $admin = auth()->guard('admin')->user();
+        abort_unless($admin->status, 403);
+        if ($admin->two_factor_enabled) {
+            abort_unless((int) session('two_factor_passed_for') === (int) $admin->id, 403);
+        }
         abort_unless(bouncer()->hasPermission('catalog.products.edit'), 403);
         app(SellerCatalogRepository::class)->storeProduct((int) $request->route('id'));
 

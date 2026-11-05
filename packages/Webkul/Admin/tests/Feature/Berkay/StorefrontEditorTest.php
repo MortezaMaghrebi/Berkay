@@ -67,3 +67,15 @@ it('saves the complete native form and returns to the embedded editor', function
         ->and($fresh->meta_title)->toBe('Product SEO title')->and($fresh->images)->toHaveCount(1)
         ->and($fresh->inventories->sum('qty'))->toBe(7);
 });
+
+it('blocks revoked staff and incomplete two-factor sessions from storefront editing', function () {
+    $admin = $this->loginAsAdmin();
+    $url = route('shop.berkay.inline_product', $this->inlineProduct->id);
+    $admin->update(['status' => 0]);
+    $this->getJson(route('shop.berkay.editor_session'))->assertExactJson(['admin' => false]);
+    $this->patchJson($url, [])->assertForbidden();
+    $admin->update(['status' => 1, 'two_factor_enabled' => true]);
+    $this->getJson(route('shop.berkay.editor_session'))->assertExactJson(['admin' => false]);
+    $this->patchJson($url, [])->assertForbidden();
+    $this->withSession(['two_factor_passed_for' => $admin->id])->getJson(route('shop.berkay.editor_session'))->assertJsonPath('admin', true);
+});

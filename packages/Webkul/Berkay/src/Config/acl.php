@@ -2,6 +2,7 @@
 
 return [
     ['key' => 'berkay', 'name' => 'berkay::app.operations', 'route' => 'admin.berkay.index', 'sort' => 20],
+    ['key' => 'berkay.users', 'name' => 'berkay::app.users.title', 'route' => ['admin.berkay.users.index', 'admin.berkay.users.create', 'admin.berkay.users.store', 'admin.berkay.users.edit', 'admin.berkay.users.update'], 'sort' => 5],
     ['key' => 'berkay.overview', 'name' => 'berkay::app.operations', 'route' => 'admin.berkay.index', 'sort' => 0],
     ['key' => 'berkay.articles', 'name' => 'berkay::app.magazine', 'route' => 'admin.berkay.articles.index', 'sort' => 1],
     ['key' => 'berkay.articles.create', 'name' => 'berkay::app.create', 'route' => ['admin.berkay.articles.create', 'admin.berkay.articles.store', 'admin.berkay.articles.parse'], 'sort' => 1],

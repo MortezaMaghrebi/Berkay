@@ -7,6 +7,7 @@ use Webkul\Berkay\Http\Controllers\Admin\ArticleImportController;
 use Webkul\Berkay\Http\Controllers\Admin\IntegrationController;
 use Webkul\Berkay\Http\Controllers\Admin\OperationsController;
 use Webkul\Berkay\Http\Controllers\Admin\SimpleCatalogController;
+use Webkul\Berkay\Http\Controllers\Admin\UserManagementController;
 use Webkul\Berkay\Http\Controllers\Shop\ContentSitemapController;
 use Webkul\Berkay\Http\Controllers\Shop\CustomRequestController;
 use Webkul\Berkay\Http\Controllers\Shop\MagazineController;
@@ -20,7 +21,7 @@ Route::middleware(['web', 'shop'])->group(function () {
     Route::get('berkay/editor-session', [StorefrontEditorController::class, 'session'])->middleware(NoCacheMiddleware::class)->name('shop.berkay.editor_session');
     Route::get(config('app.admin_url').'/berkay/storefront/products/{id}/editor', [StorefrontEditorController::class, 'editor'])->whereNumber('id')->middleware([NoCacheMiddleware::class, ProductEditorAccess::class])->name('shop.berkay.full_editor');
     Route::put(config('app.admin_url').'/berkay/storefront/products/{id}/editor', [StorefrontEditorController::class, 'saveEditor'])->whereNumber('id')->middleware([NoCacheMiddleware::class, ProductEditorAccess::class, 'throttle:30,1'])->name('shop.berkay.full_editor.update');
-    Route::patch('berkay/products/{id}/inline', [StorefrontEditorController::class, 'update'])->whereNumber('id')->middleware([NoCacheMiddleware::class, 'throttle:30,1'])->name('shop.berkay.inline_product');
+    Route::patch('berkay/products/{id}/inline', [StorefrontEditorController::class, 'update'])->whereNumber('id')->middleware([NoCacheMiddleware::class, ProductEditorAccess::class, 'throttle:30,1'])->name('shop.berkay.inline_product');
     Route::get('content-sitemap.xml', [ContentSitemapController::class, 'index'])->name('shop.berkay.content_sitemap');
     Route::get('magazine', [MagazineController::class, 'index'])->name('shop.berkay.magazine.index');
     Route::get('magazine/{slug}', [MagazineController::class, 'show'])->name('shop.berkay.magazine.show');
@@ -77,3 +78,11 @@ Route::middleware(['web', 'admin', NoCacheMiddleware::class])->prefix(config('ap
 });
 
 Route::middleware(['web', 'admin', NoCacheMiddleware::class, 'throttle:20,1'])->prefix(config('app.admin_url').'/berkay')->post('articles/import', [ArticleImportController::class, 'parse'])->name('admin.berkay.articles.parse');
+
+Route::middleware(['web', 'admin', NoCacheMiddleware::class])->prefix(config('app.admin_url').'/berkay/users')->group(function () {
+    Route::get('/', [UserManagementController::class, 'index'])->name('admin.berkay.users.index');
+    Route::get('create', [UserManagementController::class, 'create'])->name('admin.berkay.users.create');
+    Route::post('/', [UserManagementController::class, 'save'])->middleware('throttle:20,1')->name('admin.berkay.users.store');
+    Route::get('{kind}/{id}/edit', [UserManagementController::class, 'edit'])->whereIn('kind', ['customers', 'staff'])->whereNumber('id')->name('admin.berkay.users.edit');
+    Route::put('{kind}/{id}', [UserManagementController::class, 'save'])->whereIn('kind', ['customers', 'staff'])->whereNumber('id')->middleware('throttle:20,1')->name('admin.berkay.users.update');
+});

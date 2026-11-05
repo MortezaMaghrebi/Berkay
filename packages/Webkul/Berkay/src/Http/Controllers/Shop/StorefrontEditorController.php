@@ -17,7 +17,11 @@ class StorefrontEditorController extends Controller
     /** Return private editor capabilities without placing staff data in public HTML. */
     public function session(Request $request, SellerCatalogRepository $products): JsonResponse
     {
-        if (! auth()->guard('admin')->check()) {
+        if (
+            ! auth()->guard('admin')->check()
+            || ! auth()->guard('admin')->user()->status
+            || (auth()->guard('admin')->user()->two_factor_enabled && (int) session('two_factor_passed_for') !== (int) auth()->guard('admin')->id())
+        ) {
             return response()->json(['admin' => false])->header('Cache-Control', 'private, no-store');
         }
 
