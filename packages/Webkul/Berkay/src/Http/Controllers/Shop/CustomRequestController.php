@@ -3,6 +3,7 @@
 namespace Webkul\Berkay\Http\Controllers\Shop;
 
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Webkul\Berkay\Http\Requests\CustomRequest;
@@ -29,9 +30,24 @@ class CustomRequestController extends Controller
 
         $data = $request->validated();
 
-        unset($data['website']);
+        unset($data['website'], $data['images']);
         $data['reference'] = 'BK-'.Str::upper((string) Str::ulid());
-        $this->requests->create($data);
+        $paths = [];
+
+        try {
+            foreach ($request->file('images', []) as $image) {
+                $path = $image->store('berkay/custom-orders', 'private');
+                throw_unless($path, \RuntimeException::class, 'Reference image storage failed.');
+                $paths[] = $path;
+            }
+
+            $data['images'] = $paths;
+            $this->requests->create($data);
+        } catch (\Throwable $exception) {
+            Storage::disk('private')->delete($paths);
+
+            throw $exception;
+        }
 
         return redirect()->route('shop.berkay.custom_order.create')
             ->with('success', trans('berkay::app.request-saved', ['reference' => $data['reference']]));

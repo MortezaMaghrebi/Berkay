@@ -7,6 +7,16 @@
                 <div class="bk-toolbar"><h2>{{ $inquiry->name }} · {{ $inquiry->product_type }}</h2><span dir="ltr">{{ $inquiry->reference }}</span></div>
                 <p><a href="tel:{{ $inquiry->phone }}" dir="ltr">{{ $inquiry->phone }}</a> · {{ $inquiry->created_at->format('Y-m-d H:i') }}</p>
                 <p class="bk-preserve">{{ $inquiry->description }}</p>
+                @if ($inquiry->images)
+                    <h3>{{ trans('berkay::app.reference-photos') }}</h3>
+                    <div style="display:flex;flex-wrap:wrap;gap:12px;margin-block:16px">
+                        @foreach ($inquiry->images as $index => $image)
+                            <a href="{{ route('admin.berkay.custom_orders.image', [$inquiry->id, $index]) }}" target="_blank" rel="noopener">
+                                <img src="{{ route('admin.berkay.custom_orders.image', [$inquiry->id, $index]) }}" alt="{{ trans('berkay::app.reference-photos') }} {{ $index + 1 }}" width="140" height="140" loading="lazy" style="width:140px;height:140px;object-fit:cover;border-radius:8px">
+                            </a>
+                        @endforeach
+                    </div>
+                @endif
                 @if (bouncer()->hasPermission('berkay.custom-orders.edit'))
                     <form class="bk-form" method="post" action="{{ route('admin.berkay.custom_orders.update', $inquiry->id) }}">
                         @csrf @method('PUT')

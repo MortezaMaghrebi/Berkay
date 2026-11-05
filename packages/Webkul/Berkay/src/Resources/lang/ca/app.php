@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'reference-photos' => 'Reference photos (optional)',
+    'reference-photos-help' => 'Select up to 5 JPG, PNG or WebP photos, up to 4 MB each. Only authorized store staff can view them. Reselect files if the form reports an error.',
     'editorial' => [
         'cover' => 'Article cover image',
         'cover-alt' => 'Image description',

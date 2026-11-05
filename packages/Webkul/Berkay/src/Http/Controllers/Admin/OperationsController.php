@@ -4,8 +4,10 @@ namespace Webkul\Berkay\Http\Controllers\Admin;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Berkay\DataGrids\PaymentDataGrid;
 use Webkul\Berkay\Http\Requests\CustomRequestStatus;
@@ -15,6 +17,17 @@ class OperationsController extends Controller
 {
     /** Inject the bespoke operations repository. */
     public function __construct(protected CustomRequestRepository $requests) {}
+
+    /** Show a reference image only to staff allowed to read bespoke requests. */
+    public function image(int $id, int $index): StreamedResponse
+    {
+        abort_unless(bouncer()->hasPermission('berkay.custom-orders'), 403);
+        $inquiry = $this->requests->findOrFail($id);
+        $path = $inquiry->images[$index] ?? null;
+        abort_unless($path && Storage::disk('private')->exists($path), 404);
+
+        return Storage::disk('private')->response($path, null, ['Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff']);
+    }
 
     /** Show actionable store configuration and operation links. */
     public function index(): View

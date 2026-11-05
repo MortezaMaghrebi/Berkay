@@ -23,6 +23,8 @@ class CustomRequest extends FormRequest
             'product_type' => ['required', 'string', 'max:120'],
             'description' => ['required', 'string', 'min:15', 'max:4000'],
             'website' => ['nullable', 'max:0'],
+            'images' => ['nullable', 'array', 'max:5'],
+            'images.*' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096', 'dimensions:max_width=6000,max_height=6000'],
         ];
     }
 

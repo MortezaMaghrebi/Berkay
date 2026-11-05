@@ -37,6 +37,7 @@ Route::middleware(['web', 'admin', NoCacheMiddleware::class])
         Route::put('articles/{id}', [ArticleController::class, 'update'])->whereNumber('id')->name('admin.berkay.articles.update');
         Route::delete('articles/{id}', [ArticleController::class, 'destroy'])->whereNumber('id')->name('admin.berkay.articles.destroy');
         Route::get('custom-orders', [OperationsController::class, 'requests'])->name('admin.berkay.custom_orders.index');
+        Route::get('custom-orders/{id}/images/{index}', [OperationsController::class, 'image'])->whereNumber(['id', 'index'])->name('admin.berkay.custom_orders.image');
         Route::put('custom-orders/{id}', [OperationsController::class, 'updateRequest'])->whereNumber('id')->name('admin.berkay.custom_orders.update');
     });
 

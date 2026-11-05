@@ -11,5 +11,8 @@ class CustomRequest extends Model implements CustomRequestContract
     protected $table = 'berkay_custom_requests';
 
     /** Allow only explicitly managed business fields. */
-    protected $fillable = ['reference', 'name', 'phone', 'product_type', 'description', 'status', 'admin_notes'];
+    protected $fillable = ['reference', 'name', 'phone', 'product_type', 'description', 'status', 'admin_notes', 'images'];
+
+    /** Decode private reference image paths. */
+    protected $casts = ['images' => 'array'];
 }
