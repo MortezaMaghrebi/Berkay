@@ -1,6 +1,12 @@
 <?php
 
 return [
+    'variant-easy' => [
+        'add-help' => 'Select a color to add a variant. Checked colors have already been added.',
+        'save-help' => 'Edit price and stock in each row, then save the product. Zero stock means unavailable. Open row editing for images and advanced settings.',
+        'price' => 'Color price (toman)',
+        'stock' => 'Color stock',
+    ],
     'variant-settings' => [
         'simple-help' => 'Add a name and use Add. Edit and save each existing row separately. Changes also appear on associated products.',
         'name' => 'Name',

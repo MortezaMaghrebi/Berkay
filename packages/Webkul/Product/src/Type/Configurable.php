@@ -160,7 +160,9 @@ class Configurable extends AbstractType
                 foreach ($product->super_attributes as $superAttribute) {
                     $superAttributes[$superAttribute->id] = $variantData[$superAttribute->code];
 
-                    $this->fillableVariantAttributes->push($superAttribute);
+                    if (! $this->fillableVariantAttributes->contains('id', $superAttribute->id)) {
+                        $this->fillableVariantAttributes->push($superAttribute);
+                    }
                 }
 
                 $this->createVariant($product, $superAttributes, array_merge($variantData, [

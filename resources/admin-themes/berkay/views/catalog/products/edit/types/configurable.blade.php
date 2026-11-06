@@ -38,6 +38,16 @@
                 </div>
             </div>
 
+            <div class="bk-variant-quick-add" v-if="superAttributes.length === 1 && superAttributes[0].code === 'color'">
+                <p>{{ trans('berkay::app.variant-easy.add-help') }}</p>
+                <div class="bk-admin-color-choices">
+                    <button type="button" v-for="option in superAttributes[0].options" :key="option.id" :disabled="variants.some(variant => variant.color == option.id)" @click="addVariant({color: option.id}, {resetForm: () => {}})">
+                        <span class="bk-admin-color-dot" :style="{backgroundColor: option.swatch_value || '#ddd'}" aria-hidden="true"></span>@{{ option.admin_name }}
+                        <span v-if="variants.some(variant => variant.color == option.id)" aria-hidden="true">✓</span>
+                    </button>
+                </div>
+                <p class="bk-help">{{ trans('berkay::app.variant-easy.save-help') }}</p>
+            </div>
             <template v-if="variants.length">
                 <!-- Mass Action Vue Component -->
                 <v-product-variations-mass-action
@@ -712,7 +722,7 @@
         type="text/x-template"
         id="v-product-variation-item-template"
     >
-        <div class="flex justify-between gap-2.5 border-b border-slate-300 px-4 py-6 dark:border-gray-800">
+        <div class="bk-easy-variant flex justify-between gap-2.5 border-b border-slate-300 px-4 py-6 dark:border-gray-800">
 
             <!-- Information -->
             <div class="flex gap-2.5">
@@ -867,6 +877,11 @@
                 </div>
             </div>
 
+            <div class="bk-variant-inline-fields">
+                <label>{{ trans('berkay::app.variant-easy.price') }}<input type="number" min="0" step="0.01" required v-model.number="variant.price"></label>
+                <label v-for="source in inventorySources" :key="source.id">{{ trans('berkay::app.variant-easy.stock') }} <span v-if="inventorySources.length > 1">@{{ source.name }}</span><input type="number" min="0" step="1" required v-model.number="variant.inventories[source.id]"></label>
+                <label>{{ trans('berkay::app.users.status') }}<select v-model.number="variant.status"><option :value="1">{{ trans('berkay::app.users.active') }}</option><option :value="0">{{ trans('berkay::app.users.inactive') }}</option></select></label>
+            </div>
             <!-- Actions -->
             <div class="grid place-content-start gap-1 text-right">
                 <p class="font-semibold text-gray-800 dark:text-white">
@@ -1114,7 +1129,7 @@
                         sku: '',
                         price: 0,
                         status: 1,
-                        weight: 0,
+                        weight: 0.5,
                         inventories: {},
                         images: []
                     },
@@ -1144,10 +1159,10 @@
                     const optionIds = Object.values(params);
 
                     this.variants.push(Object.assign({
-                        id: 'variant_' + this.variants.length,
+                        id: 'variant_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
                         sku: '{{ $product->sku }}' + '-variant-' + optionIds.join('-'),
-                        name: '',
-                        price: 0,
+                        name: @json($product->name) + ' — ' + this.superAttributes.map(attribute => attribute.options.find(option => option.id == params[attribute.code])?.admin_name || '').join(' / '),
+                        price: this.variants.length ? Math.min(...this.variants.map(variant => Number(variant.price) || 0)) : 0,
                         status: 1,
                         weight: 0,
                         inventories: {},
@@ -1518,9 +1533,7 @@
             },
 
             mounted() {
-                if (typeof this.variant.id === 'string' || this.variant.id instanceof String) {
-                    this.$refs.editVariantDrawer.open();
-                }
+
             },
 
             computed: {
