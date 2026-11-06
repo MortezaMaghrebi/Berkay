@@ -15,6 +15,8 @@ return [
 
     'name' => env('APP_NAME', 'Bagisto'),
 
+    'public_path' => env('BERKAY_PUBLIC_PATH'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment

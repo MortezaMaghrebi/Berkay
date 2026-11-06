@@ -4,12 +4,23 @@
 
 ## مسیرهای این پروژه
 
-- مخزن cPanel: `/home/USERNAME/repositories/Berkay`
-- برنامهٔ اجرایی: `/home/USERNAME/berkay`
-- Document Root دامنه: `/home/USERNAME/berkay/public`
-- فایل خصوصی تنظیم انتشار: `/home/USERNAME/.berkay-deploy.conf`
+- مخزن cPanel: `/home/charmber/repositories/Berkay`
+- برنامهٔ اجرایی: `/home/charmber/berkay`
+- Document Root دامنه و فایل‌های عمومی: `/home/charmber/public_html`
+- فایل خصوصی تنظیم انتشار: `/home/charmber/.berkay-deploy.conf`
 
-مسیرهای Sefaresh3d را استفاده نکنید. این اسکریپت برنامه را داخل public_html نمی‌ریزد. در cPanel → Domains ریشهٔ دامنه را روی public برنامه تنظیم کنید. اگر میزبان ریشهٔ دامنهٔ اصلی را به public_html محدود کرده، پیش از انتشار از پشتیبانی بخواهید ریشه را تنظیم کند؛ کپی‌کردن کل پروژه در public_html مجاز نیست. برای ساختار جداگانهٔ public_html باید انتشار و bootstrap مخصوص همان هاست تنظیم شود.
+مسیرهای Sefaresh3d را استفاده نکنید. پوشهٔ public_html از قبل روی هاست وجود دارد؛ public نام پوشهٔ عمومی داخل مخزن لاراول است. هنگام انتشار، فقط محتوای public پروژه به public_html منتقل می‌شود. فایل index.php با مسیر درست برنامه ساخته می‌شود و public_path لاراول برای دستورات CLI و وب روی همان public_html تنظیم می‌شود. .env، vendor، storage و کدهای برنامه در پوشهٔ خصوصی berkay می‌مانند.
+
+در فایل ~/.berkay-deploy.conf این مسیرها را تنظیم کنید:
+
+```bash
+APP_DIR="/home/charmber/berkay"
+PUBLIC_DIR="/home/charmber/public_html"
+PHP_BIN="/opt/cpanel/ea-php84/root/usr/bin/php"
+COMPOSER_BIN="/usr/local/bin/composer"
+```
+
+پوشهٔ berkay را در File Manager، کنار public_html ایجاد کنید. فایل .env برنامه در /home/charmber/berkay/.env قرار می‌گیرد. روی public_html موجود ابتدا بکاپ بگیرید؛ فایل‌های عمومی هم‌نام، از جمله index.php و .htaccess با نسخهٔ سایت برکای به‌روز می‌شوند. فایل‌های اضافی و آپلودهای سرور حذف نمی‌شوند.
 
 ## پیش‌نیازهای هاست
 
@@ -22,7 +33,7 @@ PHP 8.4 در وب و CLI، Composer 2، دیتابیس سازگار بگیستو
 ۲. فایل deploy/cpanel.conf.example را به `~/.berkay-deploy.conf` کپی کنید و مسیرها و PHP/Composer را با اطلاعات میزبان تنظیم کنید:
 
 ```bash
-cp /home/USERNAME/repositories/Berkay/deploy/cpanel.conf.example ~/.berkay-deploy.conf
+cp /home/charmber/repositories/Berkay/deploy/cpanel.conf.example ~/.berkay-deploy.conf
 chmod 600 ~/.berkay-deploy.conf
 mkdir -p ~/berkay
 ```
@@ -33,13 +44,14 @@ mkdir -p ~/berkay
 APP_ENV=production
 APP_DEBUG=false
 APP_URL=https://YOUR-DOMAIN
+BERKAY_PUBLIC_PATH=/home/charmber/public_html
 APP_KEY=YOUR-PERMANENT-APPLICATION-KEY
 APP_LOCALE=fa
 APP_CURRENCY=IRT
 DB_HOST=localhost
 DB_PORT=3306
 DB_DATABASE=CPANEL_DATABASE
-DB_USERNAME=CPANEL_DATABASE_USER
+DB_charmber=CPANEL_DATABASE_USER
 DB_PASSWORD=PRIVATE_PASSWORD
 CACHE_STORE=file
 SESSION_DRIVER=file
@@ -70,7 +82,7 @@ cd ~/repositories/Berkay
 - نسخهٔ PHP، مسیرها، فایل‌های ساخت و وجود .env تولید را کنترل می‌کند؛ هم‌زمان فقط یک انتشار اجازه دارد.
 - سایت موجود را به حالت نگهداری می‌برد.
 - فقط پوشه‌های کد مشخص‌شده را همگام می‌کند. .git، .runtime، node_modules، تست‌ها، .env و storage محلی کپی نمی‌شوند.
-- فایل‌های public را بدون حذف فایل‌های اضافی سرور منتقل می‌کند. لینک public/storage و کش تصاویر حفظ می‌شوند.
+- فایل‌های public را بدون حذف فایل‌های اضافی سرور منتقل می‌کند. لینک public_html/storage و کش تصاویر حفظ می‌شوند.
 - وابستگی‌ها را از composer.lock بدون بسته‌های توسعه نصب می‌کند و نیازمندی‌های واقعی PHP را بررسی می‌کند.
 - کش قبلی را پاک، package discovery و migration را اجرا می‌کند؛ لینک storage را در صورت نبودن می‌سازد.
 - config/view/route cache را می‌سازد و درخواست راه‌اندازی دوبارهٔ صف‌ها را ثبت می‌کند.
@@ -83,8 +95,8 @@ cd ~/repositories/Berkay
 در cPanel → Cron Jobs با مسیر PHP واقعی هاست:
 
 ```cron
-* * * * * cd /home/USERNAME/berkay && /opt/cpanel/ea-php84/root/usr/bin/php artisan schedule:run >> /dev/null 2>&1
-* * * * * cd /home/USERNAME/berkay && /usr/bin/flock -n /home/USERNAME/.berkay-worker.lock /opt/cpanel/ea-php84/root/usr/bin/php artisan queue:work --stop-when-empty --max-time=50 --tries=3 --timeout=45 >> storage/logs/queue-cron.log 2>&1
+* * * * * cd /home/charmber/berkay && /opt/cpanel/ea-php84/root/usr/bin/php artisan schedule:run >> /dev/null 2>&1
+* * * * * cd /home/charmber/berkay && /usr/bin/flock -n /home/charmber/.berkay-worker.lock /opt/cpanel/ea-php84/root/usr/bin/php artisan queue:work --stop-when-empty --max-time=50 --tries=3 --timeout=45 >> storage/logs/queue-cron.log 2>&1
 ```
 
 اگر هاست worker دائمی با Supervisor فراهم می‌کند از همان استفاده کنید. راهکار Cron را فقط با تأیید محدودیت‌های پردازش میزبان فعال کنید. queue:restart به‌تنهایی worker را اجرا نمی‌کند. فایل‌های لاگ و فضای دیسک را مدیریت کنید.

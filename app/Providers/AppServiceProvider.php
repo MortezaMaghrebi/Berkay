@@ -15,6 +15,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        if ($publicPath = config('app.public_path')) {
+            $defaultStorageLink = public_path('storage');
+            $this->app->usePublicPath($publicPath);
+            $links = config('filesystems.links', []);
+            unset($links[$defaultStorageLink]);
+            $links[public_path('storage')] = storage_path('app/public');
+            config(['filesystems.links' => $links]);
+        }
+
         $allowedIPs = array_map('trim', explode(',', config('app.debug_allowed_ips', '')));
 
         $allowedIPs = array_filter($allowedIPs);
