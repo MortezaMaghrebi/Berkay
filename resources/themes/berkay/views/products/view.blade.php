@@ -69,10 +69,10 @@
         </div>
     @endif
 
-    <section class="bk-product-intro" data-product-id="{{ $product->id }}">
+    <section class="bk-product-intro bk-product-compact-title" data-product-id="{{ $product->id }}">
         <p class="bk-product-signature">{{ core()->getConfigData('berkay.store.identity.name') ?: trans('berkay::app.brand') }}</p>
         <h1 id="bk-editable-name">{{ $product->name }}</h1>
-        <a href="#bk-product-buy">{{ trans('berkay::app.storefront-editor.buy') }} <span aria-hidden="true">↓</span></a>
+        <a class="hidden" href="#bk-product-buy">{{ trans('berkay::app.storefront-editor.buy') }} <span aria-hidden="true">↓</span></a>
     </section>
     <div id="bk-product-editor-tools"></div>
     <div id="bk-product-buy"></div>
@@ -81,8 +81,14 @@
         <x-shop::shimmer.products.view />
     </v-product>
 
+    <nav class="bk-product-content-nav" aria-label="{{ trans('berkay::app.product-detail.sections') }}">
+        <a href="#bk-story-title">{{ trans('berkay::app.product-story.eyebrow') }}</a>
+        <a href="#bk-specifications-title">{{ trans('berkay::app.product-story.specifications') }}</a>
+        <a href="#bk-product-feedback">{{ trans('shop::app.products.view.review') }}</a>
+    </nav>
     @include('shop::products.view.story')
 
+    <div id="bk-product-feedback"></div>
     <!-- Information Section -->
     <div class="1180:mt-20">
         <div class="max-1180:hidden">
@@ -100,9 +106,9 @@
                     :is-selected="true"
                 >
                     <div class="container mt-15 max-1180:px-5">
-                        <p class="text-lg text-zinc-500 max-1180:text-sm">
+                        <div class="text-lg text-zinc-500 max-1180:text-sm">
                             {!! $product->description !!}
-                        </p>
+                        </div>
                     </div>
                 </x-shop::tabs.item>
 
@@ -308,6 +314,7 @@
 
                             <!-- Details -->
                             <div class="bk-product-summary relative max-w-147.5 max-1180:w-full max-1180:max-w-full max-1180:px-5 max-sm:px-4">
+                                <div class="bk-product-information">
                                 {!! view_render_event('bagisto.shop.products.name.before', ['product' => $product]) !!}
 
                                 <div class="flex justify-between gap-4">
@@ -352,12 +359,43 @@
 
                                 {!! view_render_event('bagisto.shop.products.rating.after', ['product' => $product]) !!}
 
+                                {!! view_render_event('bagisto.shop.products.short_description.before', ['product' => $product]) !!}
+
+                                <div class="bk-detail-short mt-6 text-lg text-zinc-500 max-sm:mt-1.5 max-sm:text-sm">
+                                    {!! $product->short_description !!}
+                                </div>
+
+                                <button type="button" class="bk-description-toggle" @click="$event.currentTarget.previousElementSibling.classList.toggle('is-expanded')">{{ trans('shop::app.products.view.description') }} ↕</button>
+                                {!! view_render_event('bagisto.shop.products.short_description.after', ['product' => $product]) !!}
+
+                                @include('shop::products.view.types.simple')
+
+                                @include('shop::products.view.types.configurable')
+
+                                @include('shop::products.view.types.grouped')
+
+                                @include('shop::products.view.types.bundle')
+
+                                @include('shop::products.view.types.downloadable')
+
+                                @include('shop::products.view.types.booking')
+
+                                <div class="bk-product-key-specs">
+                                    @foreach ($attributeData->filter(fn ($item) => !in_array($item['type'], ['file', 'image']))->take(4) as $spec)
+                                        <div><span>{{ $spec['label'] }}</span><strong>{{ $spec['value'] }}</strong></div>
+                                    @endforeach
+                                </div>
+                                <a class="bk-product-spec-link" href="#bk-specifications-title">{{ trans('berkay::app.product-story.specifications') }}</a>
+                                </div>
+                                <aside class="bk-purchase-panel" aria-label="{{ trans('berkay::app.product-detail.purchase') }}">
+                                    <p class="bk-purchase-seller">{{ trans('berkay::app.product-detail.seller') }}: {{ core()->getConfigData('berkay.store.identity.name') ?: trans('berkay::app.brand') }}</p>
+                                    <p class="bk-purchase-stock">{{ trans('berkay::app.product-detail.'.($product->isSaleable(1) ? 'available' : 'unavailable')) }}</p>
                                 <!-- Pricing -->
                                 {!! view_render_event('bagisto.shop.products.price.before', ['product' => $product]) !!}
 
-                                <p class="bk-detail-price mt-5.5 flex items-center gap-2.5 text-2xl font-medium! max-sm:mt-2 max-sm:gap-x-2.5 max-sm:gap-y-0 max-sm:text-lg">
+                                <div class="bk-detail-price mt-5.5 flex items-center gap-2.5 text-2xl font-medium! max-sm:mt-2 max-sm:gap-x-2.5 max-sm:gap-y-0 max-sm:text-lg">
                                     {!! $product->getTypeInstance()->getPriceHtml() !!}
-                                </p>
+                                </div>
 
                                 @if (\Webkul\Tax\Facades\Tax::isInclusiveTaxProductPrices())
                                     <span class="text-sm font-normal text-zinc-500 max-sm:text-xs">
@@ -378,26 +416,6 @@
                                 {!! view_render_event('bagisto.shop.products.price.after', ['product' => $product]) !!}
 
                                 {!! app(\Webkul\Omnibus\Services\OmnibusPriceManager::class)->getOmnibusPriceHtml($product) !!}
-
-                                {!! view_render_event('bagisto.shop.products.short_description.before', ['product' => $product]) !!}
-
-                                <p class="bk-detail-short mt-6 text-lg text-zinc-500 max-sm:mt-1.5 max-sm:text-sm">
-                                    {!! $product->short_description !!}
-                                </p>
-
-                                {!! view_render_event('bagisto.shop.products.short_description.after', ['product' => $product]) !!}
-
-                                @include('shop::products.view.types.simple')
-
-                                @include('shop::products.view.types.configurable')
-
-                                @include('shop::products.view.types.grouped')
-
-                                @include('shop::products.view.types.bundle')
-
-                                @include('shop::products.view.types.downloadable')
-
-                                @include('shop::products.view.types.booking')
 
                                 <!-- Product Actions and Quantity Box -->
                                 <div class="mt-8 flex max-w-117.5 gap-4 max-sm:mt-4 max-sm:flex-wrap">
@@ -462,6 +480,7 @@
                                     {!! view_render_event('bagisto.shop.products.view.buy_now.after', ['product' => $product]) !!}
                                 @endif
 
+                                </aside>
                                 {!! view_render_event('bagisto.shop.products.view.additional_actions.before', ['product' => $product]) !!}
 
                                 <!-- Share Buttons -->

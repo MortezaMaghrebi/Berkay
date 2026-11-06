@@ -1,6 +1,13 @@
 <?php
 
 return [
+    'product-detail' => [
+        'purchase' => 'Purchase product',
+        'seller' => 'Seller',
+        'available' => 'Available to order. Select your color and model.',
+        'unavailable' => 'Currently unavailable',
+        'sections' => 'Product information',
+    ],
     'product-editor' => [
         'view-site' => 'View on site',
         'help' => 'Edit details and photos, set price and stock for each color, then save. Product identifiers and page addresses are managed automatically.',
