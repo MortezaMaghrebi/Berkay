@@ -12,8 +12,8 @@
                     @php $photo = $product->images->first(); @endphp
                     @if ($photo)<img src="{{ Storage::url($photo->path) }}" width="72" height="72" alt="{{ $product->name }}" loading="lazy">@else<span class="bk-no-photo" aria-hidden="true">◇</span>@endif
                     <div class="bk-product-name"><h2>{{ $product->name ?: $product->sku }}</h2><small>{{ trans('berkay::app.seller.'.($product->status ? 'visible' : 'hidden')) }}</small></div>
-                    <p>{{ core()->formatBasePrice($product->price) }}</p>
-                    <p>{{ trans('berkay::app.seller.stock') }}: {{ $product->inventories->sum('qty') }}</p>
+                    <p>{{ core()->formatBasePrice($product->type === 'configurable' ? $product->variants->min('price') : $product->price) }}</p>
+                    <p>{{ trans('berkay::app.seller.stock') }}: {{ $product->type === 'configurable' ? $product->variants->sum(fn ($variant) => $variant->inventories->sum('qty')) : $product->inventories->sum('qty') }}</p>
                     @if (bouncer()->hasPermission('catalog.products.edit'))<a class="bk-text-link" href="{{ route('admin.berkay.simple_product.edit', $product->id) }}">{{ trans('berkay::app.seller.edit-product') }}</a>@endif
                 </article>
             @empty
