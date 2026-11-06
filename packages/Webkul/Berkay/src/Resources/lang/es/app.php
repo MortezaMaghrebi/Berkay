@@ -1,6 +1,16 @@
 <?php
 
 return [
+    'product-editor' => [
+        'view-site' => 'View on site',
+        'help' => 'Edit details and photos, set price and stock for each color, then save. Product identifiers and page addresses are managed automatically.',
+        'sections' => 'Product editor sections',
+        'toggle' => 'Expand or collapse',
+        'saved-state' => 'Ready to edit.',
+        'dirty-state' => 'Unsaved changes. Save the product when finished.',
+        'video' => 'Video (optional)',
+        'related' => 'Related product suggestions (optional)',
+    ],
     'variant-dialog' => [
         'add' => 'Add variant',
         'edit' => 'Edit variant',

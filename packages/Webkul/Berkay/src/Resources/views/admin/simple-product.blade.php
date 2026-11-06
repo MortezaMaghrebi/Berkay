@@ -5,6 +5,9 @@
             <div><p class="bk-eyebrow">{{ trans('berkay::app.seller.your-store') }}</p><h1>{{ trans('berkay::app.seller.'.($product ? 'edit-product' : 'new-product')) }}</h1></div>
             <a href="{{ route('admin.berkay.simple_product.index') }}">{{ trans('berkay::app.back') }}</a>
         </div>
+        @if ($product && $product->url_key)
+            <a class="bk-button" href="{{ route('shop.product_or_category.index', $product->url_key) }}" target="_blank" rel="noopener">{{ trans('berkay::app.product-editor.view-site') }}</a>
+        @endif
         <p class="bk-help">{{ trans('berkay::app.seller.product-intro') }}</p>
         @include('berkay::admin.seller-feedback')
         <form class="bk-form" method="post" enctype="multipart/form-data" action="{{ $product ? route('admin.berkay.simple_product.update', $product->id) : route('admin.berkay.simple_product.store') }}">
@@ -56,7 +59,6 @@
                 <summary>{{ trans('berkay::app.seller.advanced-product') }}</summary>
                 <p>{{ trans('berkay::app.seller.advanced-product-help') }}</p>
                 <a href="{{ $product ? route('admin.catalog.products.edit', $product->id) : route('admin.catalog.products.index') }}">{{ trans('berkay::app.seller.open-advanced') }}</a>
-                @if ($product)<p>{{ trans('berkay::app.seller.sku') }}: <b dir="ltr">{{ $product->sku }}</b></p>@endif
             </details>
         </form>
     </section>
