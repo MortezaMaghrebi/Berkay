@@ -32,6 +32,10 @@ class SessionController extends Controller
      */
     public function index()
     {
+        if (auth()->guard('admin')->check()) {
+            return redirect()->route('admin.dashboard.index');
+        }
+
         if (auth()->guard('customer')->check()) {
             return redirect()->route('shop.home.index');
         }
@@ -62,6 +66,16 @@ class SessionController extends Controller
             $this->fireLockoutEvent($loginRequest);
 
             return $this->sendLockoutResponse($loginRequest);
+        }
+
+        if (auth()->guard('admin')->validate($loginRequest->only(['email', 'password']))) {
+            $response = app(\Webkul\Admin\Http\Controllers\User\SessionController::class)->store();
+            if (auth()->guard('admin')->check()) {
+                $this->clearLoginAttempts($loginRequest);
+                session()->regenerate();
+            }
+
+            return $response;
         }
 
         if (! auth()->guard('customer')->attempt($credentials)) {

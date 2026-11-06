@@ -43,7 +43,7 @@ class SessionController extends Controller
 
         session()->put('url.intended', $intendedUrl);
 
-        return view('admin::users.sessions.create');
+        return redirect()->route('shop.customer.session.index');
     }
 
     /**
