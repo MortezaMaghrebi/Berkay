@@ -18,6 +18,9 @@
     @if(auth()->guard('admin')->user()?->role?->permission_type === 'all')
         <a href="{{ route('admin.berkay.users.index') }}" @class(['bk-nav-active' => request()->routeIs('admin.berkay.users.*')])><span class="icon-customer" aria-hidden="true"></span>{{ trans('berkay::app.users.title') }}</a>
     @endif
+    @if(bouncer()->hasPermission('catalog.attributes') && bouncer()->hasPermission('berkay.attributes'))
+        <a href="{{ route('admin.berkay.attributes.index') }}">{{ trans('berkay::app.variant-settings.title') }}</a>
+    @endif
     <details class="bk-nav-advanced" @if(request()->is(config('app.admin_url').'/configuration*')) open @endif>
         <summary>{{ trans('berkay::app.seller.advanced-settings') }}</summary>
         <p>{{ trans('berkay::app.seller.advanced-help') }}</p>

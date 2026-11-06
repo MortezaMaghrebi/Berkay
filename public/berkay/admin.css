@@ -29,3 +29,4 @@ html[lang=fa] body{font-family:Vazirmatn,Tahoma,sans-serif}html[lang=fa] body *:
 .bk-users-list article>div{min-width:0}
 .bk-users-list article p{overflow-wrap:anywhere;line-height:1.9}
 @media(max-width:640px){.bk-users-list article{align-items:stretch;flex-direction:column}.bk-users-list article>a{align-self:flex-start}.bk-users-screen>.bk-toolbar{flex-wrap:wrap}}
+.bk-admin-color-choices{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0}.bk-admin-color-choices label,.bk-attribute-chip{display:inline-flex;align-items:center;gap:9px;padding:10px 14px;border:1px solid #ddd;border-radius:8px;min-height:44px}.bk-admin-color-choices label{cursor:pointer}.bk-admin-color-choices label:has(input:checked){border-color:#714b32;background:#f5f1e9}.bk-admin-color-dot{display:inline-block;width:24px;height:24px;border-radius:50%;border:1px solid #aaa;flex-shrink:0}

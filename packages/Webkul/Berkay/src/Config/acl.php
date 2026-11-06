@@ -1,6 +1,7 @@
 <?php
 
 return [
+    ['key' => 'berkay.attributes', 'name' => 'berkay::app.variant-settings.title', 'route' => 'admin.berkay.attributes.index', 'sort' => 6],
     ['key' => 'berkay', 'name' => 'berkay::app.operations', 'route' => 'admin.berkay.index', 'sort' => 20],
     ['key' => 'berkay.users', 'name' => 'berkay::app.users.title', 'route' => ['admin.berkay.users.index', 'admin.berkay.users.create', 'admin.berkay.users.store', 'admin.berkay.users.edit', 'admin.berkay.users.update'], 'sort' => 5],
     ['key' => 'berkay.overview', 'name' => 'berkay::app.operations', 'route' => 'admin.berkay.index', 'sort' => 0],

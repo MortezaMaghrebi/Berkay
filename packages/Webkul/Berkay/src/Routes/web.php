@@ -2,6 +2,7 @@
 
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
+use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Berkay\Http\Controllers\Admin\ArticleController;
 use Webkul\Berkay\Http\Controllers\Admin\ArticleImportController;
 use Webkul\Berkay\Http\Controllers\Admin\IntegrationController;
@@ -86,3 +87,10 @@ Route::middleware(['web', 'admin', NoCacheMiddleware::class])->prefix(config('ap
     Route::get('{kind}/{id}/edit', [UserManagementController::class, 'edit'])->whereIn('kind', ['customers', 'staff'])->whereNumber('id')->name('admin.berkay.users.edit');
     Route::put('{kind}/{id}', [UserManagementController::class, 'save'])->whereIn('kind', ['customers', 'staff'])->whereNumber('id')->middleware('throttle:20,1')->name('admin.berkay.users.update');
 });
+
+Route::middleware(['web', 'admin', NoCacheMiddleware::class])->get(config('app.admin_url').'/berkay/attributes', function () {
+    abort_unless(bouncer()->hasPermission('catalog.attributes'), 403);
+    $attributes = app(AttributeRepository::class);
+
+    return view('berkay::admin.attribute-settings', ['color' => $attributes->findOneByField('code', 'color'), 'material' => $attributes->findOneByField('code', 'material')]);
+})->name('admin.berkay.attributes.index');

@@ -1,6 +1,14 @@
 <?php
 
 return [
+    'variant-settings' => [
+        'title' => 'Variants and attributes',
+        'colors' => 'Manage colors',
+        'materials' => 'Manage materials',
+        'help' => 'Manage product colors and materials. Keep the color display type and set a name and color value for each option.',
+        'edit' => 'Edit and add options',
+        'all' => 'All attributes',
+    ],
     'product-story' => [
         'eyebrow' => 'The product story',
         'title' => 'A closer look',
