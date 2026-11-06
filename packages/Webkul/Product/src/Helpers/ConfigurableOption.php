@@ -71,6 +71,7 @@ class ConfigurableOption
         $config = [
             'attributes' => $this->getAttributesData($product, $options),
             'index' => $options['index'] ?? [],
+            'variant_details' => collect($this->getAllowedVariants($product))->mapWithKeys(fn ($variant) => [$variant->id => $variant->additional['berkay_variant'] ?? []])->all(),
             'variant_prices' => $this->getVariantPrices($product),
             'variant_images' => $this->getVariantImages($product),
             'variant_videos' => $this->getVariantVideos($product),

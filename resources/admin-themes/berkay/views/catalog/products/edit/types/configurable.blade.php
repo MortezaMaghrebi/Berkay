@@ -1,3 +1,4 @@
+@php $berkayMaterials = app(\Webkul\Attribute\Repositories\AttributeRepository::class)->findOneByField('code', 'material')?->options ?? collect(); @endphp
 @php
     $inventorySources = app(\Webkul\Inventory\Repositories\InventorySourceRepository::class)->findWhere(['status' => 1]);
 @endphp
@@ -31,30 +32,16 @@
                 <div class="flex items-center gap-x-1">
                     <div
                         class="secondary-button"
-                        @click="$refs.variantCreateModal.open()"
+                        @click="openVariantDialog()"
                     >
                         @lang('admin::app.catalog.products.edit.types.configurable.add-btn')
                     </div>
                 </div>
             </div>
 
-            <div class="bk-variant-quick-add" v-if="superAttributes.length === 1 && superAttributes[0].code === 'color'">
-                <p>{{ trans('berkay::app.variant-easy.add-help') }}</p>
-                <div class="bk-admin-color-choices">
-                    <button type="button" v-for="option in superAttributes[0].options" :key="option.id" :disabled="variants.some(variant => variant.color == option.id)" @click="addVariant({color: option.id}, {resetForm: () => {}})">
-                        <span class="bk-admin-color-dot" :style="{backgroundColor: option.swatch_value || '#ddd'}" aria-hidden="true"></span>@{{ option.admin_name }}
-                        <span v-if="variants.some(variant => variant.color == option.id)" aria-hidden="true">✓</span>
-                    </button>
-                </div>
-                <p class="bk-help">{{ trans('berkay::app.variant-easy.save-help') }}</p>
-            </div>
             <template v-if="variants.length">
                 <!-- Mass Action Vue Component -->
-                <v-product-variations-mass-action
-                    :super-attributes="superAttributes"
-                    :variants="variants"
-                >
-                </v-product-variations-mass-action>
+
 
                 <!-- Panel Content -->
                 <div class="grid">
@@ -64,7 +51,7 @@
                         :index="index"
                         :variant="variant"
                         :attributes="superAttributes"
-                        @onRemoved="removeVariant"
+                        @onRemoved="removeVariant" @onEdit="openVariantDialog"
                         :errors="errors"
                     >
                     </v-product-variation-item>
@@ -94,13 +81,29 @@
                     <!-- Add Row Button -->
                     <div
                         class="secondary-button text-sm"
-                        @click="$refs.variantCreateModal.open()"
+                        @click="openVariantDialog()"
                     >
                         @lang('admin::app.catalog.products.edit.types.configurable.add-btn')
                     </div>
                 </div>
             </template>
 
+            <dialog @keydown.enter.prevent="saveVariantDialog" ref="berkayVariantDialog" class="bk-variant-dialog" @cancel="dialogError = ''" :aria-label="variantDraft.id ? labels.edit : labels.add">
+                <div class="bk-variant-dialog-header"><h2>@{{ variantDraft.id ? labels.edit : labels.add }}</h2><button type="button" @click="$refs.berkayVariantDialog.close()">@{{ labels.close }}</button></div>
+                <div class="bk-variant-dialog-body" v-if="variantDraft.berkay_details">
+                    <label>@{{ labels.name }}<input v-model="variantDraft.name" maxlength="200"></label>
+                    <fieldset v-for="attribute in superAttributes" :key="attribute.id"><legend>@{{ attribute.admin_name }}</legend>
+                        <div class="bk-variant-dialog-colors"><label v-for="option in attribute.options" :key="option.id" :title="option.admin_name" :class="{'is-selected': variantDraft[attribute.code] == option.id}"><input type="radio" :name="'dialog-color-' + attribute.id" :value="option.id" v-model="variantDraft[attribute.code]" :aria-label="option.admin_name"><span class="bk-admin-color-dot" :style="{backgroundColor:option.swatch_value || '#ddd'}" aria-hidden="true"></span></label></div>
+                        <p class="bk-variant-color-name">@{{ attribute.options.find(option => option.id == variantDraft[attribute.code])?.admin_name }}</p>
+                    </fieldset>
+                    <label>@{{ labels.colorDescription }}<input v-model="variantDraft.berkay_details.color_description" maxlength="300"></label>
+                    <label>@{{ labels.material }}<select v-model="variantDraft.berkay_details.material"><option value="">@{{ labels.optional }}</option><option v-for="material in materialOptions" :value="material.admin_name">@{{ material.admin_name }}</option></select></label>
+                    <div class="bk-variant-feature-inputs"><label v-for="featureIndex in 3">@{{ labels.feature }} @{{ featureIndex }}<input v-model="variantDraft.berkay_details.features[featureIndex - 1]" maxlength="200" :placeholder="labels.optional"></label></div>
+                    <div class="bk-variant-dialog-pair"><label>@{{ labels.price }}<input type="number" min="0" step="0.01" v-model.number="variantDraft.price"></label><label v-for="source in inventorySources">@{{ labels.stock }}<span v-if="inventorySources.length > 1">@{{ source.name }}</span><input type="number" min="0" step="1" v-model.number="variantDraft.inventories[source.id]"></label></div>
+                    <p class="bk-variant-dialog-error" role="alert">@{{ dialogError }}</p>
+                </div>
+                <div class="bk-variant-dialog-footer"><p>@{{ labels.pending }}</p><button type="button" @click="saveVariantDialog">@{{ labels.save }}</button></div>
+            </dialog>
             <!-- Add Variant Form Modal -->
             <x-admin::form
                 v-slot="{ meta, errors, handleSubmit }"
@@ -789,6 +792,9 @@
                         :ref="$.uid + '_imageInput_' + index"
                     />
                 </template>
+                <input type="hidden" :name="'variants[' + variant.id + '][berkay_details][color_description]'" :value="variant.berkay_details?.color_description || ''">
+                <input type="hidden" :name="'variants[' + variant.id + '][berkay_details][material]'" :value="variant.berkay_details?.material || ''">
+                <input v-for="featureIndex in 3" type="hidden" :name="'variants[' + variant.id + '][berkay_details][features][' + (featureIndex - 1) + ']'" :value="variant.berkay_details?.features?.[featureIndex - 1] || ''">
                 <!-- Ends Form Hidden Fields -->
 
                 <!-- Selection Checkbox -->
@@ -834,9 +840,7 @@
                         @{{ variant.name ?? 'N/A' }}
                     </p>
 
-                    <p class="text-gray-600 dark:text-gray-300">
-                        @{{ "@lang('admin::app.catalog.products.edit.types.configurable.sku')".replace(':sku', variant.sku) }}
-                    </p>
+
 
                     <v-error-message
                         :name="'variants[' + variant.id + '].sku'"
@@ -877,11 +881,6 @@
                 </div>
             </div>
 
-            <div class="bk-variant-inline-fields">
-                <label>{{ trans('berkay::app.variant-easy.price') }}<input type="number" min="0" step="0.01" required v-model.number="variant.price"></label>
-                <label v-for="source in inventorySources" :key="source.id">{{ trans('berkay::app.variant-easy.stock') }} <span v-if="inventorySources.length > 1">@{{ source.name }}</span><input type="number" min="0" step="1" required v-model.number="variant.inventories[source.id]"></label>
-                <label>{{ trans('berkay::app.users.status') }}<select v-model.number="variant.status"><option :value="1">{{ trans('berkay::app.users.active') }}</option><option :value="0">{{ trans('berkay::app.users.inactive') }}</option></select></label>
-            </div>
             <!-- Actions -->
             <div class="grid place-content-start gap-1 text-right">
                 <p class="font-semibold text-gray-800 dark:text-white">
@@ -905,7 +904,7 @@
                     <div>
                         <p
                             class="cursor-pointer text-emerald-600 transition-all hover:underline"
-                            @click="$refs.editVariantDrawer.open()"
+                            @click="$emit('onEdit', variant)"
                         >
                             @lang('admin::app.catalog.products.edit.types.configurable.edit-btn')
                         </p>
@@ -1117,6 +1116,11 @@
 
             data () {
                 return {
+                    labels: @json(trans('berkay::app.variant-dialog')),
+                    materialOptions: @json($berkayMaterials->values()),
+                    inventorySources: @json($inventorySources),
+                    variantDraft: {},
+                    dialogError: '',
                     defaultId: parseInt('{{ $product->additional['default_variant_id'] ?? null }}'),
 
                     variants: @json($product->variants()->with(['attribute_family', 'images', 'inventories'])->get()),
@@ -1137,6 +1141,32 @@
             },
 
             methods: {
+                openVariantDialog(variant = null) {
+                    const details = variant?.berkay_details || variant?.additional?.berkay_variant || {};
+                    this.variantDraft = JSON.parse(JSON.stringify(variant || {name:'',price:0,status:1,weight:0.5,inventories:{},images:[]}));
+                    this.variantDraft.berkay_details = {color_description:details.color_description || '',material:details.material || '',features:[...(details.features || []),'','',''].slice(0,3)};
+                    this.variantDraft.inventories ||= {};
+                    this.inventorySources.forEach(source => {this.variantDraft.inventories[source.id] ??= 0;});
+                    this.dialogError = '';
+                    this.$refs.berkayVariantDialog.showModal();
+                },
+                saveVariantDialog() {
+                    const draft = this.variantDraft;
+                    if (!draft.name.trim() || !Number.isFinite(Number(draft.price)) || draft.price < 0 || this.superAttributes.some(attribute => !draft[attribute.code]) || this.inventorySources.some(source => !Number.isInteger(Number(draft.inventories[source.id])) || draft.inventories[source.id] < 0)) {
+                        this.dialogError = this.labels.invalid; return;
+                    }
+                    if (this.variants.some(variant => variant.id !== draft.id && this.superAttributes.every(attribute => variant[attribute.code] == draft[attribute.code]))) {
+                        this.dialogError = this.labels.duplicate; return;
+                    }
+                    if (draft.id) {
+                        Object.assign(this.variants.find(variant => variant.id === draft.id), draft);
+                    } else {
+                        draft.id = 'variant_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+                        draft.sku = @json($product->sku) + '-' + draft.id;
+                        this.variants.push(draft);
+                    }
+                    this.$refs.berkayVariantDialog.close();
+                },
                 addVariant(params, { resetForm }) {
                     let filteredVariants = this.variants.filter((variant) => {
                         let matchCount = 0;
@@ -1519,6 +1549,7 @@
             },
 
             created() {
+                this.variant.berkay_details ||= this.variant.additional?.berkay_variant || {color_description:"",material:"",features:[]};
                 let inventories = {};
 
                 this.inventorySources.forEach((source) => {
@@ -1526,7 +1557,7 @@
                         ? this.variant.inventories.find(inventory => inventory.inventory_source_id === source.id)
                         : null;
 
-                    inventories[source.id] = inventory ? (inventory.qty || 0) : 0;
+                    inventories[source.id] = inventory ? (inventory.qty || 0) : (this.variant.inventories[source.id] || 0);
                 });
 
                 this.variant.inventories = inventories;

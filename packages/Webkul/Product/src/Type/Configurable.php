@@ -5,6 +5,7 @@ namespace Webkul\Product\Type;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
 use Webkul\Admin\Validations\ConfigurableUniqueSku;
+use Webkul\Berkay\Repositories\VariantDetailsRepository;
 use Webkul\Checkout\Contracts\CartItem;
 use Webkul\Checkout\Models\CartItem as CartItemModel;
 use Webkul\Customer\Contracts\Wishlist;
@@ -170,6 +171,7 @@ class Configurable extends AbstractType
                     'locale' => $data['locale'] ?? core()->getDefaultLocaleCodeFromDefaultChannel(),
                 ]));
             } else {
+                abort_unless($previousVariantIds->contains($variantId), 422);
                 if (is_numeric($index = $previousVariantIds->search($variantId))) {
                     $previousVariantIds->forget($index);
                 }
@@ -231,6 +233,8 @@ class Configurable extends AbstractType
 
         $this->productImageRepository->upload($data, $variant, 'images');
 
+        app(VariantDetailsRepository::class)->saveDetails($variant->id, $data);
+
         return $variant;
     }
 
@@ -253,6 +257,8 @@ class Configurable extends AbstractType
         $this->productImageRepository->upload($data, $variant, 'images');
 
         $variant->channels()->sync($variant->parent->channels->pluck('id')->toArray());
+
+        app(VariantDetailsRepository::class)->saveDetails($variant->id, $data);
 
         return $variant;
     }
@@ -286,6 +292,11 @@ class Configurable extends AbstractType
     public function getTypeValidationRules()
     {
         return [
+            'variants.*.berkay_details' => ['nullable', 'array'],
+            'variants.*.berkay_details.color_description' => ['nullable', 'string', 'max:300'],
+            'variants.*.berkay_details.material' => ['nullable', 'string', 'max:100'],
+            'variants.*.berkay_details.features' => ['nullable', 'array', 'max:3'],
+            'variants.*.berkay_details.features.*' => ['nullable', 'string', 'max:200'],
             'variants.*.name' => 'required',
             'variants.*.sku' => [
                 'required',
@@ -450,6 +461,18 @@ class Configurable extends AbstractType
                 'option_id' => $option->id,
                 'option_label' => $option->label ? $option->label : $option->admin_name,
             ];
+        }
+
+        $details = $childProduct->additional['berkay_variant'] ?? [];
+        foreach (['name' => 'name', 'color_description' => 'colorDescription', 'material' => 'material'] as $key => $label) {
+            if (! empty($details[$key])) {
+                $data['attributes']['berkay_'.$key] = ['attribute_name' => trans('berkay::app.variant-dialog.'.$label), 'option_label' => $details[$key]];
+            }
+        }
+        foreach ($details['features'] ?? [] as $index => $feature) {
+            if (trim($feature) !== '') {
+                $data['attributes']['berkay_feature_'.$index] = ['attribute_name' => trans('berkay::app.variant-dialog.feature').' '.($index + 1), 'option_label' => $feature];
+            }
         }
 
         return $data;

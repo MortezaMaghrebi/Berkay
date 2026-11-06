@@ -1,6 +1,22 @@
 <?php
 
 return [
+    'variant-dialog' => [
+        'add' => 'Add variant',
+        'edit' => 'Edit variant',
+        'close' => 'Close',
+        'name' => 'Variant name',
+        'colorDescription' => 'Color description',
+        'material' => 'Material',
+        'feature' => 'Feature',
+        'optional' => 'Optional',
+        'price' => 'Price (toman)',
+        'stock' => 'Stock',
+        'save' => 'Confirm variant',
+        'pending' => 'Save the product after confirming.',
+        'invalid' => 'Enter a valid name, color, price and stock.',
+        'duplicate' => 'This color already exists. Edit the existing variant.',
+    ],
     'variant-easy' => [
         'add-help' => 'Select a color to add a variant. Checked colors have already been added.',
         'save-help' => 'Edit price and stock in each row, then save the product. Zero stock means unavailable. Open row editing for images and advanced settings.',

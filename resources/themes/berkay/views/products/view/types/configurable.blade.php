@@ -196,6 +196,12 @@
                         </p>
                     </v-error-message>
                 </div>
+                <section class="bk-selected-variant-details" v-if="selectedOptionVariant && config.variant_details?.[selectedOptionVariant]?.name">
+                    <h3>@{{ config.variant_details[selectedOptionVariant].name }}</h3>
+                    <p v-if="config.variant_details[selectedOptionVariant].color_description">@{{ config.variant_details[selectedOptionVariant].color_description }}</p>
+                    <p v-if="config.variant_details[selectedOptionVariant].material">{{ trans('berkay::app.variant-dialog.material') }}: @{{ config.variant_details[selectedOptionVariant].material }}</p>
+                    <ul v-if="config.variant_details[selectedOptionVariant].features?.length"><li v-for="feature in config.variant_details[selectedOptionVariant].features">@{{ feature }}</li></ul>
+                </section>
             </div>
         </script>
 
