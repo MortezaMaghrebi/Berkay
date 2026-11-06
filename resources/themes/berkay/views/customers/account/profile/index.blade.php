@@ -3,13 +3,7 @@
     <x-slot:title>
         @lang('shop::app.customers.account.profile.index.title')
     </x-slot>
-    <div class="bk-profile-logout">
-        <form method="post" action="{{ route('shop.customer.session.destroy') }}">
-            @csrf
-            @method('DELETE')
-            <button type="submit">{{ trans('shop::app.components.layouts.header.mobile.logout') }}</button>
-        </form>
-    </div>
+
 
 
     <!-- Breadcrumbs -->
@@ -24,6 +18,13 @@
     </div>
 
     <div class="flex-auto mx-4 max-md:mx-6 max-sm:mx-4">
+        <div class="bk-profile-logout">
+            <form method="post" action="{{ route('shop.customer.session.destroy') }}">
+                @csrf
+                @method('DELETE')
+                <button type="submit">{{ trans('shop::app.components.layouts.header.mobile.logout') }}</button>
+            </form>
+        </div>
         <div class="flex items-center justify-between">
             <div class="flex items-center">
                 <!-- Back Button -->
