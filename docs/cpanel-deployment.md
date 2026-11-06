@@ -1,0 +1,97 @@
+# انتشار دستی برکای از GitHub روی cPanel
+
+این روش دقیقاً «کامپیوتر → GitHub → مخزن cPanel → برنامهٔ اصلی» است. پوش به origin/main به‌تنهایی سایت را منتشر نمی‌کند. بعد از هر پوش باید در cPanel ابتدا **Update from Remote** و سپس **Deploy HEAD Commit** را بزنید. GitHub Actions و Secretهای CPANEL_SSH لازم نیستند.
+
+## مسیرهای این پروژه
+
+- مخزن cPanel: `/home/USERNAME/repositories/Berkay`
+- برنامهٔ اجرایی: `/home/USERNAME/berkay`
+- Document Root دامنه: `/home/USERNAME/berkay/public`
+- فایل خصوصی تنظیم انتشار: `/home/USERNAME/.berkay-deploy.conf`
+
+مسیرهای Sefaresh3d را استفاده نکنید. این اسکریپت برنامه را داخل public_html نمی‌ریزد. در cPanel → Domains ریشهٔ دامنه را روی public برنامه تنظیم کنید. اگر میزبان ریشهٔ دامنهٔ اصلی را به public_html محدود کرده، پیش از انتشار از پشتیبانی بخواهید ریشه را تنظیم کند؛ کپی‌کردن کل پروژه در public_html مجاز نیست. برای ساختار جداگانهٔ public_html باید انتشار و bootstrap مخصوص همان هاست تنظیم شود.
+
+## پیش‌نیازهای هاست
+
+PHP 8.4 در وب و CLI، Composer 2، دیتابیس سازگار بگیستو، SSH، rsync، flock، realpath، امکان symlink و Cron لازم‌اند. php مورد استفاده Composer باید همان PHP 8.4 باشد. همهٔ اکستنشن‌ها را composer check-platform-reqs بررسی می‌کند. خروجی Vite فروشگاه و ادمین در public/themes/.../build داخل Git موجود است؛ Node.js روی هاست برای انتشار لازم نیست.
+
+## تنظیم اولیه
+
+۱. مخزن موجود `git@github.com:MortezaMaghrebi/Berkay.git` را در cPanel → Git Version Control کلون کنید و شاخهٔ main را انتخاب کنید. برای مخزن خصوصی، کلید عمومی SSH هاست را به‌عنوان Deploy Key فقط خواندنی به همین مخزن اضافه کنید. کلید خصوصی و توکن را در مخزن قرار ندهید. وضعیت عمومی/خصوصی مخزن را خودتان در GitHub بررسی و در صورت نیاز Private کنید.
+
+۲. فایل deploy/cpanel.conf.example را به `~/.berkay-deploy.conf` کپی کنید و مسیرها و PHP/Composer را با اطلاعات میزبان تنظیم کنید:
+
+```bash
+cp /home/USERNAME/repositories/Berkay/deploy/cpanel.conf.example ~/.berkay-deploy.conf
+chmod 600 ~/.berkay-deploy.conf
+mkdir -p ~/berkay
+```
+
+۳. در cPanel دیتابیس و کاربر با دسترسی به همان دیتابیس بسازید. فایل .env.example را یک بار به `~/berkay/.env` کپی کنید؛ مقادیر را روی سرور وارد کنید، از جمله:
+
+```dotenv
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://YOUR-DOMAIN
+APP_KEY=YOUR-PERMANENT-APPLICATION-KEY
+APP_LOCALE=fa
+APP_CURRENCY=IRT
+DB_HOST=localhost
+DB_PORT=3306
+DB_DATABASE=CPANEL_DATABASE
+DB_USERNAME=CPANEL_DATABASE_USER
+DB_PASSWORD=PRIVATE_PASSWORD
+CACHE_STORE=file
+SESSION_DRIVER=file
+SESSION_DOMAIN=null
+SESSION_SECURE_COOKIE=true
+QUEUE_CONNECTION=database
+```
+
+نام دیتابیس/کاربر cPanel معمولاً پیشوند نام کاربری هاست را دارد. .env را با chmod 600 محافظت کنید. APP_KEY را هنگام به‌روزرسانی هرگز عوض نکنید. اگر دیتابیس محلی را با تنظیمات رمز‌شدهٔ موجود منتقل می‌کنید، کلید فعلی همان نصب را به‌صورت خصوصی منتقل کنید؛ کلید جدید باعث ناخوانا‌شدن داده‌های رمز‌شده می‌شود. برای نصب کاملاً خالی می‌توانید یک کلید دائمی با PHP بسازید:
+
+```bash
+/opt/cpanel/ea-php84/root/usr/bin/php -r 'echo "base64:".base64_encode(random_bytes(32)).PHP_EOL;'
+```
+
+۴. **دیتابیس فعلی و تصاویر محصولات را جداگانه منتقل کنید.** برای حفظ ۱۸۴ محصول و تنوع‌ها، از دیتابیس محلی خروجی بگیرید و در دیتابیس هاست وارد کنید. محتوای storage/app/public را به همین مسیر در برنامهٔ سرور منتقل کنید. تصاویر/پیوست‌های خصوصی در storage/app/private نیز جداگانه منتقل شوند. دیتابیس و پوشه‌های storage را داخل مخزن Git یا public_html قرار ندهید. در تنظیمات کانال بگیستو hostname محلی را به دامنهٔ واقعی تغییر دهید. رمز ادمین پیش‌فرض را پیش از عمومی‌کردن سایت از پنل تغییر دهید.
+
+۵. در Terminal هاست، بررسی بدون تغییر را اجرا کنید:
+
+```bash
+cd ~/repositories/Berkay
+/bin/bash deploy/cpanel-deploy.sh --check
+```
+
+۶. در cPanel، Update from Remote و سپس Deploy HEAD Commit را بزنید. مهاجرت‌ها اجرا می‌شوند؛ هیچ seeder، نصب مجدد بگیستو یا migrate:fresh اجرا نمی‌شود. این مسیر برای انتقال فروشگاه موجود است. نصب کاملاً خالی به نصب اولیه و ایجاد کانال/حساب مدیر نیاز دارد؛ صرف migration جایگزین نصب بگیستو نیست.
+
+## هر انتشار چه می‌کند؟
+
+- نسخهٔ PHP، مسیرها، فایل‌های ساخت و وجود .env تولید را کنترل می‌کند؛ هم‌زمان فقط یک انتشار اجازه دارد.
+- سایت موجود را به حالت نگهداری می‌برد.
+- فقط پوشه‌های کد مشخص‌شده را همگام می‌کند. .git، .runtime، node_modules، تست‌ها، .env و storage محلی کپی نمی‌شوند.
+- فایل‌های public را بدون حذف فایل‌های اضافی سرور منتقل می‌کند. لینک public/storage و کش تصاویر حفظ می‌شوند.
+- وابستگی‌ها را از composer.lock بدون بسته‌های توسعه نصب می‌کند و نیازمندی‌های واقعی PHP را بررسی می‌کند.
+- کش قبلی را پاک، package discovery و migration را اجرا می‌کند؛ لینک storage را در صورت نبودن می‌سازد.
+- config/view/route cache را می‌سازد و درخواست راه‌اندازی دوبارهٔ صف‌ها را ثبت می‌کند.
+- سایت را از حالت نگهداری خارج و شناسهٔ کامیت را در `.berkay-deployed` ثبت می‌کند.
+
+اگر خطا رخ دهد، مراحل بعد اجرا نمی‌شوند. اگر نگهداری فعال شده باشد همان‌طور می‌ماند تا علت رفع شود. نسخهٔ پشتیبان دیتابیس و فایل‌ها را قبل از انتشار از cPanel بگیرید؛ اسکریپت پشتیبان‌گیری یا rollback خودکار ندارد. همگام‌سازی کد درجا است، بنابراین انتشار اتمی و بدون downtime نیست. در صورت نیاز به بازگشت، کامیت قبلی را در Git بازگردانید و دوباره منتشر کنید؛ بازگرداندن migration/دیتابیس مرحلهٔ جدا و وابسته به بکاپ است. بعد از رفع خطا، در صورت نیاز php artisan up را از پوشهٔ برنامه اجرا کنید.
+
+## Cron و صف
+
+در cPanel → Cron Jobs با مسیر PHP واقعی هاست:
+
+```cron
+* * * * * cd /home/USERNAME/berkay && /opt/cpanel/ea-php84/root/usr/bin/php artisan schedule:run >> /dev/null 2>&1
+* * * * * cd /home/USERNAME/berkay && /usr/bin/flock -n /home/USERNAME/.berkay-worker.lock /opt/cpanel/ea-php84/root/usr/bin/php artisan queue:work --stop-when-empty --max-time=50 --tries=3 --timeout=45 >> storage/logs/queue-cron.log 2>&1
+```
+
+اگر هاست worker دائمی با Supervisor فراهم می‌کند از همان استفاده کنید. راهکار Cron را فقط با تأیید محدودیت‌های پردازش میزبان فعال کنید. queue:restart به‌تنهایی worker را اجرا نمی‌کند. فایل‌های لاگ و فضای دیسک را مدیریت کنید.
+
+## بررسی بعد از انتشار
+
+Last Deployment Information باید موفق و شناسهٔ کامیت جدید باشد. صفحهٔ اول، دسته‌بندی، گالری محصول، انتخاب رنگ/قیمت/موجودی، ورود مشترک، پنل ادمین، آپلود تصویر، سبد و پرداخت آزمایشی را بررسی کنید. SSL دامنه، آدرس کانال، تنظیمات واقعی درگاه و پیامک و برداشتن noindex محلی فقط پس از آماده‌شدن فروشگاه برای انتشار عمومی بررسی شوند.
+
+مرجع: https://docs.cpanel.net/knowledge-base/web-services/guide-to-git-set-up-deployment/
+مرجع فایل انتشار: https://docs.cpanel.net/knowledge-base/web-services/guide-to-git-deployment/

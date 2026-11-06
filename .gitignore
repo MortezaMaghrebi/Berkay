@@ -48,3 +48,14 @@ yarn-error.log
 
 # Local development runtimes and private credentials
 /.runtime/
+# cPanel deployment files with host-specific paths and secrets
+/.cpanel-local*
+*.sql.gz
+*.sql.zip
+/backups/
+.env.*
+!.env.example
+!.env.*.example
+*.sql
+*.dump
+node_modules/

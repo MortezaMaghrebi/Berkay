@@ -1,0 +1,5 @@
+# Copy to ~/.berkay-deploy.conf on the SERVER. Never store secrets here.
+APP_DIR="$HOME/berkay"
+PHP_BIN="/opt/cpanel/ea-php84/root/usr/bin/php"
+COMPOSER_BIN="/usr/local/bin/composer"
+# Set APP_DIR/public as the domain document root in cPanel.
