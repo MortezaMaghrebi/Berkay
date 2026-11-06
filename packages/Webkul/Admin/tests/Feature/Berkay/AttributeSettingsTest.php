@@ -12,6 +12,7 @@ it('saves simple color choices and refuses invalid colors or cross-attribute edi
     expect($option->fresh()->admin_name)->toBe('Olive')->and($option->fresh()->swatch_value)->toBe('#556b2f');
     $this->postJson($url, ['kind' => 'color', 'option_id' => $option->id, 'name' => 'Bad', 'color' => 'red'])->assertUnprocessable();
     $this->postJson($url, ['kind' => 'material', 'option_id' => $option->id, 'name' => 'Bad'])->assertNotFound();
+    $this->postJson($url, ['kind' => 'color', 'name' => 'New swatch', 'color' => '#112233'])->assertOk()->assertJsonStructure(['message', 'html'])->assertJsonPath('message', trans('berkay::app.saved'));
     $this->loginAsAdminWithPermissions(['berkay', 'berkay.attributes', 'catalog.attributes']);
     $this->postJson($url, ['kind' => 'color', 'name' => 'Bad', 'color' => '#ffffff'])->assertForbidden();
 });

@@ -2,6 +2,7 @@
 
 namespace Webkul\Berkay\Http\Controllers\Admin;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -12,7 +13,7 @@ use Webkul\Attribute\Repositories\AttributeRepository;
 class AttributeSettingsController extends Controller
 {
     /** Save a named color or material without exposing technical attribute configuration. */
-    public function save(Request $request, AttributeRepository $attributes, AttributeOptionRepository $options): RedirectResponse
+    public function save(Request $request, AttributeRepository $attributes, AttributeOptionRepository $options): RedirectResponse|JsonResponse
     {
         abort_unless(bouncer()->hasPermission('catalog.attributes.edit'), 403);
         $data = $request->validate([
@@ -38,9 +39,13 @@ class AttributeSettingsController extends Controller
             $values['swatch_value'] = $data['color'];
         }
         if ($option) {
-            $options->update($values, $option->id);
+            $option = $options->update($values, $option->id);
         } else {
-            $options->create($values + ['sort_order' => 0]);
+            $option = $options->create($values + ['sort_order' => 0]);
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => trans('berkay::app.saved'), 'html' => view('berkay::admin.attribute-option-row', ['attribute' => $attribute, 'option' => $option->fresh(), 'label' => $data['kind'] === 'color' ? 'colors' : 'materials'])->render()]);
         }
 
         return redirect()->route('admin.berkay.attributes.index')->with('success', trans('berkay::app.saved'));
