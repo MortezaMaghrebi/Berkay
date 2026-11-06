@@ -8,7 +8,7 @@
     <div class="container px-15 max-lg:px-8 max-md:px-0">
         <x-shop::layouts.account.breadcrumb />
 
-        <details class="bk-account-mobile-menu">
+        <details class="bk-account-mobile-menu" open>
             <summary>{{ trans('berkay::app.account') }}</summary>
             <x-shop::layouts.account.navigation />
         </details>
