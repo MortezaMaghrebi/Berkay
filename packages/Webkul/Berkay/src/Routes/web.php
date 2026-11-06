@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Berkay\Http\Controllers\Admin\ArticleController;
 use Webkul\Berkay\Http\Controllers\Admin\ArticleImportController;
+use Webkul\Berkay\Http\Controllers\Admin\AttributeSettingsController;
 use Webkul\Berkay\Http\Controllers\Admin\IntegrationController;
 use Webkul\Berkay\Http\Controllers\Admin\OperationsController;
 use Webkul\Berkay\Http\Controllers\Admin\SimpleCatalogController;
@@ -94,3 +95,5 @@ Route::middleware(['web', 'admin', NoCacheMiddleware::class])->get(config('app.a
 
     return view('berkay::admin.attribute-settings', ['color' => $attributes->findOneByField('code', 'color'), 'material' => $attributes->findOneByField('code', 'material')]);
 })->name('admin.berkay.attributes.index');
+
+Route::middleware(['web', 'admin', NoCacheMiddleware::class, 'throttle:60,1'])->post(config('app.admin_url').'/berkay/attributes/options', [AttributeSettingsController::class, 'save'])->name('admin.berkay.attributes.save');

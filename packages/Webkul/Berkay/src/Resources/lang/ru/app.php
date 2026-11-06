@@ -2,6 +2,15 @@
 
 return [
     'variant-settings' => [
+        'simple-help' => 'Add a name and use Add. Edit and save each existing row separately. Changes also appear on associated products.',
+        'name' => 'Name',
+        'pick' => 'Circle color — select a color',
+        'add' => 'Add new option',
+        'save-row' => 'Save this row',
+        'new-color' => 'For example: Olive',
+        'new-material' => 'For example: Cow leather',
+        'usage' => 'Select new colors in product variants and set price and stock. Select material in the general product editor.',
+
         'title' => 'Variants and attributes',
         'colors' => 'Manage colors',
         'materials' => 'Manage materials',
