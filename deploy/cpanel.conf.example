@@ -2,6 +2,6 @@
 APP_DIR="$HOME/berkay"
 PUBLIC_DIR="$HOME/public_html"
 PHP_BIN="/opt/cpanel/ea-php84/root/usr/bin/php"
-COMPOSER_BIN="/usr/local/bin/composer"
+COMPOSER_BIN="/bin/composer"
 # For charmber: /home/charmber/berkay and /home/charmber/public_html.
 # Add BERKAY_PUBLIC_PATH=/home/charmber/public_html to the SERVER .env.

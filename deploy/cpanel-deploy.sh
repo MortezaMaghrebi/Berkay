@@ -7,9 +7,9 @@ CONFIG_FILE="$HOME/.berkay-deploy.conf"
 APP_DIR="${APP_DIR:-$HOME/berkay}"
 PUBLIC_DIR="${PUBLIC_DIR:-$APP_DIR/public}"
 PHP_BIN="${PHP_BIN:-/opt/cpanel/ea-php84/root/usr/bin/php}"
-COMPOSER_BIN="${COMPOSER_BIN:-/usr/local/bin/composer}"
+COMPOSER_BIN="${COMPOSER_BIN:-/bin/composer}"
 fail() { printf 'Deployment stopped: %s\n' "$*" >&2; exit 1; }
-for tool in rsync realpath flock git; do command -v "$tool" >/dev/null || fail "Missing command: $tool"; done
+for tool in realpath flock git; do command -v "$tool" >/dev/null || fail "Missing command: $tool"; done
 [[ -x "$PHP_BIN" ]] || fail 'Set PHP_BIN to your PHP 8.4 CLI in ~/.berkay-deploy.conf'
 [[ -f "$COMPOSER_BIN" ]] || fail 'Set COMPOSER_BIN to the Composer PHP executable/phar'
 "$PHP_BIN" -r 'exit(version_compare(PHP_VERSION,"8.4.0",">=") ? 0 : 1);' || fail 'PHP 8.4+ is required'
@@ -35,6 +35,7 @@ if [[ "$PUBLIC_DIR" != "$APP_DIR/public" ]]; then
     [[ "$(env_value BERKAY_PUBLIC_PATH)" == "$PUBLIC_DIR" ]] || fail 'Set BERKAY_PUBLIC_PATH in server .env to the exact PUBLIC_DIR'
 fi
 grep -Eq '^APP_KEY=.{20,}' "$APP_DIR/.env" || fail 'Set a permanent server APP_KEY before deploying'
+[[ -x /bin/cp ]] || fail "/bin/cp is unavailable"
 if [[ "${1:-}" == --check ]]; then
     printf 'Preflight passed. Application: %s\nDocument root: %s\nNo deployment performed.\n' "$APP_DIR" "$PUBLIC_DIR"
     exit 0
@@ -46,17 +47,8 @@ mkdir -p "$APP_DIR/storage/app/public" "$APP_DIR/storage/app/private" "$APP_DIR/
 if [[ -f "$APP_DIR/artisan" && -f "$APP_DIR/vendor/autoload.php" ]]; then
     (cd "$APP_DIR" && "$PHP_BIN" artisan down --retry=60)
 fi
-for directory in app bootstrap config database lang packages resources routes; do
-    [[ -d "$REPO_DIR/$directory" ]] || continue
-    mkdir -p "$APP_DIR/$directory"
-    rsync -rlt --delete --exclude='node_modules/' --exclude='tests/' --exclude='cache/' --exclude='.git/' "$REPO_DIR/$directory/" "$APP_DIR/$directory/"
-done
-mkdir -p "$PUBLIC_DIR"
-# No delete on public: preserve server uploads and the storage symlink.
-rsync -rlt --exclude='index.php' --exclude='storage' --exclude='cache/' --exclude='hot' --exclude='.git/' "$REPO_DIR/public/" "$PUBLIC_DIR/"
-for file in artisan composer.json composer.lock; do
-    rsync -t "$REPO_DIR/$file" "$APP_DIR/$file"
-done
+[[ -x /bin/cp ]] || fail "/bin/cp is unavailable"
+/bin/bash "$REPO_DIR/deploy/copy-files.sh" "$REPO_DIR" "$APP_DIR" "$PUBLIC_DIR"
 cd "$APP_DIR"
 # No scripts before clearing old bootstrap caches: dependency discovery follows install.
 "$PHP_BIN" "$COMPOSER_BIN" install --no-dev --prefer-dist --no-interaction --optimize-autoloader --no-scripts

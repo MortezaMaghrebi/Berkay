@@ -17,14 +17,14 @@
 APP_DIR="/home/charmber/berkay"
 PUBLIC_DIR="/home/charmber/public_html"
 PHP_BIN="/opt/cpanel/ea-php84/root/usr/bin/php"
-COMPOSER_BIN="/usr/local/bin/composer"
+COMPOSER_BIN="/bin/composer"
 ```
 
 پوشهٔ berkay را در File Manager، کنار public_html ایجاد کنید. فایل .env برنامه در /home/charmber/berkay/.env قرار می‌گیرد. روی public_html موجود ابتدا بکاپ بگیرید؛ فایل‌های عمومی هم‌نام، از جمله index.php و .htaccess با نسخهٔ سایت برکای به‌روز می‌شوند. فایل‌های اضافی و آپلودهای سرور حذف نمی‌شوند.
 
 ## پیش‌نیازهای هاست
 
-PHP 8.4 در وب و CLI، Composer 2، دیتابیس سازگار بگیستو، SSH، rsync، flock، realpath، امکان symlink و Cron لازم‌اند. php مورد استفاده Composer باید همان PHP 8.4 باشد. همهٔ اکستنشن‌ها را composer check-platform-reqs بررسی می‌کند. خروجی Vite فروشگاه و ادمین در public/themes/.../build داخل Git موجود است؛ Node.js روی هاست برای انتشار لازم نیست.
+PHP 8.4 در وب و CLI، Composer 2، دیتابیس سازگار بگیستو، SSH، /bin/cp، flock، realpath، امکان symlink و Cron لازم‌اند. php مورد استفاده Composer باید همان PHP 8.4 باشد. همهٔ اکستنشن‌ها را composer check-platform-reqs بررسی می‌کند. خروجی Vite فروشگاه و ادمین در public/themes/.../build داخل Git موجود است؛ Node.js روی هاست برای انتشار لازم نیست.
 
 ## تنظیم اولیه
 
@@ -81,14 +81,14 @@ cd ~/repositories/Berkay
 
 - نسخهٔ PHP، مسیرها، فایل‌های ساخت و وجود .env تولید را کنترل می‌کند؛ هم‌زمان فقط یک انتشار اجازه دارد.
 - سایت موجود را به حالت نگهداری می‌برد.
-- فقط پوشه‌های کد مشخص‌شده را همگام می‌کند. .git، .runtime، node_modules، تست‌ها، .env و storage محلی کپی نمی‌شوند.
+- فقط فایل‌های ثبت‌شده در Git از پوشه‌های مجاز را با /bin/cp منتقل می‌کند. .git، .runtime، node_modules، تست‌ها، .env و storage محلی کپی نمی‌شوند.
 - فایل‌های public را بدون حذف فایل‌های اضافی سرور منتقل می‌کند. لینک public_html/storage و کش تصاویر حفظ می‌شوند.
 - وابستگی‌ها را از composer.lock بدون بسته‌های توسعه نصب می‌کند و نیازمندی‌های واقعی PHP را بررسی می‌کند.
 - کش قبلی را پاک، package discovery و migration را اجرا می‌کند؛ لینک storage را در صورت نبودن می‌سازد.
 - config/view/route cache را می‌سازد و درخواست راه‌اندازی دوبارهٔ صف‌ها را ثبت می‌کند.
 - سایت را از حالت نگهداری خارج و شناسهٔ کامیت را در `.berkay-deployed` ثبت می‌کند.
 
-اگر خطا رخ دهد، مراحل بعد اجرا نمی‌شوند. اگر نگهداری فعال شده باشد همان‌طور می‌ماند تا علت رفع شود. نسخهٔ پشتیبان دیتابیس و فایل‌ها را قبل از انتشار از cPanel بگیرید؛ اسکریپت پشتیبان‌گیری یا rollback خودکار ندارد. همگام‌سازی کد درجا است، بنابراین انتشار اتمی و بدون downtime نیست. در صورت نیاز به بازگشت، کامیت قبلی را در Git بازگردانید و دوباره منتشر کنید؛ بازگرداندن migration/دیتابیس مرحلهٔ جدا و وابسته به بکاپ است. بعد از رفع خطا، در صورت نیاز php artisan up را از پوشهٔ برنامه اجرا کنید.
+اگر خطا رخ دهد، مراحل بعد اجرا نمی‌شوند. اگر نگهداری فعال شده باشد همان‌طور می‌ماند تا علت رفع شود. نسخهٔ پشتیبان دیتابیس و فایل‌ها را قبل از انتشار از cPanel بگیرید؛ اسکریپت پشتیبان‌گیری یا rollback خودکار ندارد. کپی کد درجا است، بنابراین انتشار اتمی و بدون downtime نیست. در صورت نیاز به بازگشت، کامیت قبلی را در Git بازگردانید و دوباره منتشر کنید؛ بازگرداندن migration/دیتابیس مرحلهٔ جدا و وابسته به بکاپ است. بعد از رفع خطا، در صورت نیاز php artisan up را از پوشهٔ برنامه اجرا کنید.
 
 ## Cron و صف
 
@@ -107,3 +107,23 @@ Last Deployment Information باید موفق و شناسهٔ کامیت جدی�
 
 مرجع: https://docs.cpanel.net/knowledge-base/web-services/guide-to-git-set-up-deployment/
 مرجع فایل انتشار: https://docs.cpanel.net/knowledge-base/web-services/guide-to-git-deployment/
+
+## روش کپی بدون rsync
+
+فایل .cpanel.yml اسکریپت cpanel-deploy.sh را اجرا می‌کند. آن اسکریپت برای انتقال فایل‌ها copy-files.sh را صدا می‌زند که فقط از /bin/cp استفاده می‌کند. نصب rsync لازم نیست.
+
+فهرست مجاز: app، bootstrap، config، database، lang (اگر موجود باشد)، resources، routes، packages، public و فایل‌های artisan و composer.json و composer.lock. فایل‌های مخفی عمومی مانند public/.htaccess نیز کپی می‌شوند. فایل‌های .env، storage، cacheهای runtime، node_modules، تست‌ها، بکاپ دیتابیس و public/storage کپی نمی‌شوند. public/index.php جداگانه با مسیر واقعی برنامه ساخته می‌شود. فایل خصوصی یا آپلودی در مقصد حذف نمی‌شود.
+
+این روش هیچ فایل منسوخی را خودکار حذف نمی‌کند. اگر تغییری حذف یک فایل کد قدیمی را لازم کند، مسیر دقیق آن در برنامهٔ انتشار همان تغییر بررسی و جداگانه مدیریت می‌شود؛ حذف کلی پوشه یا پاک‌سازی public_html انجام نمی‌شود.
+
+مسیرها قبل از کپی با realpath بررسی می‌شوند؛ برنامه باید خارج از public_html و مخزن باشد، و ریشهٔ عمومی نباید مخزن یا برنامهٔ خصوصی را در خود داشته باشد. بررسی مسیر واقعی روی هاست از Terminal حساب charmber با دستورهای زیر انجام می‌شود:
+
+```bash
+realpath /home/charmber/repositories/Berkay
+realpath /home/charmber/berkay
+realpath /home/charmber/public_html
+```
+
+قبل از Deploy، در cPanel → Domains نیز تأیید کنید Document Root دامنه charmberkay.ir همان public_html است. بررسی محلی اسکریپت جایگزین بررسی مسیرهای واقعی هاست نیست.
+
+بلاک‌های PHP handler و تنظیمات PHP که با نشان BEGIN/END cPanel-generated در .htaccess فعلی هاست مشخص شده‌اند هنگام به‌روزرسانی حفظ می‌شوند تا انتخاب PHP 8.4 دامنه از بین نرود. سایر تنظیمات اختصاصی خارج از این بلاک‌ها باید پیش از انتشار در نسخهٔ مناسب .htaccess بررسی شوند.
