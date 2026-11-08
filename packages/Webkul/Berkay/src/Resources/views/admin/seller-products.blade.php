@@ -10,7 +10,7 @@
             @forelse ($products as $product)
                 <article>
                     @php $photo = $product->images->first(); @endphp
-                    @if ($photo)<img src="{{ Storage::url($photo->path) }}" width="72" height="72" alt="{{ $product->name }}" loading="lazy">@else<span class="bk-no-photo" aria-hidden="true">◇</span>@endif
+                    @if ($photo)<img src="{{ asset('storage/'.$photo->path) }}" width="72" height="72" alt="{{ $product->name }}" loading="lazy">@else<span class="bk-no-photo" aria-hidden="true">◇</span>@endif
                     <div class="bk-product-name"><h2>{{ $product->name ?: $product->sku }}</h2><small>{{ trans('berkay::app.seller.'.($product->status ? 'visible' : 'hidden')) }}</small></div>
                     <p>{{ core()->formatBasePrice($product->type === 'configurable' ? $product->variants->min('price') : $product->price) }}</p>
                     <p>{{ trans('berkay::app.seller.stock') }}: {{ $product->type === 'configurable' ? $product->variants->sum(fn ($variant) => $variant->inventories->sum('qty')) : $product->inventories->sum('qty') }}</p>

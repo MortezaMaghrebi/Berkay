@@ -39,7 +39,7 @@
             <div class="bk-form-section">
                 <h2>{{ trans('berkay::app.seller.images') }}</h2>
                 @if ($product && $product->images->isNotEmpty())
-                    <div class="bk-existing-images">@foreach ($product->images as $image)<img src="{{ Storage::url($image->path) }}" width="88" height="88" alt="{{ $product->name }}">@endforeach</div>
+                    <div class="bk-existing-images">@foreach ($product->images as $image)<img src="{{ asset('storage/'.$image->path) }}" width="88" height="88" alt="{{ $product->name }}">@endforeach</div>
                     <p class="bk-help">{{ trans('berkay::app.seller.keep-images') }}</p>
                 @endif
                 <label class="bk-upload" for="images">{{ trans('berkay::app.seller.choose-images') }}</label>

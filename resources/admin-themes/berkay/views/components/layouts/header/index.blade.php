@@ -49,7 +49,9 @@
         <a
             href="{{ route('shop.home.index') }}"
             target="_blank"
-            class="hidden sm:flex"
+            rel="noopener noreferrer"
+            aria-label="@lang('admin::app.components.layouts.header.visit-shop')"
+            class="bk-admin-store-link"
         >
             <span
                 class="icon-store cursor-pointer rounded-md p-1.5 text-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950 sm:text-2xl"

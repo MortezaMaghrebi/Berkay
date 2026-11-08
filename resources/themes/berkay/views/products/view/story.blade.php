@@ -6,14 +6,14 @@
     <header><p>{{ trans('berkay::app.product-story.eyebrow') }}</p><h2 id="bk-story-title">{{ $product->name }}</h2></header>
     <div class="bk-product-story-lead">
         @if ($storyImages->first())
-            <figure><img src="{{ Storage::url($storyImages->first()->path) }}" alt="{{ $product->name }}" loading="lazy" width="1000" height="1000"></figure>
+            <figure><img src="{{ asset('storage/'.$storyImages->first()->path) }}" alt="{{ $product->name }}" loading="lazy" width="1000" height="1000"></figure>
         @endif
         <div class="bk-product-story-copy"><h3>{{ trans('berkay::app.product-story.title') }}</h3><div>{!! $product->description !!}</div></div>
     </div>
     @if ($storyImages->count() > 1)
         <div class="bk-product-story-photos">
             @foreach ($storyImages->skip(1) as $image)
-                <figure><img src="{{ Storage::url($image->path) }}" alt="{{ $product->name }} — {{ trans('berkay::app.product-story.details') }}" loading="lazy" width="900" height="900"><figcaption>{{ trans('berkay::app.product-story.details') }}</figcaption></figure>
+                <figure><img src="{{ asset('storage/'.$image->path) }}" alt="{{ $product->name }} — {{ trans('berkay::app.product-story.details') }}" loading="lazy" width="900" height="900"><figcaption>{{ trans('berkay::app.product-story.details') }}</figcaption></figure>
             @endforeach
         </div>
     @endif
