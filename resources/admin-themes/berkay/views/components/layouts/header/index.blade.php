@@ -1,5 +1,9 @@
 @php
     $admin = auth()->guard('admin')->user();
+    $logo = core()->getConfigData('general.design.admin_logo.logo_image');
+    $logoUrl = $logo && Storage::getDefaultDriver() === 'public'
+        ? asset('storage/'.$logo)
+        : ($logo ? Storage::url($logo) : null);
 @endphp
 
 <header class="sticky top-0 z-10001 flex items-center justify-between border-b bg-white px-2 py-2 dark:border-gray-800 dark:bg-gray-900 sm:px-4 sm:py-2.5">
@@ -12,10 +16,10 @@
 
         <!-- Logo -->
         <a href="{{ route('admin.berkay.index') }}" class="shrink-0">
-            @if ($logo = core()->getConfigData('general.design.admin_logo.logo_image'))
+            @if ($logoUrl)
                 <img
                     class="h-8 w-auto sm:h-10"
-                    src="{{ Storage::url($logo) }}"
+                    src="{{ $logoUrl }}"
                     alt="{{ config('app.name') }}"
                 />
             @else
@@ -138,9 +142,9 @@
     <!-- Drawer Header -->
     <x-slot:header>
         <div class="flex items-center justify-between">
-            @if ($logo = core()->getConfigData('general.design.admin_logo.logo_image'))
+            @if ($logoUrl)
                 <img
-                    src="{{ Storage::url($logo) }}"
+                    src="{{ $logoUrl }}"
                     class="h-8 w-auto sm:h-10"
                     alt="{{ config('app.name') }}"
                 />
