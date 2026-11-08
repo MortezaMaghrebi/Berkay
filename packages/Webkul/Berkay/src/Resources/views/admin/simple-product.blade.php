@@ -49,6 +49,17 @@
                 <textarea id="description" name="description" rows="5" maxlength="20000">{{ old('description', strip_tags($product?->description ?? '')) }}</textarea>
                 <small>{{ trans('berkay::app.seller.description-help') }}</small>
             </div>
+            <details class="bk-advanced" @if(old('featured', $product?->featured) || old('special_price', $product?->special_price) || $errors->has('special_price')) open @endif>
+                <summary>{{ trans('berkay::collections.featured') }} / {{ trans('berkay::collections.discounted') }}</summary>
+                <label for="featured">{{ trans('berkay::collections.featured-product') }}</label>
+                <select id="featured" name="featured">
+                    <option value="0" @selected(! old('featured', $product?->featured))>@lang('berkay::collections.no')</option>
+                    <option value="1" @selected(old('featured', $product?->featured))>@lang('berkay::collections.yes')</option>
+                </select>
+                <label for="special_price">{{ trans('berkay::collections.special-price') }}</label>
+                <input id="special_price" name="special_price" inputmode="decimal" value="{{ old('special_price', $product?->special_price) }}" aria-describedby="bk-sale-help">
+                <small id="bk-sale-help">{{ trans('berkay::collections.special-price-help') }}</small>
+            </details>
             <label for="status">{{ trans('berkay::app.seller.status') }}</label>
             <select id="status" name="status">
                 <option value="1" @selected((int) old('status', $product?->status ?? 1) === 1)>{{ trans('berkay::app.seller.visible') }}</option>

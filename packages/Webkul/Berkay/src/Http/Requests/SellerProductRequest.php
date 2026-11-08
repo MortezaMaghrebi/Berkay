@@ -24,6 +24,8 @@ class SellerProductRequest extends FormRequest
             'category_id' => ['required', 'integer', Rule::in(app(SellerCategoryRepository::class)->storeIds())],
             'description' => ['nullable', 'string', 'max:20000'],
             'status' => ['required', 'boolean'],
+            'featured' => ['sometimes', 'boolean'],
+            'special_price' => ['nullable', 'numeric', 'gt:0', 'lt:price'],
             'images' => [$this->route('id') ? 'sometimes' : 'required', 'array', 'min:1', 'max:8'],
             'images.*' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ];
@@ -32,7 +34,7 @@ class SellerProductRequest extends FormRequest
     /** Translate labels in validation messages. */
     public function attributes(): array
     {
-        return collect(['name', 'price', 'quantity', 'category_id', 'description', 'images', 'status'])
+        return ['special_price' => trans('berkay::collections.special-price')] + collect(['name', 'price', 'quantity', 'category_id', 'description', 'images', 'status'])
             ->mapWithKeys(fn ($field) => [$field => trans('berkay::app.seller.'.$field)])->all();
     }
 
@@ -40,8 +42,13 @@ class SellerProductRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $digits = array_combine(preg_split('//u', '۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩', -1, PREG_SPLIT_NO_EMPTY), str_split('01234567890123456789'));
-        foreach (['price', 'quantity'] as $field) {
-            $this->merge([$field => str_replace([',', '٬'], '', strtr((string) $this->input($field), $digits))]);
+        foreach (['price', 'quantity', 'special_price'] as $field) {
+            if (! $this->has($field) || ! is_scalar($this->input($field))) {
+                continue;
+            }
+
+            $value = str_replace([',', '٬'], '', strtr((string) $this->input($field), $digits));
+            $this->merge([$field => $value === '' ? null : $value]);
         }
     }
 }

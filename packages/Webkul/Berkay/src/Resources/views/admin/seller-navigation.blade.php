@@ -21,6 +21,11 @@
     @if(bouncer()->hasPermission('catalog.attributes') && bouncer()->hasPermission('berkay.attributes'))
         <a href="{{ route('admin.berkay.attributes.index') }}">{{ trans('berkay::app.variant-settings.title') }}</a>
     @endif
+    @if (bouncer()->hasPermission('configuration'))
+        <a href="{{ route('admin.configuration.index', ['slug' => 'berkay', 'slug2' => 'home']) }}" @class(['bk-nav-active' => request()->routeIs('admin.configuration.index') && request()->route('slug') === 'berkay' && request()->route('slug2') === 'home'])>
+            <span class="icon-settings" aria-hidden="true"></span>{{ trans('berkay::collections.settings') }}
+        </a>
+    @endif
     <details class="bk-nav-advanced" @if(request()->is(config('app.admin_url').'/configuration*')) open @endif>
         <summary>{{ trans('berkay::app.seller.advanced-settings') }}</summary>
         <p>{{ trans('berkay::app.seller.advanced-help') }}</p>

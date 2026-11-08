@@ -20,6 +20,9 @@ use Webkul\Core\Rules\Slug;
 use Webkul\Customer\Repositories\CustomerRepository;
 use Webkul\Product\Enums\SearchContextEnum;
 use Webkul\Product\Helpers\ProductType;
+use Webkul\Product\Jobs\UpdateCreateInventoryIndex;
+use Webkul\Product\Jobs\UpdateCreatePriceIndex;
+use Webkul\Product\Listeners\Product as ProductListener;
 use Webkul\Product\Repositories\ProductAttributeValueRepository;
 use Webkul\Product\Repositories\ProductDownloadableLinkRepository;
 use Webkul\Product\Repositories\ProductDownloadableSampleRepository;
@@ -158,6 +161,18 @@ class ProductController extends Controller
         Event::dispatch('catalog.product.update.after', $product);
 
         session()->flash('success', trans('admin::app.catalog.products.update-success'));
+
+        if ($request->boolean('return_to_editor')) {
+            $productIds = app(ProductListener::class)->getAllRelatedProductIds($product->fresh());
+            (new UpdateCreateInventoryIndex($productIds))->handle();
+            (new UpdateCreatePriceIndex($productIds))->handle();
+
+            return redirect()->route('admin.catalog.products.edit', [
+                'id' => $id,
+                'channel' => $request->input('channel'),
+                'locale' => $request->input('locale'),
+            ]);
+        }
 
         return redirect()->route('admin.catalog.products.index');
     }

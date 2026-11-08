@@ -17,7 +17,7 @@
             <div class="flex items-center justify-between gap-4 max-sm:flex-wrap">
                 <div class="grid gap-1.5">
                     <p class="text-xl font-bold leading-6 text-gray-800 dark:text-white">
-                        @lang('admin::app.catalog.products.edit.title')
+                        {{ $product->name ?: trans('admin::app.catalog.products.edit.title') }}
                     </p>
                 </div>
 
@@ -27,7 +27,7 @@
                         href="{{ route('admin.berkay.simple_product.index') }}"
                         class="transparent-button hover:bg-gray-200 dark:text-white dark:hover:bg-gray-800"
                     >
-                        @lang('admin::app.account.edit.back-btn')
+                        {{ trans('berkay::app.seller.products') }}
                     </a>
 
                     <!-- Preview Button -->
@@ -46,7 +46,7 @@
                     @endif
 
                     <!-- Save Button -->
-                    <button class="primary-button">
+                    <button type="submit" class="primary-button">
                         @lang('admin::app.catalog.products.edit.save-btn')
                     </button>
                 </div>
@@ -61,9 +61,47 @@
             $currentLocale = core()->getAllLocales()->firstWhere('code', $currentChannel->resolveLocaleCode(core()->getRequestedLocaleCode()));
         @endphp
 
+        <input type="hidden" name="return_to_editor" value="1">
+        @if ($errors->any())
+            <div class="bk-workspace-errors" role="alert">
+                <strong>{{ trans('berkay::collections.review-errors') }}</strong>
+                <ul>
+                    @foreach ($errors->all() as $message)
+                        <li>{{ $message }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
         <p class="bk-product-editor-help">{{ trans('berkay::app.product-editor.help') }}</p>
         <div class="bk-product-editor-status" role="status" aria-live="polite"></div>
         <nav class="bk-product-section-nav" aria-label="{{ trans('berkay::app.product-editor.sections') }}"></nav>
+        @php
+            $editableCodes = $product->getEditableAttributes()->pluck('code');
+            $hasFeatured = $editableCodes->contains('featured');
+            $hasSalePrice = $editableCodes->contains('special_price');
+        @endphp
+        @if ($hasFeatured || $hasSalePrice || $product->type === 'configurable')
+            <section class="bk-workspace-sales bk-workspace-target" data-title="{{ trans('berkay::collections.sales-settings') }}">
+                <h2>{{ trans('berkay::collections.sales-settings') }}</h2>
+                @if ($hasFeatured)
+                    <label for="featured">{{ trans('berkay::collections.featured-product') }}</label>
+                    <select id="featured" name="featured">
+                        <option value="0" @selected(! old('featured', $product->featured))>{{ trans('berkay::collections.no') }}</option>
+                        <option value="1" @selected(old('featured', $product->featured))>{{ trans('berkay::collections.yes') }}</option>
+                    </select>
+                    <x-admin::form.control-group.error control-name="featured" />
+                @endif
+                @if ($hasSalePrice)
+                    <label for="special_price">{{ trans('berkay::collections.special-price') }}</label>
+                    <input id="special_price" name="special_price" inputmode="decimal" value="{{ old('special_price', $product->special_price) }}" aria-describedby="bk-workspace-sale-help">
+                    <small id="bk-workspace-sale-help">{{ trans('berkay::collections.special-price-help') }}</small>
+                    <x-admin::form.control-group.error control-name="special_price" />
+                @elseif ($product->type === 'configurable')
+                    <p>{{ trans('berkay::collections.variant-sale-help') }}</p>
+                    <a href="#bk-workspace-variants">{{ trans('berkay::collections.edit-variants') }}</a>
+                @endif
+            </section>
+        @endif
         <!-- Channel and Locale Switcher -->
         <div class="hidden">
             <div class="flex items-center gap-x-1">
@@ -185,7 +223,7 @@
                         @if ($customAttributes->isNotEmpty())
                             {!! view_render_event("bagisto.admin.catalog.product.edit.form.{$group->code}.before", ['product' => $product]) !!}
 
-                            <details class="bk-product-edit-section box-shadow relative rounded-sm bg-white p-4 dark:bg-gray-900" @if(!in_array($group->code, ['meta_description', 'shipping', 'settings'])) open @endif>
+                            <details class="bk-product-edit-section box-shadow relative rounded-sm bg-white p-4 dark:bg-gray-900" @if(!in_array($group->code, ['meta_description', 'shipping', 'settings', 'rma'])) open @endif>
                                 <summary>{{ $group->name }}<span>{{ trans('berkay::app.product-editor.toggle') }}</span></summary>
                                 <p
                                     class="hidden"
@@ -199,6 +237,7 @@
                                 @endif
 
                                 @foreach ($customAttributes as $attribute)
+                                    @continue(($hasFeatured && $attribute->code === 'featured') || ($hasSalePrice && $attribute->code === 'special_price'))
                                     @if (in_array($attribute->code, ['sku', 'url_key', 'product_number', 'guest_checkout', 'visible_individually', 'manage_stock', 'tax_category_id', 'color', 'size', 'brand']))
                                         @php
                                             $hiddenValue = $product->{$attribute->code};
@@ -269,7 +308,7 @@
                         <details class="bk-product-extra"><summary>{{ trans('berkay::app.product-editor.video') }}</summary>@include('admin::catalog.products.edit.videos')</details>
 
                         <!-- Product Type View Blade File -->
-                        <section class="bk-workspace-target" data-title="{{ trans('berkay::app.variant-settings.title') }}">@includeIf('admin::catalog.products.edit.types.' . $product->type)</section>
+                        <section id="bk-workspace-variants" class="bk-workspace-target" data-title="{{ trans('berkay::collections.edit-variants') }}">@includeIf('admin::catalog.products.edit.types.' . $product->type)</section>
 
                         <!-- Related, Cross Sells, Up Sells View Blade File -->
                         <details class="bk-product-extra"><summary>{{ trans('berkay::app.product-editor.related') }}</summary>@include('admin::catalog.products.edit.links')</details>
@@ -303,7 +342,7 @@
                             <details class="bk-product-extra"><summary>{{ trans('berkay::app.product-editor.video') }}</summary>@include('admin::catalog.products.edit.videos')</details>
 
                             <!-- Product Type View Blade File -->
-                            <section class="bk-workspace-target" data-title="{{ trans('berkay::app.variant-settings.title') }}">@includeIf('admin::catalog.products.edit.types.' . $product->type)</section>
+                            <section id="bk-workspace-variants" class="bk-workspace-target" data-title="{{ trans('berkay::collections.edit-variants') }}">@includeIf('admin::catalog.products.edit.types.' . $product->type)</section>
 
                             <!-- Related, Cross Sells, Up Sells View Blade File -->
                             <details class="bk-product-extra"><summary>{{ trans('berkay::app.product-editor.related') }}</summary>@include('admin::catalog.products.edit.links')</details>

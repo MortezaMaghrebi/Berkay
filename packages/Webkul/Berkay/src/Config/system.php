@@ -2,6 +2,20 @@
 
 return [
     ['key' => 'berkay', 'name' => 'berkay::app.brand', 'info' => 'berkay::app.settings-info', 'sort' => 1],
+    ['key' => 'berkay.home', 'name' => 'berkay::collections.settings', 'info' => 'berkay::collections.settings-info', 'sort' => 2],
+    [
+        'key' => 'berkay.home.collections',
+        'name' => 'berkay::collections.settings',
+        'info' => 'berkay::collections.settings-info',
+        'sort' => 1,
+        'fields' => array_merge(...array_map(
+            fn ($key) => [
+                ['name' => $key.'_enabled', 'title' => 'berkay::collections.'.$key, 'type' => 'boolean', 'default' => 1, 'channel_based' => true],
+                ['name' => $key.'_limit', 'title' => 'berkay::collections.'.$key.'-limit', 'type' => 'number', 'validation' => 'required|integer|min:4|max:20', 'default' => 10, 'channel_based' => true],
+            ],
+            \Webkul\Berkay\Services\ProductCollections::KEYS
+        )),
+    ],
     ['key' => 'berkay.store', 'name' => 'berkay::app.store-settings', 'info' => 'berkay::app.settings-info', 'sort' => 1],
     [
         'key' => 'berkay.store.identity',

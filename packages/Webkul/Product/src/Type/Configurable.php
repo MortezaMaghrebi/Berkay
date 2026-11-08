@@ -52,6 +52,7 @@ class Configurable extends AbstractType
         'short_description',
         'description',
         'price',
+        'special_price',
         'weight',
         'status',
         'tax_category_id',
@@ -152,9 +153,17 @@ class Configurable extends AbstractType
          */
         $this->fillableVariantAttributes = $this->attributeRepository->findWhereIn('code', $this->fillableVariantAttributeCodes);
 
+        $this->fillableVariantAttributes = $this->fillableVariantAttributes
+            ->merge($product->super_attributes)
+            ->unique('id');
+
         $previousVariantIds = $product->variants->pluck('id');
 
         foreach ($data['variants'] ?? [] as $variantId => $variantData) {
+            if (array_key_exists('special_price', $variantData)) {
+                $variantData['special_price'] ??= '';
+            }
+
             if (Str::contains($variantId, 'variant_')) {
                 $superAttributes = [];
 
@@ -303,6 +312,7 @@ class Configurable extends AbstractType
                 new ConfigurableUniqueSku($this->getChildrenIds()),
             ],
             'variants.*.price' => 'required',
+            'variants.*.special_price' => ['nullable', 'numeric', 'gt:0', 'lt:variants.*.price'],
             'variants.*.weight' => 'required',
         ];
     }

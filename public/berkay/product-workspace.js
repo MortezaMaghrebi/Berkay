@@ -10,18 +10,29 @@
             if (event.target.closest('.bk-variant-dialog')) return;
             dirty = true;status.textContent=root.dataset.dirtyLabel;status.classList.add('is-dirty');
         };
-        root.addEventListener('click',event=>{if(event.target.closest('.bk-variant-dialog-footer button')){status.textContent=root.dataset.dirtyLabel;status.classList.add('is-dirty');}});
+        root.addEventListener('berkay:variant-saved', () => {
+            dirty = true;
+            status.textContent = root.dataset.dirtyLabel;
+            status.classList.add('is-dirty');
+        });
         root.addEventListener('input',markDirty);root.addEventListener('change',markDirty);
         const sections = root.querySelectorAll('.bk-product-edit-section,.bk-product-extra,.bk-workspace-target');
         sections.forEach((section,index)=>{
-            section.id = 'bk-edit-section-' + index;
-            const summary = section.querySelector('summary');
-            if (!summary && !section.dataset.title) return;
+            if (!section.id) section.id = 'bk-edit-section-' + index;
+            const summary = section.querySelector(':scope > summary');
+            if (section.classList.contains('bk-product-extra') || (summary && !section.open) || (!summary && !section.dataset.title)) return;
             const button = document.createElement('button');button.type='button';
             button.textContent=summary ? summary.firstChild.textContent.trim() : section.dataset.title;
             button.addEventListener('click',()=>{section.open=true;section.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});});
             nav.append(button);
         });
+        window.addEventListener('beforeunload', event => {
+            if (!dirty) return;
+
+            event.preventDefault();
+            event.returnValue = '';
+        });
+
         const form = root.querySelector('form');
         form?.addEventListener('submit',()=>{
             const title=root.querySelector('[name="name"]')?.value || '';

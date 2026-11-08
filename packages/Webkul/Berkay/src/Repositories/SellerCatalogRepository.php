@@ -78,6 +78,7 @@ class SellerCatalogRepository extends ProductRepository
                 'description' => $description, 'short_description' => $description,
                 'status' => $data['status'], 'visible_individually' => 1,
                 'new' => $id ? $product->new : 1,
+                'featured' => $data['featured'] ?? $product->featured ?? 0,
                 'weight' => $product->weight ?: '0.5',
                 'guest_checkout' => 1, 'manage_stock' => 1,
                 'channels' => array_unique([...$product->channels->pluck('id')->all(), $channel->id]),
@@ -92,6 +93,10 @@ class SellerCatalogRepository extends ProductRepository
                 'meta_title' => $product->meta_title ?: $data['name'],
                 'meta_description' => $product->meta_description ?: Str::limit(strip_tags($description), 155, ''),
             ];
+            if (array_key_exists('special_price', $data)) {
+                $payload['special_price'] = $data['special_price'] ?? '';
+            }
+
             $saved = parent::update($payload, $product->id);
             Event::dispatch('catalog.product.'.($id ? 'update' : 'create').'.after', $saved);
             if (! $id) {

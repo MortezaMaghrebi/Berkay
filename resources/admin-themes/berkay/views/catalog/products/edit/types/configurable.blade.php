@@ -88,7 +88,7 @@
                 </div>
             </template>
 
-            <dialog @keydown.enter.prevent="saveVariantDialog" ref="berkayVariantDialog" class="bk-variant-dialog" @cancel="dialogError = ''" :aria-label="variantDraft.id ? labels.edit : labels.add">
+            <dialog @keydown.enter="handleDialogEnter" ref="berkayVariantDialog" class="bk-variant-dialog" @cancel="dialogError = ''" :aria-label="variantDraft.id ? labels.edit : labels.add">
                 <div class="bk-variant-dialog-header"><h2>@{{ variantDraft.id ? labels.edit : labels.add }}</h2><button type="button" @click="$refs.berkayVariantDialog.close()">@{{ labels.close }}</button></div>
                 <div class="bk-variant-dialog-body" v-if="variantDraft.berkay_details">
                     <label>@{{ labels.name }}<input v-model="variantDraft.name" maxlength="200"></label>
@@ -100,6 +100,7 @@
                     <label>@{{ labels.material }}<select v-model="variantDraft.berkay_details.material"><option value="">@{{ labels.optional }}</option><option v-for="material in materialOptions" :value="material.admin_name">@{{ material.admin_name }}</option></select></label>
                     <div class="bk-variant-feature-inputs"><label v-for="featureIndex in 3">@{{ labels.feature }} @{{ featureIndex }}<input v-model="variantDraft.berkay_details.features[featureIndex - 1]" maxlength="200" :placeholder="labels.optional"></label></div>
                     <div class="bk-variant-dialog-pair"><label>@{{ labels.price }}<input type="number" min="0" step="0.01" v-model.number="variantDraft.price"></label><label v-for="source in inventorySources">@{{ labels.stock }}<span v-if="inventorySources.length > 1">@{{ source.name }}</span><input type="number" min="0" step="1" v-model.number="variantDraft.inventories[source.id]"></label></div>
+                    <label>{{ trans('berkay::collections.special-price') }}<input type="number" min="0" step="0.01" v-model.number="variantDraft.special_price" :placeholder="labels.optional"></label>
                     <p class="bk-variant-dialog-error" role="alert">@{{ dialogError }}</p>
                 </div>
                 <div class="bk-variant-dialog-footer"><p>@{{ labels.pending }}</p><button type="button" @click="saveVariantDialog">@{{ labels.save }}</button></div>
@@ -747,6 +748,7 @@
                     :name="'variants[' + variant.id + '][price]'"
                     :value="variant.price"
                 />
+                <input type="hidden" :name="'variants[' + variant.id + '][special_price]'" :value="variant.special_price ?? ''">
 
                 <input
                     type="hidden"
@@ -884,7 +886,11 @@
             <!-- Actions -->
             <div class="grid place-content-start gap-1 text-right">
                 <p class="font-semibold text-gray-800 dark:text-white">
-                    @{{ $admin.formatPrice(variant.price) }}  
+                    <template v-if="Number(variant.special_price) > 0">
+                        <del class="text-sm font-normal">@{{ $admin.formatPrice(variant.price) }}</del>
+                        <span class="block text-emerald-700 dark:text-emerald-400">@{{ $admin.formatPrice(variant.special_price) }}</span>
+                    </template>
+                    <template v-else>@{{ $admin.formatPrice(variant.price) }}</template>
                 </p>
 
                 <p class="font-semibold text-gray-800 dark:text-white">
@@ -893,21 +899,23 @@
 
                 <div class="flex gap-2.5">
                     <!-- Remove -->
-                    <p
-                        class="cursor-pointer text-red-600 transition-all hover:underline"
+                    <button
+                        type="button"
+                        class="bk-workspace-variant-remove text-red-600 hover:underline"
                         @click="remove"
                     >
                         @lang('admin::app.catalog.products.edit.types.configurable.delete-btn')
-                    </p>
+                    </button>
                     
                     <!-- Edit -->
                     <div>
-                        <p
-                            class="cursor-pointer text-emerald-600 transition-all hover:underline"
+                        <button
+                            type="button"
+                            class="bk-workspace-variant-edit cursor-pointer text-emerald-600 transition-all hover:underline"
                             @click="$emit('onEdit', variant)"
                         >
                             @lang('admin::app.catalog.products.edit.types.configurable.edit-btn')
-                        </p>
+                        </button>
 
                         <!-- Edit Drawer -->
                         <x-admin::form
@@ -1150,10 +1158,20 @@
                     this.dialogError = '';
                     this.$refs.berkayVariantDialog.showModal();
                 },
+                handleDialogEnter(event) {
+                    if (event.target.tagName !== 'INPUT' || event.target.type === 'radio') return;
+
+                    event.preventDefault();
+                    this.saveVariantDialog();
+                },
                 saveVariantDialog() {
                     const draft = this.variantDraft;
-                    if (!draft.name.trim() || !Number.isFinite(Number(draft.price)) || draft.price < 0 || this.superAttributes.some(attribute => !draft[attribute.code]) || this.inventorySources.some(source => !Number.isInteger(Number(draft.inventories[source.id])) || draft.inventories[source.id] < 0)) {
+                    if (!draft.name?.trim() || draft.price === '' || !Number.isFinite(Number(draft.price)) || draft.price < 0 || this.superAttributes.some(attribute => !draft[attribute.code]) || this.inventorySources.some(source => !Number.isInteger(Number(draft.inventories[source.id])) || draft.inventories[source.id] < 0)) {
                         this.dialogError = this.labels.invalid; return;
+                    }
+                    if (draft.special_price != null && draft.special_price !== '' && !(Number(draft.special_price) > 0 && Number(draft.special_price) < Number(draft.price))) {
+                        this.dialogError = @json(trans('berkay::collections.invalid-variant-sale'));
+                        return;
                     }
                     if (this.variants.some(variant => variant.id !== draft.id && this.superAttributes.every(attribute => variant[attribute.code] == draft[attribute.code]))) {
                         this.dialogError = this.labels.duplicate; return;
@@ -1165,6 +1183,7 @@
                         draft.sku = @json($product->sku) + '-' + draft.id;
                         this.variants.push(draft);
                     }
+                    this.$refs.berkayVariantDialog.dispatchEvent(new CustomEvent('berkay:variant-saved', { bubbles: true }));
                     this.$refs.berkayVariantDialog.close();
                 },
                 addVariant(params, { resetForm }) {

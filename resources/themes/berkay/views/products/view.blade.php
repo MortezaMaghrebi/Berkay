@@ -52,6 +52,7 @@
 
 <!-- Page Layout -->
 <x-shop::layouts>
+    <span hidden data-bk-product-view="{{ route('shop.berkay.collections.record', $product->id) }}"></span>
     <!-- Page Title -->
     <x-slot:title>
         {{ trim($product->meta_title) != "" ? $product->meta_title : $product->name }}

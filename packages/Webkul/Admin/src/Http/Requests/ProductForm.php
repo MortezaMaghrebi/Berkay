@@ -267,6 +267,10 @@ class ProductForm extends FormRequest
      */
     protected function passedValidation()
     {
+        if ($this->has('special_price') && $this->input('special_price') === null) {
+            $this->merge(['special_price' => '']);
+        }
+
         $tinyMCEFields = $this->productEditableAttributes
             ->filter(fn ($attribute) => $attribute->type === AttributeTypeEnum::TEXTAREA->value && $attribute->enable_wysiwyg)
             ->pluck('code')

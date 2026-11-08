@@ -13,13 +13,22 @@ use Webkul\Berkay\Http\Controllers\Admin\UserManagementController;
 use Webkul\Berkay\Http\Controllers\Shop\ContentSitemapController;
 use Webkul\Berkay\Http\Controllers\Shop\CustomRequestController;
 use Webkul\Berkay\Http\Controllers\Shop\MagazineController;
+use Webkul\Berkay\Http\Controllers\Shop\ProductCollectionController;
 use Webkul\Berkay\Http\Controllers\Shop\StorefrontEditorController;
 use Webkul\Berkay\Http\Controllers\Shop\TorobController;
 use Webkul\Berkay\Http\Controllers\Shop\ZarinpalController;
 use Webkul\Berkay\Http\Middleware\ProductEditorAccess;
+use Webkul\Berkay\Services\ProductCollections;
 use Webkul\Core\Http\Middleware\NoCacheMiddleware;
 
 Route::middleware(['web', 'shop'])->group(function () {
+    Route::get('berkay/home-collections', [ProductCollectionController::class, 'rows'])
+        ->middleware(NoCacheMiddleware::class)->name('shop.berkay.collections.rows');
+    Route::get('collections/{collection}', [ProductCollectionController::class, 'index'])
+        ->whereIn('collection', ProductCollections::KEYS)
+        ->name('shop.berkay.collections.index');
+    Route::post('berkay/product-views/{product}', [ProductCollectionController::class, 'record'])
+        ->whereNumber('product')->middleware('throttle:60,1')->name('shop.berkay.collections.record');
     Route::get('berkay/editor-session', [StorefrontEditorController::class, 'session'])->middleware(NoCacheMiddleware::class)->name('shop.berkay.editor_session');
     Route::get(config('app.admin_url').'/berkay/storefront/products/{id}/editor', [StorefrontEditorController::class, 'editor'])->whereNumber('id')->middleware([NoCacheMiddleware::class, ProductEditorAccess::class])->name('shop.berkay.full_editor');
     Route::put(config('app.admin_url').'/berkay/storefront/products/{id}/editor', [StorefrontEditorController::class, 'saveEditor'])->whereNumber('id')->middleware([NoCacheMiddleware::class, ProductEditorAccess::class, 'throttle:30,1'])->name('shop.berkay.full_editor.update');
