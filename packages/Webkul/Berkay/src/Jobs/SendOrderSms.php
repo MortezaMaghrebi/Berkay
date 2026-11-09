@@ -7,72 +7,71 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Cache;
 use InvalidArgumentException;
-use Webkul\Berkay\Services\IntegrationSettings;
 use Webkul\Berkay\Services\KavenegarSms;
+use Webkul\Berkay\Services\SmsTemplates;
 use Webkul\Sales\Repositories\OrderRepository;
 
 class SendOrderSms implements ShouldQueue
 {
     use Queueable;
 
-    /** Bound notification retries independently of order processing. */
     public int $tries = 3;
 
-    /** Allow the network request to finish within the worker timeout. */
     public int $timeout = 25;
 
-    /** Capture the order identity and notification event. */
-    public function __construct(public int $orderId, public string $event = 'created')
+    public function __construct(public int $orderId, public string $event = 'created', public ?string $token2 = null)
     {
         $this->afterCommit();
-        $this->onQueue('notifications');
     }
 
-    /** Serialize duplicate notifications for the same order event. */
     public function middleware(): array
     {
         return [(new WithoutOverlapping('berkay-sms-'.$this->orderId.'-'.$this->event))->expireAfter(60)];
     }
 
-    /** Retry temporary provider failures with increasing delays. */
     public function backoff(): array
     {
         return [30, 120, 600];
     }
 
-    /** Send a configured transactional message after the order commits. */
-    public function handle(OrderRepository $orders, KavenegarSms $sms): void
+    public function handle(OrderRepository $orders, KavenegarSms $sms, SmsTemplates $templates): void
     {
-        $template = app(IntegrationSettings::class)->get('kavenegar.'.($this->event === 'created' ? 'order_template' : 'status_template'));
+        $event = match (true) {
+            $this->event === 'created' => 'order',
+            str_starts_with($this->event, 'status-') => 'status',
+            str_starts_with($this->event, 'shipped-') => 'shipped',
+            str_starts_with($this->event, 'refunded-') => 'refunded',
+            default => $this->event,
+        };
 
-        if (
-            ! app(IntegrationSettings::class)->get('kavenegar.enabled')
-            || ! app(IntegrationSettings::class)->get('kavenegar.api_key')
-            || ! $template
-        ) {
-            return;
-        }
-
-        $order = $orders->find($this->orderId);
-
-        if (! $order) {
+        if (! $template = $templates->template($event)) {
             return;
         }
 
         $key = 'berkay:sms:'.$this->orderId.':'.$this->event;
+        $order = $orders->find($this->orderId);
 
-        if (Cache::has($key)) {
+        if (! $order || Cache::has($key)) {
             return;
         }
 
-        try {
-            $phone = $sms->normalizePhone((string) ($order->billing_address?->phone ?: $order->customer?->phone));
-        } catch (InvalidArgumentException) {
+        $phone = null;
+
+        foreach ([$order->customer?->phone, $order->billing_address?->phone] as $candidate) {
+            try {
+                $phone = $sms->normalizePhone((string) $candidate);
+                break;
+            } catch (InvalidArgumentException) {
+                continue;
+            }
+        }
+
+        if (! $phone) {
             return;
         }
 
-        $status = $this->event === 'created' ? null : substr($this->event, strlen('status-'));
-        $sms->lookup($phone, $template, (string) $order->increment_id, $status);
+        $token2 = $event === 'status' ? substr($this->event, strlen('status-')) : ($this->token2 ?? null);
+        $sms->lookup($phone, $template, (string) $order->increment_id, $token2);
         Cache::put($key, true, now()->addYear());
     }
 }

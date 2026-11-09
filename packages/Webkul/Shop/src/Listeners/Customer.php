@@ -85,7 +85,7 @@ class Customer extends Base
      */
     public function afterNoteCreated($note)
     {
-        if (! $note->customer_notified) {
+        if (! $note->customer_notified || ! $note->customer?->email) {
             return;
         }
 

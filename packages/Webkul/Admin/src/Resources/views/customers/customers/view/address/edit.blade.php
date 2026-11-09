@@ -141,7 +141,7 @@
                                     type="text"
                                     name="email"
                                     ::value="address.email"
-                                    rules="required|email"
+                                    rules="email"
                                     :label="trans('admin::app.customers.customers.view.address.edit.email')"
                                     :placeholder="trans('admin::app.customers.customers.view.address.edit.email')"
                                 />

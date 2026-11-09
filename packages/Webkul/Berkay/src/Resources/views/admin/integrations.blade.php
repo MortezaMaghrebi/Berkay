@@ -18,16 +18,8 @@
                 <select id="{{ $field }}" name="{{ $field }}">@foreach ([0, 1] as $option)<option value="{{ $option }}" @selected((int) old($field, $value) === $option)>{{ trans('berkay::app.'.($option ? 'yes' : 'no')) }}</option>@endforeach</select>
             @endforeach
             <h2>{{ trans('berkay::app.kavenegar') }}</h2>
-            <p>{{ trans('berkay::app.credential-status') }}: {{ trans('berkay::app.'.($smsConfigured ? 'configured' : 'not-configured')) }}</p>
-            <label for="kavenegar_api_key">{{ trans('berkay::app.api-key') }}</label>
-            <input id="kavenegar_api_key" name="kavenegar_api_key" type="password" autocomplete="new-password" dir="ltr" maxlength="512" value="" placeholder="{{ trans('berkay::app.keep-secret') }}">
-            <label for="kavenegar_enabled">{{ trans('berkay::app.enable-sms') }}</label>
-            <select id="kavenegar_enabled" name="kavenegar_enabled">@foreach ([0, 1] as $option)<option value="{{ $option }}" @selected((int) old('kavenegar_enabled', $smsEnabled) === $option)>{{ trans('berkay::app.'.($option ? 'yes' : 'no')) }}</option>@endforeach</select>
-            @foreach (['kavenegar_order_template' => ['order-template', $orderTemplate], 'kavenegar_status_template' => ['status-template', $statusTemplate]] as $field => [$label, $value])
-                <label for="{{ $field }}">{{ trans('berkay::app.'.$label) }}</label>
-                <input id="{{ $field }}" name="{{ $field }}" value="{{ old($field, $value) }}" maxlength="100" dir="ltr">
-            @endforeach
-            <p>{{ trans('berkay::app.template-help') }}</p>
+            <p><a class="bk-text-link" href="{{ route('admin.berkay.kavenegar.index') }}">{{ trans('berkay::sms.panel') }}</a></p>
+
             <h2>{{ trans('berkay::app.torob') }}</h2>
             <p>{{ trans('berkay::app.torob-help') }}</p>
             <label for="torob_enabled">{{ trans('berkay::app.enable') }}</label>

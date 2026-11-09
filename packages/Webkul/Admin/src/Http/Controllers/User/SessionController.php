@@ -35,15 +35,7 @@ class SessionController extends Controller
             return redirect()->route('admin.dashboard.index');
         }
 
-        if (strpos(url()->previous(), 'admin') !== false) {
-            $intendedUrl = url()->previous();
-        } else {
-            $intendedUrl = route('admin.dashboard.index');
-        }
-
-        session()->put('url.intended', $intendedUrl);
-
-        return redirect()->route('shop.customer.session.index');
+        return view('admin::users.sessions.create');
     }
 
     /**
@@ -84,6 +76,7 @@ class SessionController extends Controller
 
         $this->clearLoginAttempts(request());
 
+        session()->regenerate();
         session()->forget('two_factor_passed_for');
 
         if (! auth()->guard('admin')->user()->status) {

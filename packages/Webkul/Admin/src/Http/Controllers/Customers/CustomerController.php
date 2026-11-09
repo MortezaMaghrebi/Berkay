@@ -6,8 +6,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Webkul\Admin\DataGrids\Customers\CustomerDataGrid;
 use Webkul\Admin\DataGrids\Customers\View\InvoiceDataGrid;
@@ -16,8 +14,7 @@ use Webkul\Admin\DataGrids\Customers\View\ReviewDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Requests\MassUpdateRequest;
-use Webkul\Admin\Mail\Customer\NewCustomerNotification;
-use Webkul\Core\Rules\PhoneNumber;
+use Webkul\Berkay\Services\PhoneVerification;
 use Webkul\Customer\Repositories\CustomerGroupRepository;
 use Webkul\Customer\Repositories\CustomerNoteRepository;
 use Webkul\Customer\Repositories\CustomerRepository;
@@ -78,22 +75,22 @@ class CustomerController extends Controller
      */
     public function store(): JsonResponse
     {
+        $phone = request()->validate(['phone' => ['required', 'string', 'max:32']])['phone'];
+        request()->merge(['phone' => app(PhoneVerification::class)->normalize($phone)]);
+
         $this->validate(request(), [
             'first_name' => 'string|required',
             'last_name' => 'string|required',
             'gender' => 'required',
             'channel_id' => 'required|integer',
-            'email' => 'required|unique:customers,email,NULL,id,channel_id,'.request('channel_id'),
+            'email' => 'nullable|email|unique:customers,email,NULL,id,channel_id,'.request('channel_id'),
             'date_of_birth' => 'date|before:today',
-            'phone' => ['unique:customers,phone', new PhoneNumber],
+            'phone' => ['required', 'unique:customers,phone'],
         ]);
-
-        $password = Str::password(16);
 
         Event::dispatch('customer.registration.before');
 
         $data = array_merge([
-            'password' => bcrypt($password),
             'is_verified' => 1,
         ], request()->only([
             'first_name',
@@ -109,14 +106,6 @@ class CustomerController extends Controller
         Event::dispatch('customer.create.before');
 
         $customer = $this->customerRepository->create($data);
-
-        if (core()->getConfigData('emails.general.notifications.emails.general.notifications.customer_account_credentials')) {
-            try {
-                Mail::queue(new NewCustomerNotification($customer, $password));
-            } catch (\Exception $e) {
-                report($e);
-            }
-        }
 
         Event::dispatch('customer.create.after', $customer);
 
@@ -136,14 +125,16 @@ class CustomerController extends Controller
     public function update(int $id)
     {
         $customer = $this->customerRepository->findOrFail($id);
+        $phone = request()->validate(['phone' => ['required', 'string', 'max:32']])['phone'];
+        request()->merge(['phone' => app(PhoneVerification::class)->normalize($phone)]);
 
         $this->validate(request(), [
             'first_name' => 'string|required',
             'last_name' => 'string|required',
             'gender' => 'required',
-            'email' => 'required|unique:customers,email,'.$id.',id,channel_id,'.$customer->channel_id,
+            'email' => 'nullable|email|unique:customers,email,'.$id.',id,channel_id,'.$customer->channel_id,
             'date_of_birth' => 'date|before:today',
-            'phone' => ['unique:customers,phone,'.$id, new PhoneNumber],
+            'phone' => ['required', 'unique:customers,phone,'.$id],
         ]);
 
         $data = request()->only([

@@ -94,7 +94,7 @@
                                 name="email"
                                 ::value="customer.email"
                                 id="email"
-                                rules="required|email"
+                                rules="email"
                                 :label="trans('admin::app.customers.customers.view.edit.email')"
                                 placeholder="email@example.com"
                             />
@@ -114,7 +114,7 @@
                                     name="phone"
                                     ::value="customer.phone"
                                     id="phone"
-                                    rules="phone"
+                                    rules="required"
                                     :label="trans('admin::app.customers.customers.view.edit.phone')"
                                     :placeholder="trans('admin::app.customers.customers.view.edit.phone')"
                                 />

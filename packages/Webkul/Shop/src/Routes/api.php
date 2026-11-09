@@ -101,7 +101,10 @@ Route::group(['prefix' => 'api'], function () {
      * Login routes.
      */
     Route::controller(CustomerController::class)->prefix('customer')->group(function () {
-        Route::post('login', 'login')->name('shop.api.customers.session.create');
+        Route::post('login', fn () => response()->json([
+            'message' => trans('berkay::sms.use-phone'),
+            'login_url' => route('shop.customer.session.index'),
+        ], 410))->name('shop.api.customers.session.create');
     });
 
     Route::group(['middleware' => ['customer'], 'prefix' => 'customer'], function () {

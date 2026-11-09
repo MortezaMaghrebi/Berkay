@@ -7,6 +7,7 @@ use Webkul\Berkay\Http\Controllers\Admin\ArticleController;
 use Webkul\Berkay\Http\Controllers\Admin\ArticleImportController;
 use Webkul\Berkay\Http\Controllers\Admin\AttributeSettingsController;
 use Webkul\Berkay\Http\Controllers\Admin\IntegrationController;
+use Webkul\Berkay\Http\Controllers\Admin\KavenegarController;
 use Webkul\Berkay\Http\Controllers\Admin\OperationsController;
 use Webkul\Berkay\Http\Controllers\Admin\SimpleCatalogController;
 use Webkul\Berkay\Http\Controllers\Admin\UserManagementController;
@@ -48,6 +49,10 @@ Route::middleware(['web', 'admin', NoCacheMiddleware::class])
         Route::get('/', [OperationsController::class, 'index'])->name('admin.berkay.index');
         Route::get('integrations', [IntegrationController::class, 'index'])->name('admin.berkay.integrations.index');
         Route::put('integrations', [IntegrationController::class, 'update'])->name('admin.berkay.integrations.update');
+        Route::get('kavenegar', [KavenegarController::class, 'index'])->name('admin.berkay.kavenegar.index');
+        Route::put('kavenegar', [KavenegarController::class, 'update'])->name('admin.berkay.kavenegar.update');
+        Route::post('kavenegar/send', [KavenegarController::class, 'send'])
+            ->middleware('throttle:8,1')->name('admin.berkay.kavenegar.send');
         Route::get('articles', [ArticleController::class, 'index'])->name('admin.berkay.articles.index');
         Route::get('articles/create', [ArticleController::class, 'create'])->name('admin.berkay.articles.create');
         Route::post('articles', [ArticleController::class, 'store'])->name('admin.berkay.articles.store');

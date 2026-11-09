@@ -75,7 +75,7 @@
 
             <!-- Email -->
             <x-shop::form.control-group>
-                <x-shop::form.control-group.label class="required mt-0!" ::for="controlName + '_email'">
+                <x-shop::form.control-group.label class="mt-0!" ::for="controlName + '_email'">
                     @lang('shop::app.checkout.onepage.address.email')
                 </x-shop::form.control-group.label>
 
@@ -83,7 +83,7 @@
                     type="email"
                     ::name="controlName + '.email'"
                     ::value="address.email"
-                    rules="required|email"
+                    rules="email"
                     :label="trans('shop::app.checkout.onepage.address.email')"
                     placeholder="email@example.com"
                     ::id="controlName + '_email'"

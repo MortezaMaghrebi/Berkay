@@ -114,7 +114,7 @@
                         <x-shop::form.control-group.control
                             type="email"
                             name="email"
-                            rules="required|email"
+                            rules="email"
                             :value="old('email')"
                             :label="trans('shop::app.customers.account.addresses.create.email')"
                             :placeholder="trans('shop::app.customers.account.addresses.create.email')"

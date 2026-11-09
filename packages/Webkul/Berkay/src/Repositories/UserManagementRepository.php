@@ -23,7 +23,7 @@ class UserManagementRepository
         if ($kind === 'staff') {
             $query->with('role');
         }
-        $columns = $kind === 'staff' ? ['name', 'email'] : ['first_name', 'last_name', 'email', 'phone'];
+        $columns = $kind === 'staff' ? ['name', 'email'] : ['first_name', 'last_name', 'phone'];
         $query->when($search !== '', fn ($query) => $query->where(function ($query) use ($columns, $search) {
             foreach ($columns as $column) {
                 $query->orWhere($column, db_grammar()->caseInsensitiveLike(), '%'.$search.'%');
@@ -87,20 +87,20 @@ class UserManagementRepository
 
                 return $saved;
             }
-            $values = array_intersect_key($data, array_flip(['first_name', 'last_name', 'email', 'phone', 'status']));
-            if ($password) {
-                $values += ['password' => $password];
+            $values = array_intersect_key($data, array_flip(['first_name', 'last_name', 'phone', 'status']));
+            if ($account->phone !== $values['phone']) {
+                $values['remember_token'] = null;
             }
             Event::dispatch('customer.update.before', $id);
             $saved = $this->customers->update($values, $id);
             Event::dispatch('customer.update.after', $saved);
             if (! empty($data['grant_admin'])) {
-                if ($this->staffForEmail($data['email'])) {
+                if ($this->staffForEmail($data['staff_email'])) {
                     throw ValidationException::withMessages(['grant_admin' => trans('berkay::app.users.staff-exists')]);
                 }
                 $this->roles->findOrFail($data['role_id']);
                 Event::dispatch('user.admin.create.before');
-                $staff = $this->admins->create(['name' => trim($saved->first_name.' '.$saved->last_name), 'email' => $saved->email, 'password' => $password, 'role_id' => $data['role_id'], 'status' => 1]);
+                $staff = $this->admins->create(['name' => trim($saved->first_name.' '.$saved->last_name), 'email' => $data['staff_email'], 'password' => $password, 'role_id' => $data['role_id'], 'status' => 1]);
                 Event::dispatch('user.admin.create.after', $staff);
             }
 

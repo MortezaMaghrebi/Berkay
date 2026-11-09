@@ -12,10 +12,7 @@ class KavenegarSms
     /** Normalize Iranian mobile numbers and reject other recipients. */
     public function normalizePhone(string $phone): string
     {
-        $phone = strtr($phone, array_combine(
-            preg_split('//u', '۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩', -1, PREG_SPLIT_NO_EMPTY),
-            str_split('01234567890123456789')
-        ));
+        $phone = self::westernDigits($phone);
         $phone = preg_replace('/[\s()-]/u', '', $phone);
         $phone = preg_replace('/^(?:\+98|0098|98)/', '0', $phone);
 
@@ -24,6 +21,14 @@ class KavenegarSms
         }
 
         return $phone;
+    }
+
+    public static function westernDigits(string $value): string
+    {
+        return strtr($value, array_combine(
+            preg_split('//u', '۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩', -1, PREG_SPLIT_NO_EMPTY),
+            str_split('01234567890123456789')
+        ));
     }
 
     /** Send a verified template without exposing the API key in exceptions. */

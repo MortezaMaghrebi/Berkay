@@ -21,10 +21,6 @@ class IntegrationSettingsRequest extends FormRequest
             'zarinpal_active' => ['required', 'boolean'],
             'zarinpal_sandbox' => ['required', 'boolean'],
             'zarinpal_merchant_id' => ['nullable', 'uuid'],
-            'kavenegar_enabled' => ['required', 'boolean'],
-            'kavenegar_api_key' => ['nullable', 'string', 'regex:/^[A-Za-z0-9]{16,512}$/'],
-            'kavenegar_order_template' => ['nullable', 'string', 'max:100', 'regex:/^[A-Za-z0-9_-]+$/'],
-            'kavenegar_status_template' => ['nullable', 'string', 'max:100', 'regex:/^[A-Za-z0-9_-]+$/'],
             'torob_enabled' => ['required', 'boolean'],
         ];
     }
@@ -34,7 +30,7 @@ class IntegrationSettingsRequest extends FormRequest
     {
         throw new HttpResponseException(
             redirect()->back()->withErrors($validator)
-                ->withInput($this->except(['zarinpal_merchant_id', 'kavenegar_api_key']))
+                ->withInput($this->except(['zarinpal_merchant_id']))
         );
     }
 }

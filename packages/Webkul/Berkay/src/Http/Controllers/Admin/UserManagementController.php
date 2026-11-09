@@ -8,6 +8,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Berkay\Repositories\UserManagementRepository;
+use Webkul\Berkay\Services\PhoneVerification;
 
 class UserManagementController extends Controller
 {
@@ -38,7 +39,7 @@ class UserManagementController extends Controller
         $this->authorizeOwner();
         $account = $this->users->account($kind, $id);
 
-        return view('berkay::admin.users.edit', ['kind' => $kind, 'account' => $account, 'staff' => $kind === 'customers' ? $this->users->staffForEmail($account->email) : null, 'roles' => $this->users->roles()]);
+        return view('berkay::admin.users.edit', ['kind' => $kind, 'account' => $account, 'staff' => $kind === 'customers' && $account->email ? $this->users->staffForEmail($account->email) : null, 'roles' => $this->users->roles()]);
     }
 
     /** Validate and save an existing account or a new staff member. */
@@ -49,15 +50,33 @@ class UserManagementController extends Controller
             $this->users->account($kind, $id);
         }
         $grant = $kind === 'customers' && $request->boolean('grant_admin');
-        $rules = [
-            'email' => ['required', 'email', 'max:255', Rule::unique($kind === 'staff' ? 'admins' : 'customers', 'email')->ignore($id)],
-            'password' => [$id && ! $grant ? 'nullable' : 'required', 'string', 'min:12', 'max:128', 'confirmed'],
-            'status' => ['required', 'boolean'],
-        ];
+        $rules = ['status' => ['required', 'boolean']];
+        $passwordRules = ['string', 'min:12', 'max:128', 'confirmed'];
+
         if ($kind === 'staff') {
-            $rules += ['name' => ['required', 'string', 'max:150'], 'role_id' => ['required', 'integer', 'exists:roles,id']];
+            $rules += [
+                'name' => ['required', 'string', 'max:150'],
+                'email' => ['required', 'email', 'max:255', Rule::unique('admins', 'email')->ignore($id)],
+                'password' => [$id ? 'nullable' : 'required', ...$passwordRules],
+                'role_id' => ['required', 'integer', 'exists:roles,id'],
+            ];
         } else {
-            $rules += ['first_name' => ['required', 'string', 'max:100'], 'last_name' => ['required', 'string', 'max:100'], 'phone' => ['nullable', 'string', 'max:30', Rule::unique('customers', 'phone')->ignore($id)], 'grant_admin' => ['nullable', 'boolean'], 'role_id' => [$grant ? 'required' : 'nullable', 'integer', 'exists:roles,id']];
+            $phone = $request->validate(['phone' => ['required', 'string', 'max:32']])['phone'];
+            $request->merge(['phone' => app(PhoneVerification::class)->normalize($phone)]);
+            $rules += [
+                'first_name' => ['required', 'string', 'max:100'],
+                'last_name' => ['required', 'string', 'max:100'],
+                'phone' => ['required', Rule::unique('customers', 'phone')->ignore($id)],
+                'grant_admin' => ['nullable', 'boolean'],
+            ];
+
+            if ($grant) {
+                $rules += [
+                    'staff_email' => ['required', 'email', 'max:255', Rule::unique('admins', 'email')],
+                    'password' => ['required', ...$passwordRules],
+                    'role_id' => ['required', 'integer', 'exists:roles,id'],
+                ];
+            }
         }
         $this->users->save($kind, $id, $request->validate($rules));
 

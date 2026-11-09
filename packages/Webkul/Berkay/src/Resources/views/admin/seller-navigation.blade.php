@@ -15,6 +15,11 @@
             </a>
         @endif
     @endforeach
+    @if (bouncer()->hasPermission('berkay.integrations'))
+        <a href="{{ route('admin.berkay.kavenegar.index') }}" @class(['bk-nav-active' => request()->routeIs('admin.berkay.kavenegar.*')])>
+            <span class="icon-settings" aria-hidden="true"></span>{{ trans('berkay::sms.panel') }}
+        </a>
+    @endif
     @if(auth()->guard('admin')->user()?->role?->permission_type === 'all')
         <a href="{{ route('admin.berkay.users.index') }}" @class(['bk-nav-active' => request()->routeIs('admin.berkay.users.*')])><span class="icon-customer" aria-hidden="true"></span>{{ trans('berkay::app.users.title') }}</a>
     @endif

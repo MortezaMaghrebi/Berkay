@@ -491,3 +491,26 @@ html{-webkit-text-size-adjust:100%}
     color: var(--bk-muted);
     font-size: .9rem;
 }
+
+.bk-phone-account {
+    max-width: 520px;
+    min-height: 50vh;
+}
+
+.bk-phone-account p {
+    line-height: 1.9;
+}
+
+.bk-phone-account nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1.25rem;
+}
+
+.bk-phone-account a {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    color: var(--bk-leather);
+}

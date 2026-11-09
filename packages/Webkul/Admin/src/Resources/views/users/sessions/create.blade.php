@@ -10,7 +10,7 @@
             @if ($logo = core()->getConfigData('general.design.admin_logo.logo_image'))
                 <img
                     class="h-10 w-27.5"
-                    src="{{ Storage::url($logo) }}"
+                    src="{{ asset('storage/'.$logo) }}"
                     alt="{{ config('app.name') }}"
                 />
             @else
@@ -88,6 +88,7 @@
 
                         <!-- Submit Button -->
                         <button
+                            type="submit"
                             class="cursor-pointer rounded-md border border-blue-700 bg-blue-600 px-3.5 py-1.5 font-semibold text-gray-50"
                             aria-label="{{ trans('admin::app.users.sessions.submit-btn')}}"
                         >

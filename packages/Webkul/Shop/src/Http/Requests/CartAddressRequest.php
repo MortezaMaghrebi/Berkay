@@ -54,7 +54,7 @@ class CartAddressRequest extends FormRequest
             "{$addressType}.company_name" => ['nullable'],
             "{$addressType}.first_name" => ['required'],
             "{$addressType}.last_name" => ['required'],
-            "{$addressType}.email" => ['required'],
+            "{$addressType}.email" => ['nullable', 'email', 'max:255'],
             "{$addressType}.address" => ['required', 'array', 'min:1'],
             "{$addressType}.city" => ['required'],
             "{$addressType}.country" => core()->isCountryRequired() ? ['required'] : ['nullable'],

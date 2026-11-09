@@ -69,7 +69,7 @@
                                 type="email"
                                 id="email"
                                 name="email"
-                                rules="required|email"
+                                rules="email"
                                 :label="trans('admin::app.customers.customers.index.create.email')"
                                 placeholder="email@example.com"
                             />
@@ -87,7 +87,7 @@
                                 type="text"
                                 id="phone"
                                 name="phone"
-                                rules="phone"
+                                rules="required"
                                 :label="trans('admin::app.customers.customers.index.create.phone')"
                                 :placeholder="trans('admin::app.customers.customers.index.create.phone')"
                             />

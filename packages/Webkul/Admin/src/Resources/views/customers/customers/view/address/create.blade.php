@@ -129,7 +129,7 @@
                             <x-admin::form.control-group.control
                                 type="text"
                                 name="email"
-                                rules="required|email"
+                                rules="email"
                                 :label="trans('admin::app.customers.customers.view.address.create.email')"
                                 :placeholder="trans('admin::app.customers.customers.view.address.create.email')"
                             />

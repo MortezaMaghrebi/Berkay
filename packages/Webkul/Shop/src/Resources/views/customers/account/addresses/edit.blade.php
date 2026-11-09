@@ -126,7 +126,7 @@
                     <x-shop::form.control-group.control
                         type="email"
                         name="email"
-                        rules="required|email"
+                        rules="email"
                         :value="old('email') ?? $address->email"
                         :label="trans('Email')"
                         :placeholder="trans('Email')"

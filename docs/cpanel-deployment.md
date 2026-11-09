@@ -96,8 +96,14 @@ cd ~/repositories/Berkay
 
 ```cron
 * * * * * cd /home/charmber/berkay && /opt/cpanel/ea-php84/root/usr/bin/php artisan schedule:run >> /dev/null 2>&1
-* * * * * cd /home/charmber/berkay && /usr/bin/flock -n /home/charmber/.berkay-worker.lock /opt/cpanel/ea-php84/root/usr/bin/php artisan queue:work --stop-when-empty --max-time=50 --tries=3 --timeout=45 >> storage/logs/queue-cron.log 2>&1
+* * * * * cd /home/charmber/berkay && /usr/bin/flock -n /home/charmber/.berkay-worker.lock /opt/cpanel/ea-php84/root/usr/bin/php artisan queue:work --queue=default,notifications --stop-when-empty --max-time=50 --tries=3 --timeout=45 >> storage/logs/queue-cron.log 2>&1
 ```
+
+### پیامک و ورود مشتری
+
+در پنل مدیریت، «مدیریت پیامک کاوه‌نگار» را باز کنید. ابتدا کلید API و نام الگوی تأییدشدهٔ ورود را ذخیره و ارسال آزمایشی را امتحان کنید. نمونهٔ متن و توکن‌های هر الگو در پنل مشخص است. ثبت‌نام، تغییر شماره و حذف حساب در صورت خالی بودن الگوی اختصاصی از الگوی ورود استفاده می‌کنند. برای رویدادهای سفارش، الگوی موردنیاز را وارد کنید. ارسال پیامک سفارش به worker صف نیاز دارد.
+
+ورود مدیران از مسیر مدیریت خود سایت انجام می‌شود. مشتری‌های قبلی با شمارهٔ موبایل ثبت‌شده وارد می‌شوند. اگر شمارهٔ مشتری خالی، نامعتبر یا با حساب دیگری مشترک است، مالک فروشگاه ابتدا شماره را از «مدیریت کاربران» بررسی و اصلاح می‌کند.
 
 اگر هاست worker دائمی با Supervisor فراهم می‌کند از همان استفاده کنید. راهکار Cron را فقط با تأیید محدودیت‌های پردازش میزبان فعال کنید. queue:restart به‌تنهایی worker را اجرا نمی‌کند. فایل‌های لاگ و فضای دیسک را مدیریت کنید.
 

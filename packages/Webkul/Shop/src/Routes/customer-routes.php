@@ -9,63 +9,30 @@ use Webkul\Shop\Http\Controllers\Customer\Account\OrderController;
 use Webkul\Shop\Http\Controllers\Customer\Account\RMAController;
 use Webkul\Shop\Http\Controllers\Customer\Account\WishlistController;
 use Webkul\Shop\Http\Controllers\Customer\CustomerController;
-use Webkul\Shop\Http\Controllers\Customer\ForgotPasswordController;
+use Webkul\Berkay\Http\Controllers\Shop\PhoneAccountController;
 use Webkul\Shop\Http\Controllers\Customer\GDPRController;
-use Webkul\Shop\Http\Controllers\Customer\RegistrationController;
-use Webkul\Shop\Http\Controllers\Customer\ResetPasswordController;
 use Webkul\Shop\Http\Controllers\Customer\SessionController;
 use Webkul\Shop\Http\Controllers\DataGridController;
 use Webkul\Shop\Http\Middleware\EnsureGDPRIsEnabled;
 
 Route::prefix('customer')->group(function () {
-    /**
-     * Forgot password routes.
-     */
-    Route::controller(ForgotPasswordController::class)->prefix('forgot-password')->group(function () {
-        Route::get('', 'create')->name('shop.customers.forgot_password.create');
-
-        Route::post('', 'store')
-            ->middleware('throttle:6,1')
-            ->name('shop.customers.forgot_password.store');
+    Route::controller(PhoneAccountController::class)->middleware(NoCacheMiddleware::class)->group(function () {
+        Route::get('login', 'index')->name('shop.customer.session.index');
+        Route::post('login', 'send')->middleware('throttle:10,1')->name('shop.customer.session.create');
+        Route::post('login/verify', 'verify')->middleware('throttle:20,1')->name('shop.berkay.phone.login.verify');
+        Route::get('register', 'index')->name('shop.customers.register.index');
+        Route::post('register', 'send')->middleware('throttle:10,1')->name('shop.customers.register.store');
+        Route::post('register/verify', 'verify')->middleware('throttle:20,1')->name('shop.berkay.phone.register.verify');
     });
 
-    /**
-     * Reset password routes.
-     */
-    Route::controller(ResetPasswordController::class)->prefix('reset-password')->group(function () {
-        Route::get('{token}', 'create')->name('shop.customers.reset_password.create');
-
-        Route::post('', 'store')->name('shop.customers.reset_password.store');
-    });
-
-    /**
-     * Login routes.
-     */
-    Route::controller(SessionController::class)->prefix('login')->group(function () {
-        Route::get('', 'index')->name('shop.customer.session.index');
-
-        Route::post('', 'store')->name('shop.customer.session.create');
-    });
-
-    /**
-     * Registration routes.
-     */
-    Route::controller(RegistrationController::class)->group(function () {
-        Route::prefix('register')->group(function () {
-            Route::get('', 'index')->name('shop.customers.register.index');
-
-            Route::post('', 'store')->name('shop.customers.register.store');
-        });
-
-        /**
-         * Customer verification routes.
-         */
-        Route::get('verify-account/{token}', 'verifyAccount')->name('shop.customers.verify');
-
-        Route::get('resend/verification/{email}', 'resendVerificationEmail')
-            ->middleware('throttle:6,1')
-            ->name('shop.customers.resend.verification_email');
-    });
+    foreach ([
+        ['forgot-password', 'shop.customers.forgot_password.create'],
+        ['reset-password/{token}', 'shop.customers.reset_password.create'],
+        ['verify-account/{token}', 'shop.customers.verify'],
+        ['resend/verification/{email}', 'shop.customers.resend.verification_email'],
+    ] as [$legacyPath, $legacyName]) {
+        Route::get($legacyPath, fn () => redirect()->route('shop.customer.session.index'))->name($legacyName);
+    }
 
     /**
      * Customer authenticated routes. All the below routes only be accessible
@@ -87,6 +54,11 @@ Route::prefix('customer')->group(function () {
          * customer account details.
          */
         Route::prefix('account')->group(function () {
+            Route::controller(PhoneAccountController::class)->prefix('phone/{purpose}')->where(['purpose' => 'change|delete'])->group(function () {
+                Route::get('', 'settings')->name('shop.berkay.phone.settings');
+                Route::post('', 'sendSettingsCode')->middleware('throttle:10,1')->name('shop.berkay.phone.settings.send');
+                Route::post('verify', 'verifySettings')->middleware('throttle:20,1')->name('shop.berkay.phone.settings.verify');
+            });
             Route::get('', [CustomerController::class, 'account'])->name('shop.customers.account.index');
 
             /**
@@ -105,7 +77,7 @@ Route::prefix('customer')->group(function () {
 
                     Route::post('edit', 'update')->name('shop.customers.account.profile.update');
 
-                    Route::post('destroy', 'destroy')->name('shop.customers.account.profile.destroy');
+
                 });
 
                 Route::get('reviews', 'reviews')->name('shop.customers.account.reviews.index');

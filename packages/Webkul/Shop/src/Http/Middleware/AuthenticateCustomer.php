@@ -27,7 +27,7 @@ class AuthenticateCustomer
         } else {
             $customer = auth()->guard($guard)->user();
 
-            if (! $customer->status) {
+            if (! $customer->status || $customer->is_suspended) {
                 auth()->guard($guard)->logout();
 
                 if ($request->expectsJson()) {

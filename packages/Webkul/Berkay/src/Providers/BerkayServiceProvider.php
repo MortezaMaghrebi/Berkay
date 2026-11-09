@@ -41,6 +41,10 @@ class BerkayServiceProvider extends ServiceProvider
         });
         Event::listen('checkout.order.save.after', [OrderSmsListener::class, 'created']);
         Event::listen('sales.order.update-status.after', [OrderSmsListener::class, 'statusChanged']);
+        Event::listen('sales.order.cancel.after', [OrderSmsListener::class, 'canceled']);
+        Event::listen('sales.invoice.save.after', [OrderSmsListener::class, 'invoiced']);
+        Event::listen('sales.shipment.save.after', [OrderSmsListener::class, 'shipped']);
+        Event::listen('sales.refund.save.after', [OrderSmsListener::class, 'refunded']);
         $this->commands([SetupStore::class, PublishStarterContent::class]);
 
         $this->loadMigrationsFrom(__DIR__.'/../Database/Migrations');

@@ -106,3 +106,19 @@ html[lang=fa] body{font-family:Vazirmatn,Tahoma,sans-serif}html[lang=fa] body *:
     min-height: 44px;
     padding-inline: .3rem;
 }
+
+.bk-sms-template-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+    gap: .85rem 1.25rem;
+}
+
+.bk-sms-template-grid label,
+.bk-sms-template-grid small {
+    display: block;
+}
+
+.bk-sms-template-grid small {
+    margin-top: .25rem;
+    line-height: 1.8;
+}
