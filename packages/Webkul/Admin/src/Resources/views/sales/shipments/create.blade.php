@@ -130,10 +130,7 @@
                             <div class="grid">
                                 <!-- Item Listing -->
                                 @foreach ($order->items as $item)
-                                    @if (
-                                        $item->qty_to_ship > 0
-                                        && $item->product
-                                    )
+                                    @if ($item->canShip())
 										@php
 											$canShipQty = app('\Webkul\RMA\Helpers\Helper')->getRemainingQtyAfterRMA($item->id);
 										@endphp
@@ -223,6 +220,7 @@
 
                                         <!-- Information -->
                                         @foreach ($shipmentSources as $inventorySource)
+                                            @php $maximum = $shipmentQuantity->maximum($item, $inventorySource->id); @endphp
                                             <div class="grid grid-cols-2 gap-2.5 border-b border-slate-300 py-2.5 dark:border-gray-800">
                                                 <div class="grid gap-1">
                                                     <!--Inventory Source -->
@@ -237,20 +235,13 @@
                                                     <p class="text-gray-600 dark:text-gray-300">
                                                         @lang('admin::app.sales.shipments.create.qty-available') :
 
-                                                        @php
-                                                            $product = $item->getTypeInstance()->getOrderedItem($item)->product;
-
-                                                            $sourceQty = $product?->type == 'bundle' ? $item->qty_ordered : $product?->inventory_source_qty($inventorySource->id);
-                                                        @endphp
-
-                                                        {{ $sourceQty }}
+                                                        {{ $maximum }}
                                                     </p>
                                                 </div>
 
                                                 <div class="grid ltr:text-right rtl:text-left">
                                                     @php
                                                         $inputName = "shipment[items][$item->id][$inventorySource->id]";
-                                                        $maximum = $shipmentQuantity->maximum($item, $inventorySource->id);
                                                     @endphp
 
                                                     <!-- Quantity To Ship -->

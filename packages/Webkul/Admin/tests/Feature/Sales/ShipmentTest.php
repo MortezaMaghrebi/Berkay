@@ -83,6 +83,26 @@ it('should offer and ship only the quantity available for a partial shipment', f
     expect($item->fresh()->qty_shipped)->toBe(2);
 });
 
+it('should ship a historical order line when its catalog product was deleted', function () {
+    $product = productInStock(5);
+    $order = $this->createOrder(items: [['product' => $product, 'qty_ordered' => 1]]);
+    $item = $order->items->first();
+    $product->delete();
+
+    $this->loginAsAdmin();
+    get(route('admin.sales.orders.view', $order->id))
+        ->assertOk()
+        ->assertSee('name="shipment[items]['.$item->id.']['.$this->defaultInventorySourceId().']"', false)
+        ->assertSee('data-original-quantity="1"', false);
+
+    postJson(route('admin.sales.shipments.store', $order->id), shipmentPayload($item->id, 1))
+        ->assertRedirect(route('admin.sales.orders.view', $order->id))
+        ->assertSessionHas('success', trans('admin::app.sales.shipments.create.success'));
+
+    $this->assertDatabaseHas('shipment_items', ['order_item_id' => $item->id, 'sku' => $item->sku, 'qty' => 1]);
+    expect($item->fresh()->qty_shipped)->toBe(1);
+});
+
 it('should ship the ordered quantity, record it on the item and take it from the inventory source', function () {
     $product = productInStock(10);
 

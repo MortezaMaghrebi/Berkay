@@ -109,7 +109,7 @@
             </div>
 
             <!-- Product Information Section -->
-            <div class="-mt-9 grid max-w-72.75 translate-y-9 content-start gap-2.5 bg-white p-2.5 transition-transform duration-300 ease-out group-hover:translate-y-0 group-hover:rounded-t-lg max-md:relative max-md:mt-0 max-md:translate-y-0 max-md:gap-0 max-md:px-0 max-md:py-1.5 max-sm:min-w-42.5 max-sm:max-w-48">
+            <div class="-mt-9 grid max-w-72.75 translate-y-9 content-start gap-2.5 p-2.5 transition-transform duration-300 ease-out group-hover:translate-y-0 group-hover:rounded-t-lg max-md:relative max-md:mt-0 max-md:translate-y-0 max-md:gap-0 max-md:px-0 max-md:py-1.5 max-sm:min-w-42.5 max-sm:max-w-48">
 
                 {!! view_render_event('bagisto.shop.components.products.card.name.before') !!}
 

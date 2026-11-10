@@ -5,6 +5,7 @@ namespace Webkul\Sales\Repositories;
 use Illuminate\Container\Container;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Webkul\Berkay\Services\OrderWorkflow;
 use Webkul\Core\Eloquent\Repository;
 use Webkul\Sales\Contracts\Shipment;
 use Webkul\Sales\Models\Order;
@@ -47,7 +48,7 @@ class ShipmentRepository extends Repository
             Event::dispatch('sales.shipment.save.before', $data);
 
             $order = $this->orderRepository->findOrFail($data['order_id']);
-            abort_if(app(\Webkul\Berkay\Services\OrderWorkflow::class)->waiting($order), 409, trans('berkay::workflow.waiting'));
+            abort_if(app(OrderWorkflow::class)->waiting($order), 409, trans('berkay::workflow.waiting'));
 
             $shipment = $this->model->create([
                 'order_id' => $order->id,
@@ -80,7 +81,7 @@ class ShipmentRepository extends Repository
                     'shipment_id' => $shipment->id,
                     'order_item_id' => $orderItem->id,
                     'name' => $orderItem->name,
-                    'sku' => $orderItem->getTypeInstance()->getOrderedItem($orderItem)->sku,
+                    'sku' => $orderItem->getTypeInstance()->getOrderedItem($orderItem)?->sku ?? $orderItem->sku,
                     'qty' => $qty,
                     'weight' => $orderItem->weight * $qty,
                     'price' => $orderItem->price,
