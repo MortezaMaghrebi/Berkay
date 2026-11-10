@@ -23,7 +23,7 @@ class BerkayServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->app->booted(function () {
-            $aliases = ['catalog.products' => ['admin.berkay.simple_product.index'], 'catalog.products.create' => ['admin.berkay.simple_product.create', 'admin.berkay.simple_product.store', 'admin.catalog.products.create'], 'catalog.products.edit' => ['admin.berkay.simple_product.edit', 'admin.berkay.simple_product.update'], 'catalog.categories' => ['admin.berkay.simple_category.index'], 'catalog.categories.create' => ['admin.berkay.simple_category.create', 'admin.berkay.simple_category.store'], 'catalog.categories.edit' => ['admin.berkay.simple_category.edit', 'admin.berkay.simple_category.update']];
+            $aliases = ['catalog.products' => ['admin.berkay.simple_product.index'], 'catalog.products.create' => ['admin.berkay.simple_product.create', 'admin.berkay.simple_product.store', 'admin.catalog.products.create'], 'catalog.products.edit' => ['admin.berkay.simple_product.edit', 'admin.berkay.simple_product.update', 'admin.berkay.catalog_table.index', 'admin.berkay.catalog_table.update', 'admin.berkay.catalog_table.adjust'], 'catalog.products.delete' => ['admin.berkay.catalog_table.destroy'], 'catalog.categories' => ['admin.berkay.simple_category.index'], 'catalog.categories.create' => ['admin.berkay.simple_category.create', 'admin.berkay.simple_category.store'], 'catalog.categories.edit' => ['admin.berkay.simple_category.edit', 'admin.berkay.simple_category.update']];
             config(['acl' => array_map(function ($entry) use ($aliases) {
                 if (isset($aliases[$entry['key']])) {
                     $entry['route'] = array_unique(array_merge((array) $entry['route'], $aliases[$entry['key']]));

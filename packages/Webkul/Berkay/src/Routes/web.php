@@ -6,6 +6,7 @@ use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Berkay\Http\Controllers\Admin\ArticleController;
 use Webkul\Berkay\Http\Controllers\Admin\ArticleImportController;
 use Webkul\Berkay\Http\Controllers\Admin\AttributeSettingsController;
+use Webkul\Berkay\Http\Controllers\Admin\CatalogTableController;
 use Webkul\Berkay\Http\Controllers\Admin\IntegrationController;
 use Webkul\Berkay\Http\Controllers\Admin\KavenegarController;
 use Webkul\Berkay\Http\Controllers\Admin\OperationsController;
@@ -47,6 +48,10 @@ Route::middleware(['web', 'admin', NoCacheMiddleware::class])
     ->prefix(config('app.admin_url').'/berkay')
     ->group(function () {
         Route::get('/', [OperationsController::class, 'index'])->name('admin.berkay.index');
+        Route::get('catalog-table', [CatalogTableController::class, 'index'])->name('admin.berkay.catalog_table.index');
+        Route::patch('catalog-table', [CatalogTableController::class, 'update'])->middleware('throttle:60,1')->name('admin.berkay.catalog_table.update');
+        Route::post('catalog-table/prices', [CatalogTableController::class, 'adjust'])->middleware('throttle:5,1')->name('admin.berkay.catalog_table.adjust');
+        Route::delete('catalog-table/{parent}/{item}', [CatalogTableController::class, 'destroy'])->whereNumber(['parent', 'item'])->name('admin.berkay.catalog_table.destroy');
         Route::get('integrations', [IntegrationController::class, 'index'])->name('admin.berkay.integrations.index');
         Route::put('integrations', [IntegrationController::class, 'update'])->name('admin.berkay.integrations.update');
         Route::get('kavenegar', [KavenegarController::class, 'index'])->name('admin.berkay.kavenegar.index');

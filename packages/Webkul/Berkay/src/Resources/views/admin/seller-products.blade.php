@@ -4,6 +4,9 @@
         <div class="bk-toolbar"><div><h1>{{ trans('berkay::app.seller.products') }}</h1><p>{{ trans('berkay::app.seller.products-help') }}</p></div>
             @if (bouncer()->hasPermission('catalog.products.create'))<a class="bk-button" href="{{ route('admin.berkay.simple_product.create') }}">＋ {{ trans('berkay::app.seller.new-product') }}</a>@endif
         </div>
+        @if (bouncer()->hasPermission('catalog.products.edit'))
+            <a class="bk-button" href="{{ route('admin.berkay.catalog_table.index') }}">{{ trans('berkay::table.title') }}</a>
+        @endif
         @include('berkay::admin.seller-feedback')
         <form class="bk-list-search" method="get"><label class="sr-only" for="query">{{ trans('berkay::app.seller.search-products') }}</label><input id="query" name="query" value="{{ request('query') }}" placeholder="{{ trans('berkay::app.seller.search-products') }}"><button type="submit">{{ trans('berkay::app.search') }}</button></form>
         <div class="bk-product-list">
