@@ -32,13 +32,14 @@ class ArticleRepository extends Repository
     }
 
     /** Find a public article without exposing drafts or scheduled content. */
-    public function publishedBySlug(string $slug): mixed
+    public function publishedBySlug(string $slug, bool $required = true): mixed
     {
-        return $this->model->newQuery()
+        $query = $this->model->newQuery()
             ->where('slug', $slug)
             ->where('status', 'published')
             ->whereNotNull('published_at')
-            ->where('published_at', '<=', now())
-            ->firstOrFail();
+            ->where('published_at', '<=', now());
+
+        return $required ? $query->firstOrFail() : $query->first();
     }
 }

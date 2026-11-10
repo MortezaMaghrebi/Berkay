@@ -48,6 +48,10 @@
             @endif
             <div class="bk-prose bk-story-body">{!! $body !!}</div>
         </div>
+        @if ($article->slug === \Webkul\Berkay\Models\Article::LEATHER_GUIDE_SLUG)
+            @include('berkay::shop.leather-guide')
+        @endif
+
         @if ($related->count())
             <section class="bk-story-related"><h2>{{ trans('berkay::app.editorial.related') }}</h2>
                 <div class="bk-story-grid">@foreach ($related as $entry) @include('berkay::shop.magazine.card', ['entry' => $entry]) @endforeach</div>

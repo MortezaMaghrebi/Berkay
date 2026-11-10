@@ -1,6 +1,6 @@
 <section class="bk-leather-guide" aria-labelledby="bk-leather-guide-title">
     <header class="bk-leather-guide-intro">
-        <h2 id="bk-leather-guide-title">{{ trans('berkay::leather.title') }}</h2>
+        <h2 id="bk-leather-guide-title">{{ trans('berkay::leather.samples') }}</h2>
         <p>{{ trans('berkay::leather.intro') }}</p>
     </header>
 

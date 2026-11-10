@@ -8,6 +8,9 @@ use Webkul\Berkay\Contracts\Article as ArticleContract;
 
 class Article extends Model implements ArticleContract
 {
+    /** Public slug for the leather texture guide. */
+    public const LEATHER_GUIDE_SLUG = 'leather-textures-guide';
+
     /** Store records in the extension table. */
     protected $table = 'berkay_articles';
 

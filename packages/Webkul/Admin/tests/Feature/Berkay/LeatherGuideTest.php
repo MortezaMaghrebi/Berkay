@@ -3,6 +3,7 @@
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Webkul\Berkay\Models\Article;
 
 it('publishes a channel leather sample through the configuration form and can remove it', function () {
     $this->loginAsAdmin();
@@ -38,6 +39,22 @@ it('publishes a channel leather sample through the configuration form and can re
 
     Storage::assertMissing($path);
     expect(view('berkay::shop.leather-guide')->render())->toContain('bk-leather-swatch--patterned');
+});
+
+it('links a single card to the published article that contains the leather samples', function () {
+    $migration = require base_path('packages/Webkul/Berkay/src/Database/Migrations/2026_11_10_000007_publish_leather_textures_guide.php');
+    $migration->up();
+
+    $slug = Article::LEATHER_GUIDE_SLUG;
+    $url = route('shop.berkay.magazine.show', $slug);
+    $card = view('berkay::shop.leather-guide-card')->render();
+
+    expect($card)->toContain($url)->not->toContain('bk-leather-samples', 'bk-leather-guide-groups');
+    $this->get($url)->assertOk()->assertSee(trans('berkay::leather.samples'));
+
+    DB::table('berkay_articles')->where('slug', $slug)->update(['status' => 'draft']);
+    expect(view('berkay::shop.leather-guide-card')->render())->not->toContain($url);
+    $this->get($url)->assertNotFound();
 });
 
 it('rejects non-image uploads for the leather guide', function () {
