@@ -20,7 +20,8 @@ class SellerProductRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:200'],
             'price' => ['required', 'numeric', 'min:0', 'max:100000000000'],
-            'quantity' => ['required', 'integer', 'min:0', 'max:100000'],
+            'quantity' => [Rule::excludeIf(fn () => $this->boolean('unlimited_stock')), 'required', 'integer', 'min:0', 'max:100000'],
+            'unlimited_stock' => ['sometimes', 'boolean'],
             'category_id' => ['required', 'integer', Rule::in(app(SellerCategoryRepository::class)->storeIds())],
             'description' => ['nullable', 'string', 'max:20000'],
             'status' => ['required', 'boolean'],

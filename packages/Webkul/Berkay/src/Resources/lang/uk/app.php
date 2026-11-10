@@ -66,6 +66,8 @@ return [
         'sku' => 'Product code',
     ],
     'users' => [
+        'new-customer' => 'Add customer',
+        'new-customer-help' => 'The customer signs in using a one-time code sent to this mobile number.',
         'search-action' => 'Search',
         'title' => 'User management',
         'intro' => 'Manage customers and administrators separately. Each account has independent credentials. Only full-access owners can use this screen.',

@@ -3,10 +3,12 @@
 namespace Webkul\Berkay\Repositories;
 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Webkul\Customer\Repositories\CustomerGroupRepository;
 use Webkul\Customer\Repositories\CustomerRepository;
 use Webkul\User\Repositories\AdminRepository;
 use Webkul\User\Repositories\RoleRepository;
@@ -14,7 +16,7 @@ use Webkul\User\Repositories\RoleRepository;
 class UserManagementRepository
 {
     /** Inject the native account repositories. */
-    public function __construct(protected CustomerRepository $customers, protected AdminRepository $admins, protected RoleRepository $roles) {}
+    public function __construct(protected CustomerRepository $customers, protected AdminRepository $admins, protected RoleRepository $roles, protected CustomerGroupRepository $groups) {}
 
     /** List accounts with a bounded search and stable pagination. */
     public function listing(string $kind, string $search): LengthAwarePaginator
@@ -88,6 +90,25 @@ class UserManagementRepository
                 return $saved;
             }
             $values = array_intersect_key($data, array_flip(['first_name', 'last_name', 'phone', 'status']));
+            if (! $account) {
+                $group = $this->groups->findOneByField('code', core()->getConfigData('customer.settings.create_new_account_options.default_group') ?: 'general')
+                    ?? $this->groups->findOneByField('code', 'general');
+
+                try {
+                    $saved = $this->customers->create($values + [
+                        'channel_id' => core()->getCurrentChannel()->id,
+                        'customer_group_id' => $group?->id,
+                        'is_verified' => false,
+                    ]);
+                } catch (UniqueConstraintViolationException) {
+                    throw ValidationException::withMessages(['phone' => trans('berkay::sms.account-unavailable')]);
+                }
+
+                Event::dispatch('customer.create.after', $saved);
+
+                return $saved;
+            }
+
             if ($account->phone !== $values['phone']) {
                 $values['remember_token'] = null;
             }

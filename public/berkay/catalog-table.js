@@ -51,7 +51,7 @@ window.addEventListener('load', () => {
 
                 for (const name of edits.get(row)) {
                     const input = row.querySelector('[name="' + name + '"]');
-                    if (input.disabled) continue;
+                    if (!input || input.disabled || (name === 'quantity' && row.querySelector('[name=unlimited_stock]')?.checked && item.id)) continue;
                     if (!input.reportValidity()) return;
                     item[name] = input.type === 'checkbox' ? input.checked : input.type === 'number' ? input.valueAsNumber : input.value;
                 }
@@ -75,20 +75,41 @@ window.addEventListener('load', () => {
                     edits.delete(row);
                     row.classList.remove('is-edited');
 
+                    const submitted = payload.find(item => item.key === saved.key);
+                    const preview = row.querySelector('[data-preview-url]');
+                    if (preview && submitted?.status !== undefined) {
+                        if (submitted.status) {
+                            preview.href = preview.dataset.previewUrl;
+                            preview.removeAttribute('aria-disabled');
+                        } else {
+                            preview.removeAttribute('href');
+                            preview.setAttribute('aria-disabled', 'true');
+                        }
+                    }
+
                     if (saved.type === 'configurable') {
                         ['price','quantity'].forEach(name => {
                             const field = group.querySelector('[data-parent-row] [name="' + name + '"]');
+                            if (!field) return;
                             field.disabled = true;
                             delete field.dataset.busy;
                         });
 
-                        const submitted = payload.find(item => item.key === saved.key);
                         if (row.hasAttribute('data-parent-row') && submitted?.discount !== undefined) {
                             group.querySelectorAll('[data-variant]').forEach(child => {
                                 if (!edits.get(child)?.has('discount')) child.querySelector('[name=discount]').value = submitted.discount;
                             });
                         }
                     }
+                }
+                for (const saved of result.rows) {
+                    const group = panel.querySelector('[data-product="' + saved.parent + '"]');
+                    group.querySelectorAll('[data-row][data-id]').forEach(row => {
+                        const input = row.querySelector('[name=unlimited_stock]');
+                        if (input && !edits.get(row)?.has('unlimited_stock') && Object.hasOwn(saved.stock, row.dataset.id)) {
+                            input.checked = saved.stock[row.dataset.id];
+                        }
+                    });
                 }
                 notice(result.message);
             } catch (error) {
@@ -151,7 +172,8 @@ window.addEventListener('load', () => {
                     child.querySelector('[name=quantity]').value = parent.querySelector('[name=quantity]').value || '0';
                 }
                 button.closest('tr').before(child);
-                mark(child, ['name','price','quantity','status']);
+                child.querySelector('[name=unlimited_stock]').checked = parent.querySelector('[name=unlimited_stock]').checked;
+                mark(child, ['name','price','quantity','status','unlimited_stock']);
                 child.querySelector('[name=price]').focus();
             }
 

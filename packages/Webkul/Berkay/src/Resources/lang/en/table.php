@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'unlimited-stock' => 'Unlimited stock',
+    'stock-all-variants' => 'This option changes stock tracking for all variants.',
     'title' => 'Catalog table',
     'intro' => 'Edit price and stock in the table. Expand a product to see variants. Save all applies edits on this page.',
     'search' => 'Search product names',

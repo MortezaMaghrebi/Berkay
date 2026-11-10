@@ -138,7 +138,15 @@ html[lang=fa] body{font-family:Vazirmatn,Tahoma,sans-serif}html[lang=fa] body *:
 .bk-catalog-overflow th,.bk-catalog-overflow td{text-align:start;padding:.34rem .45rem;border-bottom:1px solid #eee6de}
 .bk-catalog-overflow th{font-size:.8rem;background:#f3ebe0;white-space:nowrap}
 .bk-catalog-overflow td:nth-child(2){width:8rem}
-.bk-catalog-overflow td:nth-child(3),.bk-catalog-overflow td:nth-child(4){width:5.2rem}
+.bk-catalog-overflow td:nth-child(3){width:8.25rem}
+.bk-catalog-overflow td:nth-child(4){width:5.2rem}
+.bk-admin .bk-unlimited-stock{display:inline-flex;align-items:center;gap:.35rem;min-height:32px;cursor:pointer;white-space:nowrap}
+.bk-admin .bk-unlimited-stock input[type=checkbox]{width:1rem;height:1rem;accent-color:#70462e}
+.bk-catalog-table .bk-unlimited-stock{font-size:.8rem}
+.bk-stock-editor:has([name=unlimited_stock]:checked) .bk-stock-quantity{display:none}
+.bk-catalog-actions{flex-wrap:wrap}
+.bk-catalog-actions a:hover{text-decoration:underline;text-underline-offset:3px}
+.bk-catalog-actions a[aria-disabled=true]{cursor:default;text-decoration:none;opacity:.55}
 .bk-catalog-table :is(input:not([type=checkbox]),select){width:100%;min-height:35px;border:1px solid #ddd2c7;border-radius:6px;background:#fff;padding:.25rem .45rem}
 .bk-catalog-table input[type=number]{direction:ltr;font-variant-numeric:tabular-nums}
 .bk-catalog-table input:disabled{opacity:.44;background:#f4f1ed}

@@ -39,6 +39,16 @@ it('lets a permitted seller create a product with automatic SKU and Persian pric
     expect($product->fresh()->images)->toHaveCount(1)
         ->and((float) $product->fresh()->price)->toBe(300000.0)
         ->and($product->fresh()->sku)->toBe($product->sku);
+
+    $this->put(route('admin.berkay.simple_product.update', $product->id), [
+        'name' => $product->name,
+        'price' => 300000,
+        'unlimited_stock' => 1,
+        'category_id' => $this->sellerCategory->id,
+        'status' => 1,
+    ])->assertSessionHasNoErrors()->assertRedirect();
+    expect($product->fresh()->haveSufficientQuantity(100))->toBeTrue()
+        ->and($product->fresh()->inventories->sum('qty'))->toBe(2);
 });
 
 it('rejects product writes from a seller with read-only access', function () {

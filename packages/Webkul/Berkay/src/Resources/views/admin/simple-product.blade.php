@@ -22,8 +22,20 @@
                     @php
                         $sourceId = core()->getCurrentChannel()->inventory_sources->first()?->id;
                         $stock = $product?->inventories->where('inventory_source_id', $sourceId)->sum('qty') ?? 1;
+                        $unlimited = (bool) old('unlimited_stock', $product && ! $product->manage_stock);
                     @endphp
-                    <div><label for="quantity">{{ trans('berkay::app.seller.quantity') }}</label><input id="quantity" name="quantity" inputmode="numeric" value="{{ old('quantity', $stock) }}" required><small>{{ trans('berkay::app.seller.quantity-help') }}</small></div>
+                    <div class="bk-stock-editor">
+                        <input type="hidden" name="unlimited_stock" value="0">
+                        <label class="bk-unlimited-stock">
+                            <input type="checkbox" name="unlimited_stock" value="1" @checked($unlimited)>
+                            <span>{{ trans('berkay::table.unlimited-stock') }}</span>
+                        </label>
+                        <div class="bk-stock-quantity">
+                            <label for="quantity">{{ trans('berkay::app.seller.quantity') }}</label>
+                            <input id="quantity" name="quantity" inputmode="numeric" value="{{ old('quantity', $stock) }}">
+                            <small>{{ trans('berkay::app.seller.quantity-help') }}</small>
+                        </div>
+                    </div>
                 </div>
                 <label for="category_id">{{ trans('berkay::app.seller.category_id') }}</label>
                 <select id="category_id" name="category_id" required>

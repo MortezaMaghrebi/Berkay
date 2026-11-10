@@ -25,12 +25,14 @@ class UserManagementController extends Controller
         return view('berkay::admin.users.index', ['kind' => $kind, 'accounts' => $this->users->listing($kind, $data['q'] ?? '')]);
     }
 
-    /** Show a staff creation form. */
-    public function create(): View
+    /** Show the creation form for the selected account type. */
+    public function create(Request $request): View
     {
         $this->authorizeOwner();
 
-        return view('berkay::admin.users.edit', ['kind' => 'staff', 'account' => null, 'staff' => null, 'roles' => $this->users->roles()]);
+        $data = $request->validate(['kind' => ['sometimes', Rule::in(['customers', 'staff'])]]);
+
+        return view('berkay::admin.users.edit', ['kind' => $data['kind'] ?? 'staff', 'account' => null, 'staff' => null, 'roles' => $this->users->roles()]);
     }
 
     /** Show the selected account without exposing its current password. */
@@ -42,14 +44,14 @@ class UserManagementController extends Controller
         return view('berkay::admin.users.edit', ['kind' => $kind, 'account' => $account, 'staff' => $kind === 'customers' && $account->email ? $this->users->staffForEmail($account->email) : null, 'roles' => $this->users->roles()]);
     }
 
-    /** Validate and save an existing account or a new staff member. */
+    /** Validate and save an existing or new account. */
     public function save(Request $request, string $kind = 'staff', ?int $id = null): RedirectResponse
     {
         $this->authorizeOwner();
         if ($id) {
             $this->users->account($kind, $id);
         }
-        $grant = $kind === 'customers' && $request->boolean('grant_admin');
+        $grant = $kind === 'customers' && $id !== null && $request->boolean('grant_admin');
         $rules = ['status' => ['required', 'boolean']];
         $passwordRules = ['string', 'min:12', 'max:128', 'confirmed'];
 
@@ -67,7 +69,7 @@ class UserManagementController extends Controller
                 'first_name' => ['required', 'string', 'max:100'],
                 'last_name' => ['required', 'string', 'max:100'],
                 'phone' => ['required', Rule::unique('customers', 'phone')->ignore($id)],
-                'grant_admin' => ['nullable', 'boolean'],
+                'grant_admin' => [$id ? 'nullable' : 'prohibited', 'boolean'],
             ];
 
             if ($grant) {

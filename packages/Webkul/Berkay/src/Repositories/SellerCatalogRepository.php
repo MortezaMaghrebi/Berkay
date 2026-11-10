@@ -60,9 +60,13 @@ class SellerCatalogRepository extends ProductRepository
         $saved = DB::transaction(function () use ($data, $id) {
             $channel = core()->getCurrentChannel();
             $source = $channel->inventory_sources->first();
-            abort_unless($source, 422, trans('berkay::app.seller.inventory-required'));
+
             $product = $id ? $this->storeProduct($id) : null;
             abort_if($product && $product->type !== 'simple', 422);
+            $manageStock = array_key_exists('unlimited_stock', $data)
+                ? ! $data['unlimited_stock']
+                : ($product ? (bool) $product->manage_stock : true);
+            abort_if($manageStock && ! $source, 422, trans('berkay::app.seller.inventory-required'));
             $sku = $product?->sku ?? 'BK-'.strtoupper((string) Str::ulid());
             Event::dispatch('catalog.product.'.($id ? 'update' : 'create').'.before', $product);
             $product ??= parent::create(['type' => 'simple', 'attribute_family_id' => 1, 'sku' => $sku]);
@@ -80,10 +84,9 @@ class SellerCatalogRepository extends ProductRepository
                 'new' => $id ? $product->new : 1,
                 'featured' => $data['featured'] ?? $product->featured ?? 0,
                 'weight' => $product->weight ?: '0.5',
-                'guest_checkout' => 1, 'manage_stock' => 1,
+                'guest_checkout' => 1, 'manage_stock' => (int) $manageStock,
                 'channels' => array_unique([...$product->channels->pluck('id')->all(), $channel->id]),
                 'categories' => [$data['category_id']],
-                'inventories' => [$source->id => $data['quantity']],
                 'images' => ['files' => $images],
                 'videos' => ['files' => $product->videos->mapWithKeys(fn ($video) => [$video->id => $video->path])->all()],
                 'up_sells' => $product->up_sells->pluck('id')->all(),
@@ -93,6 +96,9 @@ class SellerCatalogRepository extends ProductRepository
                 'meta_title' => $product->meta_title ?: $data['name'],
                 'meta_description' => $product->meta_description ?: Str::limit(strip_tags($description), 155, ''),
             ];
+            if ($manageStock && isset($data['quantity'])) {
+                $payload['inventories'] = [$source->id => $data['quantity']];
+            }
             if (array_key_exists('special_price', $data)) {
                 $payload['special_price'] = $data['special_price'] ?? '';
             }

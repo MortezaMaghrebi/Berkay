@@ -1,5 +1,7 @@
 @php
     $editable = ! $item || $table->editablePrice($item);
+    $stockControl = ! $item || $table->supportsUnlimitedStock($item);
+    $unlimited = $stockControl && $item && $table->unlimitedStock($item);
     $price = (float) ($item?->price ?? 0);
     $sale = (float) ($item?->special_price ?? 0);
     $discount = $price > $sale && $sale > 0 ? round(100 * (1 - $sale / $price), 2) : 0;
@@ -55,13 +57,31 @@
         @endunless
     </td>
     <td><input name="price" aria-label="{{ trans('berkay::table.price') }}" type="number" inputmode="decimal" min="0" max="{{ $table::MAX_PRICE }}" step=".01" value="{{ $price }}" @disabled(!$editable)></td>
-    <td><input name="quantity" aria-label="{{ trans('berkay::table.quantity') }}" type="number" inputmode="numeric" min="0" max="100000" value="{{ $item?->inventories->firstWhere('inventory_source_id', $source)?->qty ?? 0 }}" @disabled(!$source || $item?->getTypeInstance()->isComposite())></td>
+    <td class="bk-stock-editor">
+        @if ($stockControl)
+            <label class="bk-unlimited-stock" @if($discountAll) title="{{ trans('berkay::table.stock-all-variants') }}" @endif>
+                <input name="unlimited_stock" type="checkbox" @checked($unlimited)>
+                <span>{{ trans('berkay::table.unlimited-stock') }}</span>
+            </label>
+        @endif
+        @unless ($item?->getTypeInstance()->isComposite())
+            <input class="bk-stock-quantity" name="quantity" aria-label="{{ trans('berkay::table.quantity') }}" type="number" inputmode="numeric" min="0" max="100000" value="{{ $item?->inventories->firstWhere('inventory_source_id', $source)?->qty ?? 0 }}" @disabled(!$source)>
+        @endunless
+    </td>
     <td><input name="discount" aria-label="{{ trans('berkay::table.discount') }}" type="number" inputmode="decimal" min="0" max="99.99" step=".01" value="{{ $discount }}" @if($discountAll) title="{{ trans('berkay::table.discount-all') }}" placeholder="—" @endif @disabled(!$editable && !$discountAll)></td>
     <td><label class="bk-catalog-switch"><input name="status" type="checkbox" @checked($item?->status ?? true) aria-label="{{ trans('berkay::table.status') }}"><span aria-hidden="true"></span></label></td>
     <td><div class="bk-catalog-actions">
         <button type="button" data-save-row disabled>{{ trans('berkay::app.save') }}</button>
         @if ($parentRow)
             <a href="{{ route('admin.berkay.simple_product.edit', $item->id) }}">{{ trans('berkay::app.edit') }}</a>
+            @if ($item->url_key && $item->visible_individually)
+                <a
+                    data-preview-url="{{ route('shop.product_or_category.index', $item->url_key) }}"
+                    @if ($item->status) href="{{ route('shop.product_or_category.index', $item->url_key) }}" @else aria-disabled="true" @endif
+                    target="_blank"
+                    rel="noopener"
+                >{{ trans('berkay::app.product-editor.view-site') }}</a>
+            @endif
         @endif
         @if (bouncer()->hasPermission('catalog.products.delete'))
             <button type="button" data-delete-row>{{ trans('berkay::table.delete') }}</button>

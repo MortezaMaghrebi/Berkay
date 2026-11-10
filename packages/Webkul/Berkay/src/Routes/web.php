@@ -115,6 +115,7 @@ Route::middleware(['web', 'admin', NoCacheMiddleware::class])->prefix(config('ap
     Route::get('/', [UserManagementController::class, 'index'])->name('admin.berkay.users.index');
     Route::get('create', [UserManagementController::class, 'create'])->name('admin.berkay.users.create');
     Route::post('/', [UserManagementController::class, 'save'])->middleware('throttle:20,1')->name('admin.berkay.users.store');
+    Route::post('customers', [UserManagementController::class, 'save'])->defaults('kind', 'customers')->middleware('throttle:20,1')->name('admin.berkay.users.customers.store');
     Route::get('{kind}/{id}/edit', [UserManagementController::class, 'edit'])->whereIn('kind', ['customers', 'staff'])->whereNumber('id')->name('admin.berkay.users.edit');
     Route::put('{kind}/{id}', [UserManagementController::class, 'save'])->whereIn('kind', ['customers', 'staff'])->whereNumber('id')->middleware('throttle:20,1')->name('admin.berkay.users.update');
 });

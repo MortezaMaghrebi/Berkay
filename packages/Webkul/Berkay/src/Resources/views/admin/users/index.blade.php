@@ -1,7 +1,12 @@
 <x-admin::layouts>
     <x-slot:title>{{ trans('berkay::app.users.title') }}</x-slot>
     <section class="bk-admin bk-users-screen">
-        <div class="bk-toolbar"><h1>{{ trans('berkay::app.users.title') }}</h1><a href="{{ route('admin.berkay.users.create') }}">{{ trans('berkay::app.users.new-staff') }}</a></div>
+        <div class="bk-toolbar">
+            <h1>{{ trans('berkay::app.users.title') }}</h1>
+            <a href="{{ route('admin.berkay.users.create', ['kind' => $kind]) }}">
+                {{ trans('berkay::app.users.'.($kind === 'customers' ? 'new-customer' : 'new-staff')) }}
+            </a>
+        </div>
         <p class="bk-help">{{ trans('berkay::app.users.intro') }}</p>
         @include('berkay::admin.seller-feedback')
         <nav class="bk-users-tabs" aria-label="{{ trans('berkay::app.users.title') }}">

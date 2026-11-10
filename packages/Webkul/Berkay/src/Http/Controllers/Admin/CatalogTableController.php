@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Berkay\Services\CatalogTable;
 
 class CatalogTableController
@@ -28,7 +29,7 @@ class CatalogTableController
             'table' => $this->table,
             'color' => $this->table->colors(),
             'source' => $this->table->inventorySource(),
-            'materials' => app(\Webkul\Attribute\Repositories\AttributeRepository::class)->findOneByField('code', 'material')?->options ?? collect(),
+            'materials' => app(AttributeRepository::class)->findOneByField('code', 'material')?->options ?? collect(),
         ]);
     }
 
@@ -38,7 +39,7 @@ class CatalogTableController
 
         $data = $request->validate([
             'rows' => ['required', 'array', 'max:250'],
-            'rows.*' => ['required', 'array:key,id,parent,color,name,price,quantity,discount,status,color_description,material,feature1,feature2,feature3'],
+            'rows.*' => ['required', 'array:key,id,parent,color,name,price,quantity,unlimited_stock,discount,status,color_description,material,feature1,feature2,feature3'],
             'rows.*.key' => ['required', 'string', 'distinct', 'max:64'],
             'rows.*.id' => ['nullable', 'integer', 'min:1'],
             'rows.*.parent' => ['required', 'integer', 'min:1'],
@@ -46,6 +47,7 @@ class CatalogTableController
             'rows.*.name' => ['sometimes', 'required', 'string', 'max:200'],
             'rows.*.price' => ['sometimes', 'required', 'numeric', 'min:0', 'max:'.CatalogTable::MAX_PRICE],
             'rows.*.quantity' => ['sometimes', 'required', 'integer', 'min:0', 'max:100000'],
+            'rows.*.unlimited_stock' => ['sometimes', 'required', 'boolean'],
             'rows.*.discount' => ['sometimes', 'required', 'numeric', 'min:0', 'max:99.99'],
             'rows.*.status' => ['sometimes', 'required', 'boolean'],
             'rows.*.color_description' => ['nullable', 'string', 'max:300'],

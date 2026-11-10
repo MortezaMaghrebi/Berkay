@@ -1,12 +1,13 @@
 <x-admin::layouts>
-    <x-slot:title>{{ trans('berkay::app.users.'.($account ? 'edit' : 'new-staff')) }}</x-slot>
+    @php $title = trans('berkay::app.users.'.($account ? 'edit' : ($kind === 'customers' ? 'new-customer' : 'new-staff'))); @endphp
+    <x-slot:title>{{ $title }}</x-slot>
     <section class="bk-admin bk-seller-editor">
         <div class="bk-toolbar">
-            <h1>{{ trans('berkay::app.users.'.($account ? 'edit' : 'new-staff')) }}</h1>
+            <h1>{{ $title }}</h1>
             <a href="{{ route('admin.berkay.users.index', ['kind' => $kind]) }}">{{ trans('berkay::app.back') }}</a>
         </div>
         @include('berkay::admin.seller-feedback')
-        <form method="post" class="bk-form" action="{{ $account ? route('admin.berkay.users.update', ['kind' => $kind, 'id' => $account->id]) : route('admin.berkay.users.store') }}">
+        <form method="post" class="bk-form" action="{{ $account ? route('admin.berkay.users.update', ['kind' => $kind, 'id' => $account->id]) : route($kind === 'customers' ? 'admin.berkay.users.customers.store' : 'admin.berkay.users.store') }}">
             @csrf
             @if ($account)
                 @method('PUT')
@@ -23,7 +24,7 @@
             @else
                 <label for="phone">{{ trans('berkay::sms.phone') }}</label>
                 <input type="tel" id="phone" name="phone" dir="ltr" value="{{ old('phone', $account?->phone) }}" maxlength="32" required>
-                <p class="bk-help">{{ trans('berkay::sms.admin-phone-help') }}</p>
+                <p class="bk-help">{{ trans($account ? 'berkay::sms.admin-phone-help' : 'berkay::app.users.new-customer-help') }}</p>
             @endif
 
             <label for="status">{{ trans('berkay::app.users.status') }}</label>
@@ -32,7 +33,7 @@
                 <option value="0" @selected(old('status', $account?->status ?? 1) == 0)>{{ trans('berkay::app.users.inactive') }}</option>
             </select>
 
-            @if ($kind === 'customers')
+            @if ($kind === 'customers' && $account)
                 @if ($staff)
                     <a href="{{ route('admin.berkay.users.edit', ['kind' => 'staff', 'id' => $staff->id]) }}">{{ trans('berkay::app.users.edit-staff') }}</a>
                 @else
@@ -44,7 +45,7 @@
                         @include('berkay::admin.users.staff-fields')
                     </details>
                 @endif
-            @else
+            @elseif ($kind === 'staff')
                 @include('berkay::admin.users.staff-fields')
             @endif
             <button type="submit">{{ trans('berkay::app.save') }}</button>

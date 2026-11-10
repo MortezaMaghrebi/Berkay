@@ -13,6 +13,27 @@ it('denies credential management to guests and custom roles even with a users pe
     $this->postJson(route('admin.berkay.users.store'), [])->assertForbidden();
 });
 
+it('creates a phone-only customer without verifying ownership or granting staff access', function () {
+    $this->loginAsAdmin();
+    $url = route('admin.berkay.users.customers.store');
+    $payload = ['first_name' => 'New', 'last_name' => 'Customer', 'phone' => '۰۹۱۲۳۴۵۶۷۸۹', 'status' => 1];
+
+    $this->get(route('admin.berkay.users.index'))->assertSee(route('admin.berkay.users.create', ['kind' => 'customers']));
+    $this->get(route('admin.berkay.users.create', ['kind' => 'customers']))
+        ->assertOk()->assertSee($url)->assertDontSee('name="grant_admin"', false);
+
+    $this->postJson($url, $payload + ['grant_admin' => 1])->assertUnprocessable()->assertJsonValidationErrors('grant_admin');
+    $this->post($url, $payload)->assertSessionHasNoErrors()->assertRedirect(route('admin.berkay.users.index', ['kind' => 'customers']));
+    $this->assertDatabaseHas('customers', [
+        'phone' => '09123456789',
+        'first_name' => 'New',
+        'email' => null,
+        'channel_id' => core()->getCurrentChannel()->id,
+        'is_verified' => false,
+    ]);
+    $this->postJson($url, $payload)->assertUnprocessable()->assertJsonValidationErrors('phone');
+});
+
 it('updates a customer without changing a blank password and rejects weak passwords', function () {
     $this->loginAsAdmin();
     $customer = Customer::factory()->create();

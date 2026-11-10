@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Webkul\Attribute\Repositories\AttributeRepository;
+use Webkul\Berkay\Repositories\VariantDetailsRepository;
 use Webkul\Product\Helpers\Indexers\Flat;
 use Webkul\Product\Jobs\Search\IndexProducts;
 use Webkul\Product\Jobs\UpdateCreateInventoryIndex;
@@ -15,6 +16,7 @@ use Webkul\Product\Jobs\UpdateCreatePriceIndex;
 use Webkul\Product\Models\Product;
 use Webkul\Product\Repositories\ProductInventoryRepository;
 use Webkul\Product\Repositories\ProductRepository;
+use Webkul\Shop\Listeners\CatalogCache;
 
 class CatalogTable
 {
@@ -62,6 +64,15 @@ class CatalogTable
 
                 $this->update($product, $row);
                 $saved[] = ['key' => $row['key'], 'id' => $product->id, 'parent' => $parent->id, 'type' => $parent->type];
+            }
+
+            $stock = $this->parents()->whereKey($parentIds)
+                ->with(['attribute_values', 'variants.attribute_values'])->get()
+                ->mapWithKeys(fn ($parent) => [$parent->id => $parent->variants->concat([$parent])
+                    ->mapWithKeys(fn ($product) => [$product->id => $this->unlimitedStock($product)])
+                    ->all()]);
+            foreach ($saved as $index => $result) {
+                $saved[$index]['stock'] = $stock[$result['parent']];
             }
 
             return [$saved, $parentIds];
@@ -133,6 +144,22 @@ class CatalogTable
         return $product->getEditableAttributes()->contains('code', 'price');
     }
 
+    /** Check whether the catalog row represents stock or a configurable group of stock items. */
+    public function supportsUnlimitedStock(Product $product): bool
+    {
+        return $product->type === 'configurable' || $product->getTypeInstance()->isInventoryManageable();
+    }
+
+    /** A configurable product is unlimited when all of its variants are unlimited. */
+    public function unlimitedStock(Product $product): bool
+    {
+        if ($product->type === 'configurable') {
+            return $product->variants->isNotEmpty() && $product->variants->every(fn ($variant) => ! $variant->manage_stock);
+        }
+
+        return ! $product->manage_stock;
+    }
+
     private function addColor(Product $parent, array &$row): Product
     {
         $color = $this->colors();
@@ -154,6 +181,7 @@ class CatalogTable
         $row['price'] ??= (float) $parent->price;
         $row['quantity'] ??= $parent->type === 'simple' ? (int) $parent->inventory_source_qty($this->inventorySource()) : 0;
         $row['status'] ??= (bool) $parent->status;
+        $row['unlimited_stock'] ??= $this->unlimitedStock($parent);
 
         if ($parent->type === 'simple') {
             $parent->forceFill(['type' => 'configurable'])->save();
@@ -177,7 +205,7 @@ class CatalogTable
             'weight' => $parent->weight ?: 0.5,
             'status' => $row['status'],
             'visible_individually' => 0,
-            'manage_stock' => 1,
+            'manage_stock' => (int) ! $row['unlimited_stock'],
             'color' => $option->id,
             'price' => (float) $row['price'] === 0.0 ? '0.00' : $row['price'],
         ];
@@ -188,16 +216,21 @@ class CatalogTable
 
     private function update(Product $product, array $row): void
     {
-        if ($product->type === 'configurable' && array_key_exists('discount', $row)) {
+        $variantFields = array_intersect_key($row, array_flip(['discount', 'unlimited_stock']));
+        if ($product->type === 'configurable' && $variantFields) {
             foreach ($product->variants()->with('attribute_values')->get() as $variant) {
-                $this->update($variant, ['discount' => $row['discount']]);
+                $this->update($variant, $variantFields);
             }
-            unset($row['discount']);
+            unset($row['discount'], $row['unlimited_stock']);
         }
 
         $attributes = array_intersect_key($row, array_flip(['name', 'status']));
         if (isset($row['status'])) {
             $attributes['status'] = (int) $row['status'];
+        }
+
+        if (array_key_exists('unlimited_stock', $row) && $product->getTypeInstance()->isInventoryManageable()) {
+            $attributes['manage_stock'] = (int) ! $row['unlimited_stock'];
         }
 
         if (array_key_exists('price', $row) || array_key_exists('discount', $row)) {
@@ -235,7 +268,7 @@ class CatalogTable
                     ? ($row[$field] ?? '')
                     : ($details['features'][$index - 1] ?? '');
             }
-            app(\Webkul\Berkay\Repositories\VariantDetailsRepository::class)->saveDetails($product->id, [
+            app(VariantDetailsRepository::class)->saveDetails($product->id, [
                 'name' => $row['name'] ?? $product->name,
                 'berkay_details' => $details,
             ]);
@@ -268,6 +301,6 @@ class CatalogTable
         (new UpdateCreateInventoryIndex($ids))->handle();
         (new UpdateCreatePriceIndex($ids))->handle();
         IndexProducts::dispatch($ids);
-        app(\Webkul\Shop\Listeners\CatalogCache::class)->flush();
+        app(CatalogCache::class)->flush();
     }
 }
