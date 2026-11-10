@@ -58,6 +58,7 @@ class CartResource extends JsonResource
             'shipping_discount_amount' => $shippingDiscount = (float) ($this->selected_shipping_rate?->discount_amount ?? 0),
             'formatted_shipping_discount_amount' => core()->formatPrice($shippingDiscount),
             'shipping_method' => $this->shipping_method,
+            'shipping_charge_mode' => $this->selected_shipping_rate?->charge_mode,
             'shipping_amount' => $this->shipping_amount,
             'formatted_shipping_amount' => core()->formatPrice($this->shipping_amount),
             'shipping_amount_incl_tax' => $this->shipping_amount_incl_tax,

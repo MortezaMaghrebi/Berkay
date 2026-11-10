@@ -43,6 +43,23 @@ return [
             ['name' => 'custom_orders', 'title' => 'berkay::app.custom-orders-enabled', 'type' => 'boolean'],
         ],
     ],
+    ...array_map(fn ($code) => [
+        'key' => 'sales.carriers.'.$code,
+        'name' => 'berkay::delivery.'.$code,
+        'info' => 'berkay::delivery.settings-help',
+        'sort' => $code === 'berkay_post' ? 1 : 2,
+        'fields' => [
+            ['name' => 'active', 'title' => 'berkay::app.enable', 'type' => 'boolean', 'default' => 1, 'channel_based' => true],
+            ['name' => 'charge_mode', 'title' => 'berkay::delivery.charge-mode', 'type' => 'select', 'default' => 'collect',
+                'validation' => 'required|in:collect,fixed', 'channel_based' => true, 'options' => [
+                    ['value' => 'collect', 'title' => 'berkay::delivery.collect'],
+                    ['value' => 'fixed', 'title' => 'berkay::delivery.fixed'],
+                ],
+            ],
+            ['name' => 'fixed_price', 'title' => 'berkay::delivery.fixed-price', 'type' => 'number', 'validation' => 'nullable|numeric|min:0|max:99999999', 'default' => 0, 'channel_based' => true],
+            ['name' => 'free_threshold', 'title' => 'berkay::delivery.free-threshold', 'type' => 'number', 'validation' => 'nullable|numeric|min:0|max:99999999999', 'default' => 0, 'channel_based' => true],
+        ],
+    ], ['berkay_post', 'berkay_freight']),
     [
         'key' => 'sales.payment_methods.berkay_zarinpal',
         'name' => 'berkay::app.zarinpal',

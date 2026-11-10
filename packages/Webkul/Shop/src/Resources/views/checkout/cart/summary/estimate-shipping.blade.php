@@ -152,7 +152,9 @@
                                 :for="rate.method"
                             >
                                 <p class="text-2xl font-semibold max-md:text-lg">
-                                    @{{ rate.base_formatted_price }}
+                                    <template v-if="rate.charge_mode === 'collect'">{{ trans('berkay::delivery.collect') }}</template>
+                                    <template v-else-if="rate.charge_mode === 'free'">{{ trans('berkay::delivery.free') }}</template>
+                                    <template v-else>@{{ rate.base_formatted_price }}</template>
                                 </p>
                                 
                                 <p class="mt-2.5 text-xs font-medium max-md:mt-0">

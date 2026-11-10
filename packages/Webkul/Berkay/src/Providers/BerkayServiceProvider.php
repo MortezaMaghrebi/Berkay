@@ -32,9 +32,18 @@ class BerkayServiceProvider extends ServiceProvider
                 return $entry;
             }, config('acl'))]);
             $allowed = ['berkay_zarinpal', 'cashondelivery', 'moneytransfer'];
+            $carriers = [
+                'berkay_post' => ['class' => \Webkul\Berkay\Shipping\Post::class],
+                'berkay_freight' => ['class' => \Webkul\Berkay\Shipping\Freight::class],
+            ];
+            config(['carriers' => $carriers]);
             config(['payment_methods' => array_intersect_key(config('payment_methods', []), array_flip($allowed))]);
-            config(['core' => array_values(array_filter(config('core', []), function ($item) use ($allowed) {
+            config(['core' => array_values(array_filter(config('core', []), function ($item) use ($allowed, $carriers) {
                 $key = $item['key'] ?? '';
+
+                if (str_starts_with($key, 'sales.carriers.')) {
+                    return array_key_exists(substr($key, strlen('sales.carriers.')), $carriers);
+                }
 
                 return ! str_starts_with($key, 'sales.payment_methods.') || in_array(substr($key, strlen('sales.payment_methods.')), $allowed, true);
             }))]);

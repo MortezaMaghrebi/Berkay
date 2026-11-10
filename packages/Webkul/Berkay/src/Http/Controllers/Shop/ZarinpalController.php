@@ -56,6 +56,10 @@ class ZarinpalController extends Controller
 
         try {
             Cart::collectTotals();
+            if (! app(\Webkul\Berkay\Shipping\ShippingQuote::class)->refresh(Cart::getCart())) {
+                return redirect()->route('shop.checkout.onepage.index')
+                    ->with('warning', trans('berkay::delivery.quote-changed'));
+            }
             $cart = Cart::getCart();
 
             if ($review = app(OrderWorkflow::class)->deferCheckout($cart)) {
@@ -110,8 +114,14 @@ class ZarinpalController extends Controller
             && $order->payment?->method === 'berkay_zarinpal',
             404
         );
-        abort_unless($workflow->record($order)?->review === 'approved', 409);
-        abort_if($workflow->ended($order) || $workflow->paid($order) || ! $order->canInvoice(), 409);
+        if ($workflow->record($order)?->review !== 'approved') {
+            return redirect()->route('shop.customers.account.orders.view', $order->id)
+                ->with('info', trans('berkay::workflow.waiting'));
+        }
+
+        if ($workflow->ended($order) || $workflow->paid($order) || ! $order->canInvoice()) {
+            return redirect()->route('shop.customers.account.orders.view', $order->id);
+        }
 
         try {
             return Cache::lock('berkay.payment.order.'.$order->id, 60)->block(5, function () use ($order, $workflow) {

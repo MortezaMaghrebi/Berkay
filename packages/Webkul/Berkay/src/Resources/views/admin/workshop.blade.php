@@ -6,6 +6,7 @@
             <div class="flex flex-wrap gap-2">
                 @if (bouncer()->hasPermission('configuration'))
                     <a href="{{ route('admin.configuration.index', ['slug' => 'berkay', 'slug2' => 'workshop']) }}">{{ trans('berkay::workflow.settings') }}</a>
+                    <a href="{{ route('admin.configuration.index', ['slug' => 'sales', 'slug2' => 'carriers']) }}">{{ trans('berkay::delivery.settings') }}</a>
                 @endif
                 <a href="{{ route('admin.sales.orders.index') }}">{{ trans('berkay::app.seller.orders') }}</a>
             </div>

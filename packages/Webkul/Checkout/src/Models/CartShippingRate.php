@@ -23,6 +23,7 @@ class CartShippingRate extends Model implements CartShippingRateContract
         'method',
         'method_title',
         'method_description',
+        'charge_mode',
         'price',
         'base_price',
         'discount_amount',

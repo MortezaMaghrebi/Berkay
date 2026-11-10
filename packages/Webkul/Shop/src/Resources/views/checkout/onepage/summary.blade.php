@@ -182,7 +182,12 @@
     <!-- Shipping Rates -->
     {!! view_render_event('bagisto.shop.checkout.onepage.summary.delivery_charges.before') !!}
         
-    <template v-if="displayTax.shipping == 'including_tax'">
+    <div v-if="['collect', 'free'].includes(cart.shipping_charge_mode)" class="flex justify-between gap-3">
+        <p>@lang('shop::app.checkout.onepage.summary.delivery-charges')</p>
+        <p v-if="cart.shipping_charge_mode === 'collect'">{{ trans('berkay::delivery.collect') }}</p>
+        <p v-else>{{ trans('berkay::delivery.free') }}</p>
+    </div>
+    <template v-else-if="displayTax.shipping == 'including_tax'">
         <div class="flex justify-between text-right">
             <p class="text-base max-sm:text-sm">
                 @lang('shop::app.checkout.onepage.summary.delivery-charges')

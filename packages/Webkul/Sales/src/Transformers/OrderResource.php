@@ -27,7 +27,10 @@ class OrderResource extends JsonResource
         if ($this->haveStockableItems()) {
             $shippingInformation = [
                 'shipping_method' => $this->selected_shipping_rate->method,
-                'shipping_title' => $this->selected_shipping_rate->carrier_title.' - '.$this->selected_shipping_rate->method_title,
+                'shipping_title' => implode(' - ', array_unique([
+                    $this->selected_shipping_rate->carrier_title,
+                    $this->selected_shipping_rate->method_title,
+                ])),
                 'shipping_description' => $this->selected_shipping_rate->method_description,
                 'shipping_amount' => $this->selected_shipping_rate->price,
                 'base_shipping_amount' => $this->selected_shipping_rate->base_price,

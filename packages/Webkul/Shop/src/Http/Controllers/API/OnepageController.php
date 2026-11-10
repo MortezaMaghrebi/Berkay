@@ -159,6 +159,12 @@ class OnepageController extends APIController
 
         Cart::collectTotals();
 
+        if (! app(\Webkul\Berkay\Shipping\ShippingQuote::class)->refresh(Cart::getCart())) {
+            session()->flash('warning', trans('berkay::delivery.quote-changed'));
+
+            return new JsonResource(['redirect' => true, 'redirect_url' => route('shop.checkout.onepage.index')]);
+        }
+
         try {
             $this->validateOrder();
         } catch (\Exception $e) {

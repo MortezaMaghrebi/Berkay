@@ -33,7 +33,7 @@ trait CheckoutHelpers
     public function prepareCartForCheckout(
         int|Product $product,
         array $addressOverrides = [],
-        string $shippingMethod = 'free_free',
+        string $shippingMethod = 'berkay_post_berkay_post',
         ?string $paymentMethod = null,
         int $quantity = 1,
     ): int {
