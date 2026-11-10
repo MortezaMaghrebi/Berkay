@@ -76,11 +76,18 @@ window.addEventListener('load', () => {
                     row.classList.remove('is-edited');
 
                     if (saved.type === 'configurable') {
-                        ['price','discount','quantity'].forEach(name => {
+                        ['price','quantity'].forEach(name => {
                             const field = group.querySelector('[data-parent-row] [name="' + name + '"]');
                             field.disabled = true;
                             delete field.dataset.busy;
                         });
+
+                        const submitted = payload.find(item => item.key === saved.key);
+                        if (row.hasAttribute('data-parent-row') && submitted?.discount !== undefined) {
+                            group.querySelectorAll('[data-variant]').forEach(child => {
+                                if (!edits.get(child)?.has('discount')) child.querySelector('[name=discount]').value = submitted.discount;
+                            });
+                        }
                     }
                 }
                 notice(result.message);

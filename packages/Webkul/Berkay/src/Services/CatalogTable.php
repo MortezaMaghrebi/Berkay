@@ -179,7 +179,7 @@ class CatalogTable
             'visible_individually' => 0,
             'manage_stock' => 1,
             'color' => $option->id,
-            'price' => $row['price'],
+            'price' => (float) $row['price'] === 0.0 ? '0.00' : $row['price'],
         ];
         $this->products->update($attributes + $this->context(), $variant->id, array_keys($attributes));
 
@@ -188,6 +188,13 @@ class CatalogTable
 
     private function update(Product $product, array $row): void
     {
+        if ($product->type === 'configurable' && array_key_exists('discount', $row)) {
+            foreach ($product->variants()->with('attribute_values')->get() as $variant) {
+                $this->update($variant, ['discount' => $row['discount']]);
+            }
+            unset($row['discount']);
+        }
+
         $attributes = array_intersect_key($row, array_flip(['name', 'status']));
         if (isset($row['status'])) {
             $attributes['status'] = (int) $row['status'];
@@ -202,7 +209,7 @@ class CatalogTable
             $price = $row['price'] ?? $old;
             $oldSale = (float) $product->special_price;
             $discount = $row['discount'] ?? ($old > 0 && $oldSale > 0 && $oldSale < $old ? (1 - $oldSale / $old) * 100 : 0);
-            $attributes['price'] = $price;
+            $attributes['price'] = (float) $price === 0.0 ? '0.00' : $price;
             $sale = round($price * (1 - $discount / 100), 4);
             if (array_key_exists('discount', $row) || ($oldSale > 0 && $oldSale < $old)) {
                 $attributes['special_price'] = $discount > 0 && $sale > 0 && $sale < $price ? $sale : '';

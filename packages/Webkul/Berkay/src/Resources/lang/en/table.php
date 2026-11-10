@@ -18,6 +18,7 @@ return [
     'price' => 'Regular price',
     'quantity' => 'Stock',
     'discount' => 'Discount %',
+    'discount-all' => 'This discount applies to all variants of the product.',
     'status' => 'Active',
     'actions' => 'Actions',
     'add-color' => 'Add variant by color',

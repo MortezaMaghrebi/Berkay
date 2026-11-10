@@ -3,6 +3,16 @@
     $price = (float) ($item?->price ?? 0);
     $sale = (float) ($item?->special_price ?? 0);
     $discount = $price > $sale && $sale > 0 ? round(100 * (1 - $sale / $price), 2) : 0;
+    $discountAll = $parentRow && $item->type === 'configurable';
+    if ($discountAll) {
+        $variantDiscounts = $item->variants->map(function ($variant) {
+            $regular = (float) $variant->price;
+            $special = (float) $variant->special_price;
+
+            return $regular > $special && $special > 0 ? round(100 * (1 - $special / $regular), 2) : 0;
+        })->unique();
+        $discount = $variantDiscounts->count() === 1 ? $variantDiscounts->first() : null;
+    }
     $option = ! $parentRow && $item ? $color?->options->find($item->color) : null;
     $swatch = preg_match('/^#[0-9a-f]{6}$/i', $option?->swatch_value ?? '') ? $option->swatch_value : '#a8a29e';
 @endphp
@@ -46,7 +56,7 @@
     </td>
     <td><input name="price" aria-label="{{ trans('berkay::table.price') }}" type="number" inputmode="decimal" min="0" max="{{ $table::MAX_PRICE }}" step=".01" value="{{ $price }}" @disabled(!$editable)></td>
     <td><input name="quantity" aria-label="{{ trans('berkay::table.quantity') }}" type="number" inputmode="numeric" min="0" max="100000" value="{{ $item?->inventories->firstWhere('inventory_source_id', $source)?->qty ?? 0 }}" @disabled(!$source || $item?->getTypeInstance()->isComposite())></td>
-    <td><input name="discount" aria-label="{{ trans('berkay::table.discount') }}" type="number" inputmode="decimal" min="0" max="99.99" step=".01" value="{{ $discount }}" @disabled(!$editable)></td>
+    <td><input name="discount" aria-label="{{ trans('berkay::table.discount') }}" type="number" inputmode="decimal" min="0" max="99.99" step=".01" value="{{ $discount }}" @if($discountAll) title="{{ trans('berkay::table.discount-all') }}" placeholder="—" @endif @disabled(!$editable && !$discountAll)></td>
     <td><label class="bk-catalog-switch"><input name="status" type="checkbox" @checked($item?->status ?? true) aria-label="{{ trans('berkay::table.status') }}"><span aria-hidden="true"></span></label></td>
     <td><div class="bk-catalog-actions">
         <button type="button" data-save-row disabled>{{ trans('berkay::app.save') }}</button>
