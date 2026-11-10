@@ -16,6 +16,18 @@ return [
             \Webkul\Berkay\Services\ProductCollections::KEYS
         )),
     ],
+    ['key' => 'berkay.workshop', 'name' => 'berkay::workflow.settings', 'info' => 'berkay::workflow.settingsHelp', 'sort' => 3],
+    [
+        'key' => 'berkay.workshop.review',
+        'name' => 'berkay::workflow.settings',
+        'info' => 'berkay::workflow.settingsHelp',
+        'sort' => 1,
+        'fields' => [
+            ['name' => 'auto_approve', 'title' => 'berkay::workflow.auto', 'type' => 'boolean', 'default' => 1, 'channel_based' => true],
+            ['name' => 'quantity_limit', 'title' => 'berkay::workflow.quantity', 'type' => 'number', 'validation' => 'nullable|integer|min:0|max:100000', 'default' => 0, 'channel_based' => true],
+            ['name' => 'amount_limit', 'title' => 'berkay::workflow.amount', 'type' => 'number', 'validation' => 'nullable|numeric|min:0|max:99999999999', 'default' => 0, 'channel_based' => true],
+        ],
+    ],
     ['key' => 'berkay.store', 'name' => 'berkay::app.store-settings', 'info' => 'berkay::app.settings-info', 'sort' => 1],
     [
         'key' => 'berkay.store.identity',

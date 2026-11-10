@@ -46,7 +46,8 @@ class ShipmentRepository extends Repository
         try {
             Event::dispatch('sales.shipment.save.before', $data);
 
-            $order = $this->orderRepository->find($data['order_id']);
+            $order = $this->orderRepository->findOrFail($data['order_id']);
+            abort_if(app(\Webkul\Berkay\Services\OrderWorkflow::class)->waiting($order), 409, trans('berkay::workflow.waiting'));
 
             $shipment = $this->model->create([
                 'order_id' => $order->id,

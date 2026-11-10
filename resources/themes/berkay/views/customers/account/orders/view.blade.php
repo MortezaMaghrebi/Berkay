@@ -105,6 +105,7 @@
             </div>
         @endif
 
+        @include('berkay::shop.order-workflow')
         {!! view_render_event('bagisto.shop.customers.account.orders.view.before', ['order' => $order]) !!}
 
         <!-- Order view tabs -->

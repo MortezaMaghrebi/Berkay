@@ -169,6 +169,20 @@ class OnepageController extends APIController
 
         $cart = Cart::getCart();
 
+        try {
+            if ($review = app(\Webkul\Berkay\Services\OrderWorkflow::class)->deferCheckout($cart)) {
+                return new JsonResource(['redirect' => true, 'redirect_url' => $review->getTargetUrl()]);
+            }
+        } catch (CouponUsageLimitExceededException) {
+            cart()->removeCouponCode();
+            Cart::collectTotals();
+
+            return new JsonResource([
+                'redirect' => false,
+                'message' => trans('shop::app.checkout.coupon.usage-limit-exceeded'),
+            ]);
+        }
+
         if ($redirectUrl = Payment::getRedirectUrl($cart)) {
             return new JsonResource([
                 'redirect' => true,

@@ -11,6 +11,7 @@ return [
     ['key' => 'berkay.articles.delete', 'name' => 'berkay::app.delete', 'route' => 'admin.berkay.articles.destroy', 'sort' => 3],
     ['key' => 'berkay.custom-orders', 'name' => 'berkay::app.custom-orders', 'route' => ['admin.berkay.custom_orders.index', 'admin.berkay.custom_orders.image'], 'sort' => 2],
     ['key' => 'berkay.custom-orders.edit', 'name' => 'berkay::app.edit', 'route' => 'admin.berkay.custom_orders.update', 'sort' => 1],
+    ['key' => 'berkay.workshop', 'name' => 'berkay::workflow.manage', 'route' => 'admin.berkay.workshop.advance', 'sort' => 7],
     ['key' => 'berkay.payments', 'name' => 'berkay::app.payments', 'route' => 'admin.berkay.payments.index', 'sort' => 3],
     ['key' => 'berkay.integrations', 'name' => 'berkay::app.integrations', 'route' => ['admin.berkay.integrations.index', 'admin.berkay.kavenegar.index'], 'sort' => 4],
     ['key' => 'berkay.integrations.edit', 'name' => 'berkay::app.edit', 'route' => ['admin.berkay.integrations.update', 'admin.berkay.kavenegar.update', 'admin.berkay.kavenegar.send'], 'sort' => 1],

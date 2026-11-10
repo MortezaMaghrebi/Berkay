@@ -12,8 +12,10 @@ use Webkul\Berkay\Http\Controllers\Admin\KavenegarController;
 use Webkul\Berkay\Http\Controllers\Admin\OperationsController;
 use Webkul\Berkay\Http\Controllers\Admin\SimpleCatalogController;
 use Webkul\Berkay\Http\Controllers\Admin\UserManagementController;
+use Webkul\Berkay\Http\Controllers\Admin\WorkshopController;
 use Webkul\Berkay\Http\Controllers\Shop\ContentSitemapController;
 use Webkul\Berkay\Http\Controllers\Shop\CustomRequestController;
+use Webkul\Berkay\Http\Controllers\Shop\GuestTrackingController;
 use Webkul\Berkay\Http\Controllers\Shop\MagazineController;
 use Webkul\Berkay\Http\Controllers\Shop\ProductCollectionController;
 use Webkul\Berkay\Http\Controllers\Shop\StorefrontEditorController;
@@ -24,6 +26,8 @@ use Webkul\Berkay\Services\ProductCollections;
 use Webkul\Core\Http\Middleware\NoCacheMiddleware;
 
 Route::middleware(['web', 'shop'])->group(function () {
+    Route::get('order-tracking/{id}', GuestTrackingController::class)->whereNumber('id')
+        ->middleware(['signed', NoCacheMiddleware::class, 'throttle:30,1'])->name('shop.berkay.guest_tracking');
     Route::get('berkay/home-collections', [ProductCollectionController::class, 'rows'])
         ->middleware(NoCacheMiddleware::class)->name('shop.berkay.collections.rows');
     Route::get('collections/{collection}', [ProductCollectionController::class, 'index'])
@@ -48,6 +52,9 @@ Route::middleware(['web', 'admin', NoCacheMiddleware::class])
     ->prefix(config('app.admin_url').'/berkay')
     ->group(function () {
         Route::get('/', [OperationsController::class, 'index'])->name('admin.berkay.index');
+        Route::get('workshop', [WorkshopController::class, 'index'])->name('admin.berkay.workshop.index');
+        Route::post('workshop/{id}/{action}', [WorkshopController::class, 'advance'])->whereNumber('id')
+            ->whereIn('action', ['approve', 'building', 'delivered'])->name('admin.berkay.workshop.advance');
         Route::get('catalog-table', [CatalogTableController::class, 'index'])->name('admin.berkay.catalog_table.index');
         Route::patch('catalog-table', [CatalogTableController::class, 'update'])->middleware('throttle:60,1')->name('admin.berkay.catalog_table.update');
         Route::post('catalog-table/prices', [CatalogTableController::class, 'adjust'])->middleware('throttle:5,1')->name('admin.berkay.catalog_table.adjust');
@@ -72,6 +79,10 @@ Route::middleware(['web', 'admin', NoCacheMiddleware::class])
 Route::middleware(['api', StartSession::class, 'shop', 'throttle:60,1'])
     ->post('torob_api/v3/products', [TorobController::class, 'index'])
     ->name('shop.berkay.torob.products');
+
+Route::middleware(['web', 'shop', 'customer', NoCacheMiddleware::class, 'throttle:8,1'])
+    ->post('customer/account/orders/{id}/approved-payment', [ZarinpalController::class, 'payApproved'])
+    ->whereNumber('id')->name('shop.berkay.zarinpal.approved');
 
 Route::middleware(['web', 'shop', 'throttle:20,1'])->group(function () {
     Route::get('payments/zarinpal/resume/{token}', [ZarinpalController::class, 'resume'])->where('token', '[A-Za-z0-9]{64}')->name('shop.berkay.zarinpal.resume');

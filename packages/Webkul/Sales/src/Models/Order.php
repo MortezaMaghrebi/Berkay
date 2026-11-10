@@ -324,6 +324,10 @@ class Order extends Model implements OrderContract
      */
     public function canShip(): bool
     {
+        if (app(\Webkul\Berkay\Services\OrderWorkflow::class)->waiting($this)) {
+            return false;
+        }
+
         foreach ($this->items as $item) {
             if (
                 $item->canShip()
@@ -344,6 +348,10 @@ class Order extends Model implements OrderContract
      */
     public function canInvoice(): bool
     {
+        if (app(\Webkul\Berkay\Services\OrderWorkflow::class)->waiting($this)) {
+            return false;
+        }
+
         foreach ($this->items as $item) {
             if (
                 $item->canInvoice()

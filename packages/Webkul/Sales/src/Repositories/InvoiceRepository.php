@@ -49,7 +49,8 @@ class InvoiceRepository extends Repository
         try {
             Event::dispatch('sales.invoice.save.before', $data);
 
-            $order = $this->orderRepository->find($data['order_id']);
+            $order = $this->orderRepository->findOrFail($data['order_id']);
+            abort_if(app(\Webkul\Berkay\Services\OrderWorkflow::class)->waiting($order), 409, trans('berkay::workflow.waiting'));
 
             $totalQty = array_sum($data['invoice']['items']);
 

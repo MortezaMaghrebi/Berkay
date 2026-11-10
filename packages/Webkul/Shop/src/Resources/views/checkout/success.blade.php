@@ -46,6 +46,11 @@
 				@endif
 			</p>
 
+            @include('berkay::shop.order-workflow')
+            @if ($order->is_guest)
+                <a class="secondary-button" href="{{ \Illuminate\Support\Facades\URL::temporarySignedRoute('shop.berkay.guest_tracking', now()->addDays(60), $order->id) }}">{{ trans('berkay::workflow.manage') }}</a>
+            @endif
+
 			{{ view_render_event('bagisto.shop.checkout.success.continue-shopping.before', ['order' => $order]) }}
 
 			<a href="{{ route('shop.home.index') }}">

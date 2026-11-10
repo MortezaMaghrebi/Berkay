@@ -10,6 +10,7 @@ use Throwable;
 use Webkul\Berkay\Payment\Zarinpal;
 use Webkul\Berkay\Repositories\PaymentAttemptRepository;
 use Webkul\Berkay\Services\IranianMoney;
+use Webkul\Berkay\Services\OrderWorkflow;
 use Webkul\Berkay\Services\ZarinpalGateway;
 use Webkul\Checkout\Facades\Cart;
 use Webkul\Sales\Repositories\InvoiceRepository;
@@ -54,6 +55,13 @@ class ZarinpalController extends Controller
         }
 
         try {
+            Cart::collectTotals();
+            $cart = Cart::getCart();
+
+            if ($review = app(OrderWorkflow::class)->deferCheckout($cart)) {
+                return $review;
+            }
+
             return Cache::lock('berkay.payment.cart.'.$cart->id, 60)->block(5, function () use ($cart) {
                 if ($this->orders->findOneWhere(['cart_id' => $cart->id])) {
                     return $this->failed();
@@ -89,6 +97,64 @@ class ZarinpalController extends Controller
             });
         } catch (Throwable) {
             return $this->failed();
+        }
+    }
+
+    /** Open payment for an approved order owned by the signed-in customer. */
+    public function payApproved(int $id, OrderWorkflow $workflow): RedirectResponse
+    {
+        $order = $this->orders->findOrFail($id);
+        abort_unless(
+            (int) $order->customer_id === auth()->guard('customer')->id()
+            && (int) $order->channel_id === core()->getCurrentChannel()->id
+            && $order->payment?->method === 'berkay_zarinpal',
+            404
+        );
+        abort_unless($workflow->record($order)?->review === 'approved', 409);
+        abort_if($workflow->ended($order) || $workflow->paid($order) || ! $order->canInvoice(), 409);
+
+        try {
+            return Cache::lock('berkay.payment.order.'.$order->id, 60)->block(5, function () use ($order, $workflow) {
+                $order = $order->fresh();
+                if ($workflow->ended($order) || $workflow->paid($order) || ! $order->canInvoice()) {
+                    return redirect()->route('shop.customers.account.orders.view', $order->id);
+                }
+
+                $attempt = $this->attempts->findOneWhere(['order_id' => $order->id, 'provider' => 'zarinpal']);
+                if ($attempt && $attempt->status !== 'pending') {
+                    return redirect()->route('shop.customers.account.orders.view', $order->id);
+                }
+
+                if (! $attempt) {
+                    if (! app(Zarinpal::class)->isAvailable()) {
+                        return redirect()->route('shop.customers.account.orders.view', $order->id)
+                            ->with('error', trans('berkay::workflow.gateway-disabled'));
+                    }
+
+                    $amount = $this->money->toRial($order->base_grand_total, $order->base_currency_code);
+                    $token = Str::random(64);
+                    $context = $this->gateway->context();
+                    $authority = $this->gateway->purchase($amount, route('shop.berkay.zarinpal.callback', $token), $context);
+                    $attempt = $this->attempts->create([
+                        'token' => $token,
+                        'order_id' => $order->id,
+                        'cart_id' => $order->cart_id,
+                        'provider' => 'zarinpal',
+                        'authority' => $authority,
+                        'amount_rial' => $amount,
+                        'gateway_context' => $context,
+                        'status' => 'pending',
+                    ]);
+                }
+
+                session()->put('berkay.payment.token', $attempt->token);
+
+                return redirect()->away($this->gateway->redirectUrl($attempt->authority, $attempt->gateway_context))
+                    ->header('Referrer-Policy', 'no-referrer');
+            });
+        } catch (Throwable) {
+            return redirect()->route('shop.customers.account.orders.view', $order->id)
+                ->with('error', trans('berkay::app.payment-not-completed'));
         }
     }
 

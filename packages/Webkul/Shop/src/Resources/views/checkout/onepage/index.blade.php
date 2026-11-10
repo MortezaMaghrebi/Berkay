@@ -55,6 +55,7 @@
 
         {!! view_render_event('bagisto.shop.checkout.onepage.breadcrumbs.after') !!}
 
+        <p class="bk-notice">{{ trans('berkay::workflow.checkout') }}</p>
         <!-- Checkout Vue Component -->
         <v-checkout>
             <!-- Shimmer Effect -->
