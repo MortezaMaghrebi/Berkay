@@ -6,7 +6,8 @@ use Illuminate\Http\Response;
 use Illuminate\View\View;
 use Webkul\Admin\DataGrids\Sales\OrderShipmentDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
-use Webkul\Sales\Repositories\OrderItemRepository;
+use Webkul\Berkay\Services\ShipmentQuantity;
+use Webkul\Sales\Models\Order;
 use Webkul\Sales\Repositories\OrderRepository;
 use Webkul\Sales\Repositories\ShipmentRepository;
 
@@ -19,7 +20,7 @@ class ShipmentController extends Controller
      */
     public function __construct(
         protected OrderRepository $orderRepository,
-        protected OrderItemRepository $orderItemRepository,
+        protected ShipmentQuantity $quantity,
         protected ShipmentRepository $shipmentRepository
     ) {}
 
@@ -71,8 +72,10 @@ class ShipmentController extends Controller
         }
 
         $this->validate(request(), [
-            'shipment.source' => 'required',
-            'shipment.items.*.*' => 'required|numeric|min:0',
+            'shipment.source' => 'required|integer',
+            'shipment.items' => 'sometimes|array',
+            'shipment.items.*' => 'array',
+            'shipment.items.*.*' => 'required|integer|min:0',
         ]);
 
         $data = request()->only(['shipment', 'carrier_name']);
@@ -83,7 +86,10 @@ class ShipmentController extends Controller
             return redirect()->back();
         }
 
-        if (! $this->isInventoryValidate($data)) {
+        if (
+            ! $order->channel?->inventory_sources->where('status', 1)->contains('id', (int) $data['shipment']['source'])
+            || ! $this->isInventoryValidate($data, $order)
+        ) {
             session()->flash('error', trans('admin::app.sales.shipments.create.quantity-invalid'));
 
             return redirect()->back();
@@ -98,71 +104,30 @@ class ShipmentController extends Controller
         return redirect()->route('admin.sales.orders.view', $orderId);
     }
 
-    /**
-     * Checks if requested quantity available or not.
-     *
-     * @param  array  $data
-     * @return bool
-     */
-    public function isInventoryValidate(&$data)
+    /** Keep only positive quantities that can ship from the selected source. */
+    protected function isInventoryValidate(array &$data, Order $order): bool
     {
-        if (! isset($data['shipment']['items'])) {
-            return;
-        }
+        $sourceId = (int) $data['shipment']['source'];
+        $items = $order->items->keyBy('id');
+        $selected = [];
 
-        $valid = false;
+        foreach ($data['shipment']['items'] ?? [] as $itemId => $sources) {
+            $quantity = (int) ($sources[$sourceId] ?? 0);
 
-        $inventorySourceId = $data['shipment']['source'];
-
-        foreach ($data['shipment']['items'] as $itemId => $inventorySource) {
-            $qty = $inventorySource[$inventorySourceId];
-
-            if ((int) $qty) {
-                $orderItem = $this->orderItemRepository->find($itemId);
-
-                if ($orderItem->qty_to_ship < $qty) {
-                    return false;
-                }
-
-                if ($orderItem->getTypeInstance()->isComposite()) {
-                    foreach ($orderItem->children as $child) {
-                        if (! $child->qty_ordered) {
-                            continue;
-                        }
-
-                        $finalQty = ($child->qty_ordered / $orderItem->qty_ordered) * $qty;
-
-                        $availableQty = $child->product->inventories()
-                            ->where('inventory_source_id', $inventorySourceId)
-                            ->sum('qty');
-
-                        if (
-                            $child->qty_to_ship < $finalQty
-                            || $availableQty < $finalQty
-                        ) {
-                            return false;
-                        }
-                    }
-                } else {
-                    $availableQty = $orderItem->product->inventories()
-                        ->where('inventory_source_id', $inventorySourceId)
-                        ->sum('qty');
-
-                    if (
-                        $orderItem->qty_to_ship < $qty
-                        || $availableQty < $qty
-                    ) {
-                        return false;
-                    }
-                }
-
-                $valid = true;
-            } else {
-                unset($data['shipment']['items'][$itemId]);
+            if ($quantity === 0) {
+                continue;
             }
+
+            if ($quantity > $this->quantity->maximum($items[$itemId], $sourceId)) {
+                return false;
+            }
+
+            $selected[$itemId] = [$sourceId => $quantity];
         }
 
-        return $valid;
+        $data['shipment']['items'] = $selected;
+
+        return $selected !== [];
     }
 
     /**
@@ -183,8 +148,8 @@ class ShipmentController extends Controller
     protected function itemsBelongToOrder($order, array $itemIds): bool
     {
         return ! array_diff(
-            array_map('intval', $itemIds),
-            $order->items->pluck('id')->map('intval')->all()
+            $itemIds,
+            $order->items->pluck('id')->all()
         );
     }
 }

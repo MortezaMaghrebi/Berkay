@@ -62,6 +62,27 @@ it('should deny guest access to the shipments index page', function () {
 // Store
 // ============================================================================
 
+it('should offer and ship only the quantity available for a partial shipment', function () {
+    $order = $this->createOrder(items: [[
+        'product' => productInStock(1),
+        'qty_ordered' => 3,
+        'qty_shipped' => 1,
+    ]]);
+    $item = $order->items->first();
+    $this->loginAsAdmin();
+
+    get(route('admin.sales.orders.view', $order->id))
+        ->assertOk()
+        ->assertSee('data-original-quantity="1"', false)
+        ->assertSee('source: "'.$this->defaultInventorySourceId().'"', false);
+
+    postJson(route('admin.sales.shipments.store', $order->id), shipmentPayload($item->id, 1))
+        ->assertRedirect(route('admin.sales.orders.view', $order->id))
+        ->assertSessionHas('success', trans('admin::app.sales.shipments.create.success'));
+
+    expect($item->fresh()->qty_shipped)->toBe(2);
+});
+
 it('should ship the ordered quantity, record it on the item and take it from the inventory source', function () {
     $product = productInStock(10);
 

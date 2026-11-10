@@ -1,3 +1,7 @@
+@php
+    $shipmentSources = $order->channel->inventory_sources->where('status', 1);
+    $shipmentQuantity = app(\Webkul\Berkay\Services\ShipmentQuantity::class);
+@endphp
 <!-- Shipment Vue Components -->
 <v-create-shipment>
     <div
@@ -110,7 +114,7 @@
                                     :placeholder="trans('admin::app.sales.shipments.create.source')"
                                     @change="onSourceChange"
                                 >
-                                    @foreach ($order->channel->inventory_sources as $inventorySource)
+                                    @foreach ($shipmentSources as $inventorySource)
                                         <option 
                                             value="{{ $inventorySource->id }}"
                                             v-pre
@@ -218,7 +222,7 @@
                                         </div>
 
                                         <!-- Information -->
-                                        @foreach ($order->channel->inventory_sources as $inventorySource)
+                                        @foreach ($shipmentSources as $inventorySource)
                                             <div class="grid grid-cols-2 gap-2.5 border-b border-slate-300 py-2.5 dark:border-gray-800">
                                                 <div class="grid gap-1">
                                                     <!--Inventory Source -->
@@ -246,6 +250,7 @@
                                                 <div class="grid ltr:text-right rtl:text-left">
                                                     @php
                                                         $inputName = "shipment[items][$item->id][$inventorySource->id]";
+                                                        $maximum = $shipmentQuantity->maximum($item, $inventorySource->id);
                                                     @endphp
 
                                                     <!-- Quantity To Ship -->
@@ -259,11 +264,11 @@
                                                             class="w-25!"
                                                             :id="$inputName"
                                                             :name="$inputName"
-                                                            :rules="'required|numeric|min_value:0|max_value:' . $canShipQty['qty']"
-                                                            :value="$canShipQty['qty']"
+                                                            :rules="'required|numeric|min_value:0|max_value:' . $maximum"
+                                                            :value="$maximum"
                                                             :label="trans('admin::app.sales.shipments.create.qty-to-ship')"
-                                                            data-original-quantity="{{ $canShipQty['qty'] }}"
-                                                            ::disabled="'{{ empty($sourceQty) }}' || source != '{{ $inventorySource->id }}'"
+                                                            data-original-quantity="{{ $maximum }}"
+                                                            ::disabled="{{ $maximum === 0 ? 'true' : 'false' }} || source != '{{ $inventorySource->id }}'"
                                                             :ref="$inputName"
                                                         />
 
@@ -292,7 +297,7 @@
 
         data() {
             return {
-                source: "",
+                source: @json((string) ($shipmentSources->first()?->id ?? '')),
             };
         },
 
