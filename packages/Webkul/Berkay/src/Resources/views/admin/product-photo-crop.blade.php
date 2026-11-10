@@ -1,4 +1,6 @@
-<button type="button" id="bk-crop-open" hidden>{{ trans('berkay::photo.crop') }}</button>
+@unless ($gallery ?? false)
+    <button type="button" id="bk-crop-open" hidden>{{ trans('berkay::photo.crop') }}</button>
+@endunless
 <dialog id="bk-crop-dialog" class="bk-crop-dialog" aria-labelledby="bk-crop-title">
     <h2 id="bk-crop-title">{{ trans('berkay::photo.crop') }}</h2>
     <label for="bk-crop-file">{{ trans('berkay::photo.photo') }}</label>
@@ -13,7 +15,7 @@
     <p role="alert" hidden>{{ trans('berkay::photo.error') }}</p>
     <div class="bk-toolbar">
         <button type="button" data-crop-apply disabled>{{ trans('berkay::photo.apply') }}</button>
-        <button type="button" data-crop-close>{{ trans('berkay::app.back') }}</button>
+        <button type="button" data-crop-close>{{ trans(($gallery ?? false) ? 'berkay::photo.finish' : 'berkay::app.back') }}</button>
     </div>
 </dialog>
 @pushOnce('scripts')

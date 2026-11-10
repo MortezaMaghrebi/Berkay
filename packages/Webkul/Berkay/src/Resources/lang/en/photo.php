@@ -7,5 +7,6 @@ return [
     'horizontal' => 'Move horizontally',
     'vertical' => 'Move vertically',
     'apply' => 'Apply crop',
+    'finish' => 'Add selected photos',
     'error' => 'This photo could not be prepared.',
 ];

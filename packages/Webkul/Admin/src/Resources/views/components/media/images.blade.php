@@ -104,6 +104,7 @@
                                 :id="$.uid + '_imageInput'"
                                 accept="image/*"
                                 :multiple="allowMultiple"
+                                :data-bk-gallery-photo="name === 'images[files]' ? '' : null"
                                 :ref="$.uid + '_imageInput'"
                                 @change="add"
                             />

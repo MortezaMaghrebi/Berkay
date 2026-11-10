@@ -370,6 +370,7 @@
 
     {!! view_render_event('bagisto.admin.catalog.product.edit.after', ['product' => $product]) !!}
     </div>
+    @include('berkay::admin.product-photo-crop', ['gallery' => true])
     @pushOnce('scripts')
         <script src="{{ asset('berkay/product-workspace.js') }}?v={{ filemtime(public_path('berkay/product-workspace.js')) }}" defer></script>
     @endPushOnce

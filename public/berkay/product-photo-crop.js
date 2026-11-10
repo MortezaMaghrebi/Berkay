@@ -1,8 +1,10 @@
 window.addEventListener('load', () => {
-    const input = document.querySelector('[data-bk-product-photos]');
+    const simpleInput = document.querySelector('[data-bk-product-photos]');
+    let input = simpleInput;
+    let galleryInput = null;
     const dialog = document.querySelector('#bk-crop-dialog');
 
-    if (input && dialog && typeof DataTransfer === 'function') {
+    if (dialog && typeof DataTransfer === 'function') {
         const open = document.querySelector('#bk-crop-open');
         const choice = dialog.querySelector('select');
         const canvas = dialog.querySelector('canvas');
@@ -49,12 +51,26 @@ window.addEventListener('load', () => {
             }
         };
 
-        input.addEventListener('change', () => { open.hidden = input.files.length === 0; });
-        open.addEventListener('click', () => {
+        const showCrop = () => {
             choice.replaceChildren(...Array.from(input.files, (file, index) => new Option(file.name, index)));
             dialog.showModal();
             load();
-        });
+        };
+
+        if (simpleInput) {
+            simpleInput.addEventListener('change', () => { open.hidden = simpleInput.files.length === 0; });
+            open.addEventListener('click', showCrop);
+        }
+
+        const forwarded = new WeakSet();
+        document.addEventListener('change', event => {
+            const picker = event.target;
+            if (!picker.matches?.('[data-bk-gallery-photo]') || !picker.files.length || forwarded.has(picker)) return;
+
+            event.stopImmediatePropagation();
+            galleryInput = input = picker;
+            showCrop();
+        }, true);
         choice.addEventListener('change', load);
         controls.forEach(control => control.addEventListener('input', draw));
         dialog.querySelector('[data-crop-close]').addEventListener('click', () => dialog.close());
@@ -62,6 +78,15 @@ window.addEventListener('load', () => {
             if (previewUrl) URL.revokeObjectURL(previewUrl);
             previewUrl = null;
             image = null;
+
+            if (galleryInput) {
+                const picker = galleryInput;
+                galleryInput = null;
+                input = simpleInput;
+                forwarded.add(picker);
+                picker.dispatchEvent(new Event('change', {bubbles: true}));
+                forwarded.delete(picker);
+            }
         });
         apply.addEventListener('click', () => {
             const index = Number(choice.value);
@@ -80,8 +105,13 @@ window.addEventListener('load', () => {
                     ? new File([blob], file.name.replace(/\.[^.]*$/, '') + '.jpg', {type: 'image/jpeg'})
                     : file));
                 input.files = edited.files;
-                input.dispatchEvent(new Event('change', {bubbles: true}));
-                dialog.close();
+                if (galleryInput && index + 1 < files.length) {
+                    choice.value = index + 1;
+                    load();
+                } else {
+                    if (!galleryInput) input.dispatchEvent(new Event('change', {bubbles: true}));
+                    dialog.close();
+                }
             }, 'image/jpeg', .9);
         });
     }

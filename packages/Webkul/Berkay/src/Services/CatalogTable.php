@@ -211,6 +211,10 @@ class CatalogTable
             $discount = $row['discount'] ?? ($old > 0 && $oldSale > 0 && $oldSale < $old ? (1 - $oldSale / $old) * 100 : 0);
             $attributes['price'] = (float) $price === 0.0 ? '0.00' : $price;
             $sale = round($price * (1 - $discount / 100), 4);
+            if (array_key_exists('discount', $row)) {
+                $attributes['special_price_from'] = '';
+                $attributes['special_price_to'] = '';
+            }
             if (array_key_exists('discount', $row) || ($oldSale > 0 && $oldSale < $old)) {
                 $attributes['special_price'] = $discount > 0 && $sale > 0 && $sale < $price ? $sale : '';
             }
