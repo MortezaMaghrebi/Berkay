@@ -73,13 +73,13 @@
                         @endif
                     </tbody>
                 @endforeach
+                <tbody data-variant-template hidden>
+                    @include('berkay::admin.catalog-table-row', ['item' => null, 'parentRow' => false, 'canAddColor' => false])
+                </tbody>
             </table>
         </div>
         {{ $products->links() }}
 
-        <template data-variant-template>
-            @include('berkay::admin.catalog-table-row', ['item' => null, 'parentRow' => false, 'canAddColor' => false])
-        </template>
     </section>
     @pushOnce('scripts')
         <script type="module" src="{{ asset('berkay/catalog-table.js') }}?v={{ filemtime(public_path('berkay/catalog-table.js')) }}"></script>
