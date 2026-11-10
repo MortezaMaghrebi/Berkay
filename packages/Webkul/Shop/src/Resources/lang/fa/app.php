@@ -793,7 +793,7 @@ return [
 
     'products' => [
         'omnibus' => [
-            'price-info' => 'Lowest price 30 days prior to the discount:',
+            'price-info' => 'کمترین قیمت در ۳۰ روز پیش از تخفیف:',
         ],
 
         'prices' => [
@@ -862,25 +862,25 @@ return [
                     ],
 
                     'event' => [
-                        'book-your-ticket' => 'رزرو بلیط شما',
+                        'book-your-ticket' => 'رزرو بلیت شما',
                         'title' => 'رویداد در :',
                         'total-price' => 'قیمت کل',
                         'summary-title' => 'رزرو شما',
                         'ticket-line' => ':name (:count × :price)',
                         'base-fee-line' => 'هزینه پایه (:count × :price)',
-                        'ticket' => 'بلیط',
-                        'tickets' => 'بلیط',
+                        'ticket' => 'بلیت',
+                        'tickets' => 'بلیت',
                         'total' => 'مجموع',
-                        'select-tickets-hint' => 'برای مشاهده مجموع، تعداد بلیط‌ها را انتخاب کنید.',
+                        'select-tickets-hint' => 'برای مشاهده مجموع، تعداد بلیت‌ها را انتخاب کنید.',
                         'starting-from' => 'شروع از',
-                        'base-fee-note' => 'شامل هزینه پایه + ارزان‌ترین بلیط. مجموع بر اساس انتخاب بلیط به‌روزرسانی می‌شود.',
+                        'base-fee-note' => 'شامل هزینه پایه + ارزان‌ترین بلیت. مجموع بر اساس انتخاب بلیت به‌روزرسانی می‌شود.',
                     ],
 
                     'rental' => [
                         'choose-rent-option' => 'گزینه اجاره را انتخاب کنید',
-                        'daily-basis' => 'به صورت روزانه',
+                        'daily-basis' => 'به‌صورت روزانه',
                         'from' => 'از',
-                        'hourly-basis' => 'به صورت ساعتی',
+                        'hourly-basis' => 'به‌صورت ساعتی',
                         'rent-an-item' => 'اجاره یک مورد',
                         'select-date' => 'تاریخ را انتخاب کنید',
                         'select-rent-time' => 'زمان اجاره را انتخاب کنید',
@@ -950,8 +950,8 @@ return [
 
             'contact-us' => [
                 'about' => 'یک یادداشت برای ما بنویسید و ما در اسرع وقت به شما پاسخ خواهیم داد',
-                'desc' => 'درباره چی فکر می‌کنید؟',
-                'describe-here' => 'اینجا را توصیف کنید',
+                'desc' => 'دربارهٔ چه موضوعی می‌خواهید با ما صحبت کنید؟',
+                'describe-here' => 'پیام خود را بنویسید',
                 'email' => 'ایمیل',
                 'message' => 'پیام',
                 'name' => 'نام',
@@ -962,8 +962,8 @@ return [
 
             'add-to-cart' => 'افزودن به سبد خرید',
             'add-to-compare' => 'محصول به لیست مقایسه اضافه شد.',
-            'add-to-wishlist' => 'افزودن به لیست خرید',
-            'additional-information' => 'اطلاعات اضافی',
+            'add-to-wishlist' => 'افزودن به علاقه‌مندی‌ها',
+            'additional-information' => 'اطلاعات تکمیلی',
             'already-in-compare' => 'محصول از قبل در لیست مقایسه وجود دارد.',
             'buy-now' => 'خرید فوری',
             'compare' => 'مقایسه',
@@ -971,7 +971,7 @@ return [
             'related-product-title' => 'محصولات مرتبط',
             'review' => 'نقد و بررسی‌ها',
             'tax-inclusive' => 'شامل تمام مالیات‌ها',
-            'up-sell-title' => 'ما محصولات دیگری پیدا کردیم که شاید به شما بپسندد!',
+            'up-sell-title' => 'محصولات دیگری که شاید بپسندید',
         ],
 
         'type' => [
@@ -988,21 +988,21 @@ return [
                 'booking-location' => 'مکان',
                 'booking-till' => 'رزرو تا',
                 'charged-per' => 'هزینه به ازای',
-                'daily' => 'به صورت روزانه',
+                'daily' => 'به‌صورت روزانه',
                 'event-from' => 'رویداد از',
                 'event-location' => 'مکان رویداد',
-                'event-ticket' => 'بلیط رویداد',
+                'event-ticket' => 'بلیت رویداد',
                 'event-till' => 'رویداد تا',
                 'guest-limit' => 'محدودیت مهمان در هر میز',
-                'hourly' => 'به صورت ساعتی',
+                'hourly' => 'به‌صورت ساعتی',
 
                 'integrity' => [
                     'event' => [
                         'expired' => 'این رویداد منقضی شده است.',
-                        'exceeds-available' => 'فقط :qty بلیط برای این رویداد موجود است.',
+                        'exceeds-available' => 'فقط :qty بلیت برای این رویداد موجود است.',
                         'sold-out' => 'بلیت‌های این رویداد تمام شده است.',
-                        'ticket-exceeds-available' => 'فقط :qty بلیط ":ticket" موجود است.',
-                        'ticket-sold-out' => 'بلیط‌های ":ticket" تمام شده است.',
+                        'ticket-exceeds-available' => 'فقط :qty بلیت ":ticket" موجود است.',
+                        'ticket-sold-out' => 'بلیت‌های ":ticket" تمام شده است.',
                     ],
 
                     'missing-options' => 'گزینه‌ها برای این محصول وجود ندارند.',
@@ -1020,7 +1020,7 @@ return [
                 'special-note' => 'درخواست/یادداشت ویژه',
             ],
 
-            'per-ticket-price' => ':price به ازای هر بلیط',
+            'per-ticket-price' => ':price به ازای هر بلیت',
         ],
     ],
 

@@ -6,6 +6,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
+use Webkul\Berkay\Support\ProductDiscount;
 use Webkul\Product\Jobs\UpdateCreateInventoryIndex;
 use Webkul\Product\Jobs\UpdateCreatePriceIndex;
 use Webkul\Product\Repositories\ProductRepository;
@@ -99,7 +100,11 @@ class SellerCatalogRepository extends ProductRepository
             if ($manageStock && isset($data['quantity'])) {
                 $payload['inventories'] = [$source->id => $data['quantity']];
             }
-            if (array_key_exists('special_price', $data)) {
+            if (isset($data['discount_percent'])) {
+                $payload['special_price'] = ProductDiscount::price((float) $data['price'], (float) $data['discount_percent']) ?? '';
+                $payload['special_price_from'] = '';
+                $payload['special_price_to'] = '';
+            } elseif (array_key_exists('special_price', $data)) {
                 $payload['special_price'] = $data['special_price'] ?? '';
             }
 

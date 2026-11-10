@@ -87,7 +87,9 @@
         <a href="#bk-specifications-title">{{ trans('berkay::app.product-story.specifications') }}</a>
         <a href="#bk-product-feedback">{{ trans('shop::app.products.view.review') }}</a>
     </nav>
+    {!! view_render_event('bagisto.shop.products.view.description.before', ['product' => $product]) !!}
     @include('shop::products.view.story')
+    {!! view_render_event('bagisto.shop.products.view.description.after', ['product' => $product]) !!}
 
     <div id="bk-product-feedback"></div>
     <!-- Information Section -->
@@ -97,31 +99,13 @@
                 position="center"
                 ref="productTabs"
             >
-                <!-- Description Tab -->
-                {!! view_render_event('bagisto.shop.products.view.description.before', ['product' => $product]) !!}
-
-                <x-shop::tabs.item
-                    id="descritpion-tab"
-                    class="container mt-15 p-0!"
-                    :title="trans('shop::app.products.view.description')"
-                    :is-selected="true"
-                >
-                    <div class="container mt-15 max-1180:px-5">
-                        <div class="text-lg text-zinc-500 max-1180:text-sm">
-                            {!! $product->description !!}
-                        </div>
-                    </div>
-                </x-shop::tabs.item>
-
-                {!! view_render_event('bagisto.shop.products.view.description.after', ['product' => $product]) !!}
-
                 <!-- Additional Information Tab -->
                 @if(count($attributeData))
                     <x-shop::tabs.item
                         id="information-tab"
                         class="container mt-15 p-0!"
                         :title="trans('shop::app.products.view.additional-information')"
-                        :is-selected="false"
+                        :is-selected="true"
                     >
                         <div class="container mt-15 max-1180:px-5">
                             <div class="mt-8 grid max-w-max grid-cols-[auto_1fr] gap-4">
@@ -169,7 +153,7 @@
                     id="review-tab"
                     class="container mt-15 p-0!"
                     :title="trans('shop::app.products.view.review')"
-                    :is-selected="false"
+                    :is-selected="$attributeData->isEmpty()"
                 >
                     @include('shop::products.view.reviews')
                 </x-shop::tabs.item>
@@ -179,24 +163,6 @@
 
     <!-- Information Section -->
     <div class="container mt-6 grid gap-3 p-0! max-1180:px-5 1180:hidden">
-        <!-- Description Accordion -->
-        <x-shop::accordion
-            class="max-md:border-none"
-            :is-active="true"
-        >
-            <x-slot:header class="bg-gray-100 max-md:py-3! max-sm:py-2!">
-                <p class="text-base font-medium 1180:hidden">
-                    @lang('shop::app.products.view.description')
-                </p>
-            </x-slot>
-
-            <x-slot:content class="max-sm:px-0">
-                <div class="mb-5 text-lg text-zinc-500 max-1180:text-sm max-md:mb-1 max-md:px-4">
-                    {!! $product->description !!}
-                </div>
-            </x-slot>
-        </x-shop::accordion>
-
         <!-- Additional Information Accordion -->
         @if (count($attributeData))
             <x-shop::accordion
@@ -366,7 +332,6 @@
                                     {!! $product->short_description !!}
                                 </div>
 
-                                <button type="button" class="bk-description-toggle" @click="$event.currentTarget.previousElementSibling.classList.toggle('is-expanded')">{{ trans('shop::app.products.view.description') }} ↕</button>
                                 {!! view_render_event('bagisto.shop.products.short_description.after', ['product' => $product]) !!}
 
                                 @include('shop::products.view.types.simple')

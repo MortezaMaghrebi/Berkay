@@ -92,10 +92,8 @@
                     <x-admin::form.control-group.error control-name="featured" />
                 @endif
                 @if ($hasSalePrice)
-                    <label for="special_price">{{ trans('berkay::collections.special-price') }}</label>
-                    <input id="special_price" name="special_price" inputmode="decimal" value="{{ old('special_price', $product->special_price) }}" aria-describedby="bk-workspace-sale-help">
-                    <small id="bk-workspace-sale-help">{{ trans('berkay::collections.special-price-help') }}</small>
-                    <x-admin::form.control-group.error control-name="special_price" />
+                    @include('berkay::admin.product-discount')
+                    <x-admin::form.control-group.error control-name="discount_percent" />
                 @elseif ($product->type === 'configurable')
                     <p>{{ trans('berkay::collections.variant-sale-help') }}</p>
                     <a href="#bk-workspace-variants">{{ trans('berkay::collections.edit-variants') }}</a>

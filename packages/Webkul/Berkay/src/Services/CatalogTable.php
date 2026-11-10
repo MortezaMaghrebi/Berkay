@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Berkay\Repositories\VariantDetailsRepository;
+use Webkul\Berkay\Support\ProductDiscount;
 use Webkul\Product\Helpers\Indexers\Flat;
 use Webkul\Product\Jobs\Search\IndexProducts;
 use Webkul\Product\Jobs\UpdateCreateInventoryIndex;
@@ -243,13 +244,13 @@ class CatalogTable
             $oldSale = (float) $product->special_price;
             $discount = $row['discount'] ?? ($old > 0 && $oldSale > 0 && $oldSale < $old ? (1 - $oldSale / $old) * 100 : 0);
             $attributes['price'] = (float) $price === 0.0 ? '0.00' : $price;
-            $sale = round($price * (1 - $discount / 100), 4);
+            $sale = ProductDiscount::price((float) $price, $discount);
             if (array_key_exists('discount', $row)) {
                 $attributes['special_price_from'] = '';
                 $attributes['special_price_to'] = '';
             }
             if (array_key_exists('discount', $row) || ($oldSale > 0 && $oldSale < $old)) {
-                $attributes['special_price'] = $discount > 0 && $sale > 0 && $sale < $price ? $sale : '';
+                $attributes['special_price'] = $sale ?? '';
             }
         }
 

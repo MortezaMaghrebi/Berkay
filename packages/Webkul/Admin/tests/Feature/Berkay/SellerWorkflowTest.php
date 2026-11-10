@@ -51,6 +51,22 @@ it('lets a permitted seller create a product with automatic SKU and Persian pric
         ->and($product->fresh()->inventories->sum('qty'))->toBe(2);
 });
 
+it('sets, keeps and clears a percentage discount through the seller product editor', function () {
+    $this->loginAsAdmin();
+    $product = $this->createSimpleProduct();
+    $url = route('admin.berkay.simple_product.update', $product->id);
+    $data = ['name' => $product->name, 'price' => 200000, 'quantity' => 3, 'category_id' => $this->sellerCategory->id, 'status' => 1];
+
+    $this->put($url, $data + ['discount_percent' => '۱۲٫۵'])->assertSessionHasNoErrors();
+    expect((float) $product->fresh()->special_price)->toBe(175000.0);
+
+    $this->put($url, $data + ['discount_percent' => ''])->assertSessionHasNoErrors();
+    expect((float) $product->fresh()->special_price)->toBe(175000.0);
+
+    $this->put($url, $data + ['discount_percent' => 0])->assertSessionHasNoErrors();
+    expect($product->fresh()->special_price)->toBeNull();
+});
+
 it('rejects product writes from a seller with read-only access', function () {
     $this->loginAsAdminWithPermissions(['catalog', 'catalog.products']);
     $this->get(route('admin.berkay.simple_product.index'))->assertOk();

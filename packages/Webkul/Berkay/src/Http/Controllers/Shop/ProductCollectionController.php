@@ -29,22 +29,20 @@ class ProductCollectionController
             }
 
             $limit = (int) core()->getConfigData("berkay.home.collections.{$key}_limit");
-            $limit = max(4, min(20, $limit ?: 10));
+            $limit = max($key === 'discounted' ? 4 : 5, min(20, $limit ?: 10));
             $products = $this->collections->query($key)->limit($limit)->get();
             $isFallback = $products->isEmpty() && $key !== 'discounted';
-            $suggestedIds = [];
 
-            if ($key !== 'discounted' && $products->count() < $limit) {
+            if ($key !== 'discounted' && $products->count() < 5) {
                 $suggestions = $recommendations->whereNotIn('id', $products->modelKeys())
                     ->shuffle()
-                    ->take($limit - $products->count());
+                    ->take(5 - $products->count());
 
-                $suggestedIds = $suggestions->modelKeys();
                 $products = $products->concat($suggestions);
             }
 
             if ($products->isNotEmpty()) {
-                $rows[$key] = compact('products', 'isFallback', 'suggestedIds');
+                $rows[$key] = compact('products', 'isFallback');
             }
         }
 

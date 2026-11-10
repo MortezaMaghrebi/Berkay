@@ -1,4 +1,4 @@
-@foreach ($rows as $key => ['products' => $products, 'isFallback' => $isFallback, 'suggestedIds' => $suggestedIds])
+@foreach ($rows as $key => ['products' => $products, 'isFallback' => $isFallback])
     @php
         $title = trans('berkay::collections.'.$key);
         $viewAllUrl = $isFallback ? route('shop.search.index') : route('shop.berkay.collections.index', $key);
@@ -8,13 +8,8 @@
         <header class="bk-product-row-header">
             <div>
                 <h2 id="bk-row-{{ $key }}">{{ $title }}</h2>
-                @if ($isFallback)
-                    <p class="bk-product-row-note">{{ trans('berkay::collections.random-selection') }}</p>
-                @endif
             </div>
             <div class="bk-product-row-actions">
-                <button type="button" data-bk-scroll="-1" aria-controls="bk-track-{{ $key }}" aria-label="{{ trans('berkay::collections.previous') }}" hidden>‹</button>
-                <button type="button" data-bk-scroll="1" aria-controls="bk-track-{{ $key }}" aria-label="{{ trans('berkay::collections.next') }}" hidden>›</button>
                 <a href="{{ $viewAllUrl }}" aria-label="{{ trans('berkay::app.view-all').' · '.$viewAllLabel }}">
                     {{ trans('berkay::app.view-all') }}
                 </a>
@@ -24,7 +19,6 @@
             @foreach ($products as $product)
                 <li>@include('berkay::shop.collections.card', [
                     'collection' => $key,
-                    'isSuggestion' => ! $isFallback && in_array($product->id, $suggestedIds, true),
                 ])</li>
             @endforeach
         </ul>

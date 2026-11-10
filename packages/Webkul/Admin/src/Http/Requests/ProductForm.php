@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Webkul\Admin\Validations\ProductCategoryUniqueSlug;
 use Webkul\Attribute\Enums\AttributeTypeEnum;
+use Webkul\Berkay\Support\ProductDiscount;
 use Webkul\Core\Helpers\MediaFileName;
 use Webkul\Core\Rules\Decimal;
 use Webkul\Core\Rules\Regex;
@@ -92,6 +93,7 @@ class ProductForm extends FormRequest
             'special_price_from' => ['nullable', 'date'],
             'special_price_to' => ['nullable', 'date', 'after_or_equal:special_price_from'],
             'special_price' => ['nullable', new Decimal, 'lt:price'],
+            'discount_percent' => ['nullable', 'numeric', 'between:0,99.99'],
             'visible_individually' => ['sometimes', 'required', 'in:0,1'],
             'status' => ['sometimes', 'required', 'in:0,1'],
             'guest_checkout' => ['sometimes', 'required', 'in:0,1'],
@@ -269,6 +271,14 @@ class ProductForm extends FormRequest
     {
         if ($this->has('special_price') && $this->input('special_price') === null) {
             $this->merge(['special_price' => '']);
+        }
+
+        if ($this->filled('discount_percent') && $this->productEditableAttributes->contains('code', 'special_price')) {
+            $this->merge([
+                'special_price' => ProductDiscount::price((float) $this->input('price'), (float) $this->input('discount_percent')) ?? '',
+                'special_price_from' => '',
+                'special_price_to' => '',
+            ]);
         }
 
         $tinyMCEFields = $this->productEditableAttributes

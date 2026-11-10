@@ -100,7 +100,16 @@
                     <label>@{{ labels.material }}<select v-model="variantDraft.berkay_details.material"><option value="">@{{ labels.optional }}</option><option v-for="material in materialOptions" :value="material.admin_name">@{{ material.admin_name }}</option></select></label>
                     <div class="bk-variant-feature-inputs"><label v-for="featureIndex in 3">@{{ labels.feature }} @{{ featureIndex }}<input v-model="variantDraft.berkay_details.features[featureIndex - 1]" maxlength="200" :placeholder="labels.optional"></label></div>
                     <div class="bk-variant-dialog-pair"><label>@{{ labels.price }}<input type="number" min="0" step="0.01" v-model.number="variantDraft.price"></label><label v-for="source in inventorySources">@{{ labels.stock }}<span v-if="inventorySources.length > 1">@{{ source.name }}</span><input type="number" min="0" step="1" v-model.number="variantDraft.inventories[source.id]"></label></div>
-                    <label>{{ trans('berkay::collections.special-price') }}<input type="number" min="0" step="0.01" v-model.number="variantDraft.special_price" :placeholder="labels.optional"></label>
+                    <label>
+                        {{ trans('berkay::table.discount') }}
+                        <input type="number" inputmode="decimal" min="0" max="99.99" step="0.01" v-model.number="variantDraft.discount_percent" :placeholder="labels.optional" aria-describedby="bk-variant-discount-help">
+                    </label>
+                    <small id="bk-variant-discount-help">
+                        <template v-if="Number(variantDraft.special_price) > 0 && Number(variantDraft.special_price) < Number(variantDraft.price)">
+                            @{{ currentDiscountLabel.replace(':percent', (100 * (1 - Number(variantDraft.special_price) / Number(variantDraft.price))).toFixed(2)) }}.
+                        </template>
+                        {{ trans('berkay::collections.discount-percent-help') }}
+                    </small>
                     <p class="bk-variant-dialog-error" role="alert">@{{ dialogError }}</p>
                 </div>
                 <div class="bk-variant-dialog-footer"><p>@{{ labels.pending }}</p><button type="button" @click="saveVariantDialog">@{{ labels.save }}</button></div>
@@ -1125,6 +1134,7 @@
             data () {
                 return {
                     labels: @json(trans('berkay::app.variant-dialog')),
+                    currentDiscountLabel: @json(trans('berkay::collections.current-discount')),
                     materialOptions: @json($berkayMaterials->values()),
                     inventorySources: @json($inventorySources),
                     variantDraft: {},
@@ -1153,6 +1163,7 @@
                     const details = variant?.berkay_details || variant?.additional?.berkay_variant || {};
                     this.variantDraft = JSON.parse(JSON.stringify(variant || {name:'',price:0,status:1,weight:0.5,inventories:{},images:[]}));
                     this.variantDraft.berkay_details = {color_description:details.color_description || '',material:details.material || '',features:[...(details.features || []),'','',''].slice(0,3)};
+                    this.variantDraft.discount_percent = '';
                     this.variantDraft.inventories ||= {};
                     this.inventorySources.forEach(source => {this.variantDraft.inventories[source.id] ??= 0;});
                     this.dialogError = '';
@@ -1169,6 +1180,15 @@
                     if (!draft.name?.trim() || draft.price === '' || !Number.isFinite(Number(draft.price)) || draft.price < 0 || this.superAttributes.some(attribute => !draft[attribute.code]) || this.inventorySources.some(source => !Number.isInteger(Number(draft.inventories[source.id])) || draft.inventories[source.id] < 0)) {
                         this.dialogError = this.labels.invalid; return;
                     }
+                    if (draft.discount_percent !== '') {
+                        const percent = Number(draft.discount_percent);
+                        const sale = Number((Number(draft.price) * (1 - percent / 100)).toFixed(4));
+                        if (!Number.isFinite(percent) || percent < 0 || percent > 99.99 || (percent > 0 && !(sale > 0 && sale < Number(draft.price)))) {
+                            this.dialogError = @json(trans('berkay::collections.invalid-discount-percent'));
+                            return;
+                        }
+                        draft.special_price = percent ? sale : '';
+                    }
                     if (draft.special_price != null && draft.special_price !== '' && !(Number(draft.special_price) > 0 && Number(draft.special_price) < Number(draft.price))) {
                         this.dialogError = @json(trans('berkay::collections.invalid-variant-sale'));
                         return;
@@ -1176,6 +1196,7 @@
                     if (this.variants.some(variant => variant.id !== draft.id && this.superAttributes.every(attribute => variant[attribute.code] == draft[attribute.code]))) {
                         this.dialogError = this.labels.duplicate; return;
                     }
+                    delete draft.discount_percent;
                     if (draft.id) {
                         Object.assign(this.variants.find(variant => variant.id === draft.id), draft);
                     } else {

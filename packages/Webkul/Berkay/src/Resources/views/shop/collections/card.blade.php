@@ -15,9 +15,6 @@
         @endif
     </span>
     <span class="bk-collection-card-name">{{ $product->name }}</span>
-    @if ($isSuggestion ?? false)
-        <small class="bk-collection-card-note">{{ trans('berkay::collections.random-selection') }}</small>
-    @endif
     @if ($collection === 'discounted' && $product->type === 'configurable' && ! $hasDiscount)
         <small>{{ trans('berkay::collections.variant-discount-label') }}</small>
     @endif

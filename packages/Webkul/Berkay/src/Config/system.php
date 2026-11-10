@@ -1,5 +1,7 @@
 <?php
 
+use Webkul\Berkay\Services\ProductCollections;
+
 return [
     ['key' => 'berkay', 'name' => 'berkay::app.brand', 'info' => 'berkay::app.settings-info', 'sort' => 1],
     ['key' => 'berkay.home', 'name' => 'berkay::collections.settings', 'info' => 'berkay::collections.settings-info', 'sort' => 2],
@@ -11,9 +13,9 @@ return [
         'fields' => array_merge(...array_map(
             fn ($key) => [
                 ['name' => $key.'_enabled', 'title' => 'berkay::collections.'.$key, 'type' => 'boolean', 'default' => 1, 'channel_based' => true],
-                ['name' => $key.'_limit', 'title' => 'berkay::collections.'.$key.'-limit', 'type' => 'number', 'validation' => 'required|integer|min:4|max:20', 'default' => 10, 'channel_based' => true],
+                ['name' => $key.'_limit', 'title' => 'berkay::collections.'.$key.'-limit', 'type' => 'number', 'validation' => 'required|integer|min:'.($key === 'discounted' ? 4 : 5).'|max:20', 'default' => 10, 'channel_based' => true],
             ],
-            \Webkul\Berkay\Services\ProductCollections::KEYS
+            ProductCollections::KEYS
         )),
     ],
     ['key' => 'berkay.workshop', 'name' => 'berkay::workflow.settings', 'info' => 'berkay::workflow.settingsHelp', 'sort' => 3],

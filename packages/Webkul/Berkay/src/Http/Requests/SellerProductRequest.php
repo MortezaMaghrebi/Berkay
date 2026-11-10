@@ -27,6 +27,7 @@ class SellerProductRequest extends FormRequest
             'status' => ['required', 'boolean'],
             'featured' => ['sometimes', 'boolean'],
             'special_price' => ['nullable', 'numeric', 'gt:0', 'lt:price'],
+            'discount_percent' => ['nullable', 'numeric', 'between:0,99.99'],
             'images' => [$this->route('id') ? 'sometimes' : 'required', 'array', 'min:1', 'max:8'],
             'category_logo' => ['prohibited'],
             'images.*' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
@@ -36,7 +37,7 @@ class SellerProductRequest extends FormRequest
     /** Translate labels in validation messages. */
     public function attributes(): array
     {
-        return ['special_price' => trans('berkay::collections.special-price')] + collect(['name', 'price', 'quantity', 'category_id', 'description', 'images', 'status'])
+        return ['special_price' => trans('berkay::collections.special-price'), 'discount_percent' => trans('berkay::table.discount')] + collect(['name', 'price', 'quantity', 'category_id', 'description', 'images', 'status'])
             ->mapWithKeys(fn ($field) => [$field => trans('berkay::app.seller.'.$field)])->all();
     }
 
@@ -44,12 +45,12 @@ class SellerProductRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $digits = array_combine(preg_split('//u', '۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩', -1, PREG_SPLIT_NO_EMPTY), str_split('01234567890123456789'));
-        foreach (['price', 'quantity', 'special_price'] as $field) {
+        foreach (['price', 'quantity', 'special_price', 'discount_percent'] as $field) {
             if (! $this->has($field) || ! is_scalar($this->input($field))) {
                 continue;
             }
 
-            $value = str_replace([',', '٬'], '', strtr((string) $this->input($field), $digits));
+            $value = str_replace([',', '٬', '٫'], ['', '', '.'], strtr((string) $this->input($field), $digits));
             $this->merge([$field => $value === '' ? null : $value]);
         }
     }
