@@ -18,6 +18,22 @@ return [
             ProductCollections::KEYS
         )),
     ],
+    ['key' => 'berkay.leather', 'name' => 'berkay::leather.title', 'info' => 'berkay::leather.settings-help', 'sort' => 3],
+    ...array_map(fn ($group) => [
+        'key' => 'berkay.leather.'.$group,
+        'name' => 'berkay::leather.'.$group,
+        'info' => 'berkay::leather.group-help',
+        'sort' => $group === 'plain' ? 1 : 2,
+        'fields' => array_merge(...array_map(
+            fn ($slot) => [
+                ['name' => 'photo_'.$slot, 'title' => 'berkay::leather.photo-'.$slot, 'type' => 'image',
+                    'validation' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096', 'channel_based' => true],
+                ['name' => 'caption_'.$slot, 'title' => 'berkay::leather.caption-'.$slot, 'type' => 'text',
+                    'validation' => 'nullable|string|max:100', 'channel_based' => true, 'locale_based' => true],
+            ],
+            [1, 2, 3]
+        )),
+    ], ['plain', 'patterned']),
     ['key' => 'berkay.workshop', 'name' => 'berkay::workflow.settings', 'info' => 'berkay::workflow.settingsHelp', 'sort' => 3],
     [
         'key' => 'berkay.workshop.review',

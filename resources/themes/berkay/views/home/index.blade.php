@@ -67,6 +67,7 @@
                 </a>
             @endforeach
         </nav>
+        @include('berkay::shop.leather-guide')
         <div data-bk-collections="{{ route('shop.berkay.collections.rows') }}"></div>
         @if (core()->getConfigData('berkay.store.identity.custom_orders'))
             <section class="bk-bespoke">

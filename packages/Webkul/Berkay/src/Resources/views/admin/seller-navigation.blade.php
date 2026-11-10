@@ -32,6 +32,9 @@
         <a href="{{ route('admin.berkay.attributes.index') }}">{{ trans('berkay::app.variant-settings.title') }}</a>
     @endif
     @if (bouncer()->hasPermission('configuration'))
+        <a href="{{ route('admin.configuration.index', ['slug' => 'berkay', 'slug2' => 'leather']) }}" @class(['bk-nav-active' => request()->routeIs('admin.configuration.index') && request()->route('slug') === 'berkay' && request()->route('slug2') === 'leather'])>
+            <span class="icon-cms" aria-hidden="true"></span>{{ trans('berkay::leather.title') }}
+        </a>
         <a href="{{ route('admin.configuration.index', ['slug' => 'berkay', 'slug2' => 'home']) }}" @class(['bk-nav-active' => request()->routeIs('admin.configuration.index') && request()->route('slug') === 'berkay' && request()->route('slug2') === 'home'])>
             <span class="icon-settings" aria-hidden="true"></span>{{ trans('berkay::collections.settings') }}
         </a>

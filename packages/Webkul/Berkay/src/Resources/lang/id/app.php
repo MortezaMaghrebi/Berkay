@@ -208,7 +208,7 @@ return [
     'view-all' => 'View all',
     'support' => 'Contact and support',
     'contact' => 'Contact us',
-    'footer-text' => 'Leather pieces, chosen with care.',
+    'footer-text' => 'Handcrafted leather bags and accessories',
     'categories' => 'Explore the collection',
     'article-time' => 'Scheduled dates use the store timezone.',
     'content-help' => 'HTML is sanitized on save. Use headings, paragraphs and lists.',
