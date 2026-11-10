@@ -19,7 +19,8 @@ class SellerCategoryRequest extends FormRequest
             'name' => ['required', 'string', 'max:150'],
             'parent_id' => ['nullable', 'integer'],
             'status' => ['required', 'boolean'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'category_logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'images' => ['prohibited'],
         ];
     }
 
@@ -30,7 +31,7 @@ class SellerCategoryRequest extends FormRequest
             'name' => trans('berkay::app.seller.category-name'),
             'parent_id' => trans('berkay::app.seller.parent-category'),
             'status' => trans('berkay::app.seller.status'),
-            'image' => trans('berkay::app.seller.category-photo'),
+            'category_logo' => trans('berkay::app.seller.category-photo'),
         ];
     }
 }

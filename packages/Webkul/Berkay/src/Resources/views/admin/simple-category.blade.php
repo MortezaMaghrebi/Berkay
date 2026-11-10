@@ -18,8 +18,8 @@
             </select>
             <small>{{ trans('berkay::app.seller.parent-help') }}</small>
             @if ($category?->logo_url)<img class="bk-category-preview" src="{{ $category->logo_url }}" alt="{{ $category->name }}" width="90" height="90">@endif
-            <label for="image">{{ trans('berkay::app.seller.category-photo') }}</label>
-            <input id="image" name="image" type="file" accept="image/jpeg,image/png,image/webp">
+            <label for="category_logo">{{ trans('berkay::app.seller.category-photo') }}</label>
+            <input id="category_logo" name="category_logo" type="file" accept="image/jpeg,image/png,image/webp">
             <label for="status">{{ trans('berkay::app.seller.status') }}</label>
             <select id="status" name="status">
                 <option value="1" @selected((int) old('status', $category?->status ?? 1) === 1)>{{ trans('berkay::app.seller.visible') }}</option>

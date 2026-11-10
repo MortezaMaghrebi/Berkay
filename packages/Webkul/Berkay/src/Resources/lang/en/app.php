@@ -320,6 +320,7 @@ return [
         'save-category' => 'Save category',
         'no-categories' => 'Create your first product category.',
         'check-fields' => 'Please review these fields:',
+        'image-save-failed' => 'The image could not be saved. Try again.',
         'product-saved' => 'Product saved. Update its price, stock and photos here.',
         'category-saved' => 'Category saved.',
         'inventory-required' => 'Set up an inventory source first.',

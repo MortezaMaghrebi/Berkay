@@ -43,7 +43,8 @@
                     <p class="bk-help">{{ trans('berkay::app.seller.keep-images') }}</p>
                 @endif
                 <label class="bk-upload" for="images">{{ trans('berkay::app.seller.choose-images') }}</label>
-                <input id="images" type="file" name="images[]" accept="image/jpeg,image/png,image/webp" multiple @required(!$product)>
+                <input id="images" type="file" name="images[]" accept="image/jpeg,image/png,image/webp" data-bk-product-photos multiple @required(!$product)>
+                @include('berkay::admin.product-photo-crop')
                 <small>{{ trans('berkay::app.seller.image-help') }}</small>
                 <label for="description">{{ trans('berkay::app.seller.description') }}</label>
                 <textarea id="description" name="description" rows="5" maxlength="20000">{{ old('description', strip_tags($product?->description ?? '')) }}</textarea>

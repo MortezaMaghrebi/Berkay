@@ -27,6 +27,7 @@ class SellerProductRequest extends FormRequest
             'featured' => ['sometimes', 'boolean'],
             'special_price' => ['nullable', 'numeric', 'gt:0', 'lt:price'],
             'images' => [$this->route('id') ? 'sometimes' : 'required', 'array', 'min:1', 'max:8'],
+            'category_logo' => ['prohibited'],
             'images.*' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ];
     }

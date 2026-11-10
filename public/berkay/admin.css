@@ -122,3 +122,9 @@ html[lang=fa] body{font-family:Vazirmatn,Tahoma,sans-serif}html[lang=fa] body *:
     margin-top: .25rem;
     line-height: 1.8;
 }
+
+.bk-crop-dialog{inset:0;margin:auto;width:min(440px,calc(100% - 24px));max-height:calc(100dvh - 24px);padding:1rem;border:1px solid #ded5c8;border-radius:14px;background:#fff;color:#30231e;overflow:auto}
+.bk-crop-dialog[open]{display:grid;gap:.45rem}
+.bk-crop-dialog::backdrop{background:#211b16aa}
+.bk-crop-dialog canvas{width:min(100%,38dvh);margin-inline:auto;border-radius:8px}
+.bk-crop-dialog input[type=range]{min-height:32px;padding:0}

@@ -64,11 +64,25 @@ class SellerCategoryRepository extends CategoryRepository
             $values['banner_path'] = [$category->banner_path];
         }
         $saved = $category ? parent::update($values, $id) : parent::create($values);
-        if (! empty($data['image'])) {
-            $path = 'categories/'.$saved->id.'/'.Str::ulid().'.webp';
-            Storage::put($path, (string) image_manager()->fromUpload($data['image'])->toWebp()->toBytes());
-            $this->model->newQuery()->whereKey($saved->id)->update(['logo_path' => $path]);
-            $saved->refresh();
+        if (! empty($data['category_logo'])) {
+            $previous = $saved->logo_path;
+            $directory = 'categories/'.$saved->id.'/';
+            $path = $directory.Str::ulid().'.webp';
+            if (! Storage::put($path, (string) image_manager()->fromUpload($data['category_logo'])->toWebp()->toBytes())) {
+                throw ValidationException::withMessages(['category_logo' => trans('berkay::app.seller.image-save-failed')]);
+            }
+
+            try {
+                $saved->forceFill(['logo_path' => $path])->saveOrFail();
+            } catch (\Throwable $exception) {
+                Storage::delete($path);
+
+                throw $exception;
+            }
+
+            if ($previous && Str::startsWith($previous, $directory)) {
+                Storage::delete($previous);
+            }
         }
 
         return $saved;
