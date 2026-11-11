@@ -107,6 +107,7 @@ Route::middleware(['web', 'admin', NoCacheMiddleware::class])->prefix(config('ap
     Route::get('categories', 'categories')->name('admin.berkay.simple_category.index');
     Route::get('categories/{id}/edit', 'editCategory')->whereNumber('id')->name('admin.berkay.simple_category.edit');
     Route::put('categories/{id}', 'updateCategory')->whereNumber('id')->name('admin.berkay.simple_category.update');
+    Route::delete('categories/{id}', 'deleteCategory')->whereNumber('id')->name('admin.berkay.simple_category.delete');
 });
 
 Route::middleware(['web', 'admin', NoCacheMiddleware::class, 'throttle:20,1'])->prefix(config('app.admin_url').'/berkay')->post('articles/import', [ArticleImportController::class, 'parse'])->name('admin.berkay.articles.parse');

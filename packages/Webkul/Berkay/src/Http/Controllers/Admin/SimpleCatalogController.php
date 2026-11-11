@@ -93,6 +93,15 @@ class SimpleCatalogController extends Controller
         return redirect()->route('admin.berkay.simple_category.index')->with('success', trans('berkay::app.seller.category-saved'));
     }
 
+    /** Delete a category from the active store. */
+    public function deleteCategory(int $id): RedirectResponse
+    {
+        abort_unless(bouncer()->hasPermission('catalog.categories.delete'), 403);
+        $this->categories->deleteSimple($id);
+
+        return redirect()->route('admin.berkay.simple_category.index')->with('success', trans('berkay::category-delete.deleted'));
+    }
+
     /** Save category edits through the scoped repository. */
     public function updateCategory(SellerCategoryRequest $request, int $id): RedirectResponse
     {

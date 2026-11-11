@@ -2,6 +2,7 @@
 
 namespace Webkul\Berkay\Repositories;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -34,6 +35,26 @@ class SellerCategoryRepository extends CategoryRepository
         );
 
         return $this->findOrFail($id);
+    }
+
+    /** Remove a leaf category and keep its assigned products. */
+    public function deleteSimple(int $id): void
+    {
+        $this->storeCategory($id);
+
+        DB::transaction(function () use ($id) {
+            $category = $this->model->newQuery()->lockForUpdate()->findOrFail($id);
+            abort_if(core()->getAllChannels()->contains('root_category_id', $id), 404);
+
+            if ($category->children()->exists()) {
+                throw ValidationException::withMessages(['category' => trans('berkay::category-delete.has-children')]);
+            }
+
+            Event::dispatch('catalog.category.delete.before', [$id]);
+            $category->deleteOrFail();
+        });
+
+        Event::dispatch('catalog.category.delete.after', [$id]);
     }
 
     /** Build a readable category with automatic addresses and ordering. */

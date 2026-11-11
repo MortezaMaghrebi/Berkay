@@ -135,3 +135,23 @@ it('shows real order counts for this store without counting unrelated orders', f
     $this->get(route('admin.berkay.index'))->assertOk()
         ->assertDontSee(trans('berkay::app.refresh.order-overview'));
 });
+
+it('deletes only leaf categories and keeps their products', function () {
+    $this->loginAsAdmin();
+    $root = core()->getCurrentChannel()->root_category_id;
+    $parent = $this->sellerCategory;
+    $child = app(SellerCategoryRepository::class)->saveSimple([
+        'name' => 'Child to delete',
+        'parent_id' => $parent->id,
+        'status' => 1,
+    ]);
+    $product = $this->createSimpleProduct();
+    $product->categories()->attach($child->id);
+    $url = fn ($id) => route('admin.berkay.simple_category.delete', $id);
+
+    $this->delete($url($root))->assertNotFound();
+    $this->delete($url($parent->id))->assertSessionHasErrors('category');
+    $this->delete($url($child->id))->assertRedirect(route('admin.berkay.simple_category.index'));
+    $this->assertDatabaseMissing('categories', ['id' => $child->id]);
+    $this->assertDatabaseHas('products', ['id' => $product->id]);
+});
