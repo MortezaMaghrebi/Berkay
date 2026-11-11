@@ -2,6 +2,7 @@
 
 namespace Webkul\Berkay\Repositories;
 
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -59,16 +60,24 @@ class SellerCategoryRepository extends CategoryRepository
             'meta_description' => $category?->meta_description ?: $data['name'],
         ];
         $values[core()->getCurrentLocale()->code] = array_intersect_key($values, array_flip(['name', 'slug', 'meta_title', 'meta_description']));
+        $storeLocale = core()->getCurrentChannel()->default_locale?->code;
+        if ($storeLocale && ! $category?->translate($storeLocale)) {
+            $values[$storeLocale] = $values[$values['locale']];
+        }
+
         if ($category) {
             $values['logo_path'] = [$category->logo_path];
             $values['banner_path'] = [$category->banner_path];
         }
+        $event = $category ? 'catalog.category.update' : 'catalog.category.create';
         $saved = $category ? parent::update($values, $id) : parent::create($values);
         if (! empty($data['category_logo'])) {
             $previous = $saved->logo_path;
             $directory = 'categories/'.$saved->id.'/';
             $path = $directory.Str::ulid().'.webp';
-            if (! Storage::put($path, (string) image_manager()->fromUpload($data['category_logo'])->toWebp()->toBytes())) {
+            $image = image_manager()->fromUpload($data['category_logo']);
+            $side = min(500, $image->width(), $image->height());
+            if (! Storage::put($path, $image->cover($side, $side)->toWebp()->toBytes())) {
                 throw ValidationException::withMessages(['category_logo' => trans('berkay::app.seller.image-save-failed')]);
             }
 
@@ -84,6 +93,8 @@ class SellerCategoryRepository extends CategoryRepository
                 Storage::delete($previous);
             }
         }
+
+        Event::dispatch($event.'.after', [$saved]);
 
         return $saved;
     }

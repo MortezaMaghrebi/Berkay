@@ -1,11 +1,13 @@
-@unless ($gallery ?? false)
+@unless (($gallery ?? false) || ($categoryPhoto ?? false))
     <button type="button" id="bk-crop-open" hidden>{{ trans('berkay::photo.crop') }}</button>
 @endunless
 <dialog id="bk-crop-dialog" class="bk-crop-dialog" aria-labelledby="bk-crop-title">
-    <h2 id="bk-crop-title">{{ trans('berkay::photo.crop') }}</h2>
-    <label for="bk-crop-file">{{ trans('berkay::photo.photo') }}</label>
-    <select id="bk-crop-file"></select>
-    <canvas width="1000" height="1000"></canvas>
+    <h2 id="bk-crop-title">{{ trans(($categoryPhoto ?? false) ? 'berkay::app.seller.category-photo' : 'berkay::photo.crop') }}</h2>
+    @unless ($categoryPhoto ?? false)
+        <label for="bk-crop-file">{{ trans('berkay::photo.photo') }}</label>
+    @endunless
+    <select id="bk-crop-file" @if($categoryPhoto ?? false) hidden @endif></select>
+    <canvas width="{{ ($categoryPhoto ?? false) ? 500 : 1000 }}" height="{{ ($categoryPhoto ?? false) ? 500 : 1000 }}"></canvas>
     <label for="bk-crop-zoom">{{ trans('berkay::photo.zoom') }}</label>
     <input id="bk-crop-zoom" type="range" min="1" max="3" step=".05" value="1">
     <label for="bk-crop-x">{{ trans('berkay::photo.horizontal') }}</label>

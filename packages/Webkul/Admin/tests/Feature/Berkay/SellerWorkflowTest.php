@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Webkul\Berkay\Repositories\ArticleRepository;
 use Webkul\Berkay\Repositories\SellerCatalogRepository;
@@ -77,11 +78,13 @@ it('creates and edits categories without position or URL fields and rejects a cy
     $this->loginAsAdminWithPermissions(['catalog', 'catalog.categories', 'catalog.categories.create', 'catalog.categories.edit']);
     $this->post(route('admin.berkay.simple_category.store'), [
         'name' => 'زیرمجموعه نمونه', 'parent_id' => $this->sellerCategory->id, 'status' => 1,
-        'image' => UploadedFile::fake()->image('category.jpg'),
+        'category_logo' => UploadedFile::fake()->image('category.jpg', 900, 650),
     ])->assertSessionHasNoErrors()->assertRedirect();
     $child = app(SellerCategoryRepository::class)->findWhere(['parent_id' => $this->sellerCategory->id])->first();
     expect($child)->not->toBeNull()->and($child->logo_path)->not->toBeNull();
     $photo = $child->logo_path;
+    [$width, $height] = getimagesizefromstring(Storage::get($photo));
+    expect([$width, $height])->toBe([500, 500]);
     $this->put(route('admin.berkay.simple_category.update', $child->id), [
         'name' => 'نام تازه', 'parent_id' => $this->sellerCategory->id, 'status' => 1,
     ])->assertSessionHasNoErrors()->assertRedirect();
@@ -89,6 +92,20 @@ it('creates and edits categories without position or URL fields and rejects a cy
     $this->put(route('admin.berkay.simple_category.update', $this->sellerCategory->id), [
         'name' => 'Parent', 'parent_id' => $child->id, 'status' => 1,
     ])->assertSessionHasErrors('parent_id');
+});
+
+it('announces a newly visible category so the storefront cache is refreshed', function () {
+    $this->loginAsAdmin();
+    Event::fake(['catalog.category.create.after']);
+    $name = 'دسته آزمایشی تازه';
+
+    $this->post(route('admin.berkay.simple_category.store'), ['name' => $name, 'status' => 1])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect();
+
+    $categories = app(CategoryRepository::class)->getVisibleCategoryTree(core()->getCurrentChannel()->root_category_id);
+    expect($categories->contains(fn ($category) => $category->name === $name))->toBeTrue();
+    Event::assertDispatched('catalog.category.create.after');
 });
 
 it('validates and sanitizes AI article JSON without saving or publishing it', function () {

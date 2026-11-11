@@ -1,6 +1,7 @@
 window.addEventListener('load', () => {
     const simpleInput = document.querySelector('[data-bk-product-photos]');
-    let input = simpleInput;
+    const categoryInput = document.querySelector('[data-bk-category-photo]');
+    let input = simpleInput || categoryInput;
     let galleryInput = null;
     const dialog = document.querySelector('#bk-crop-dialog');
 
@@ -15,11 +16,15 @@ window.addEventListener('load', () => {
         const ctx = canvas.getContext('2d');
         let image = null;
         let previewUrl = null;
+        let categoryCropApplied = false;
 
         const draw = () => {
             if (!image) return;
 
             const side = Math.min(image.naturalWidth, image.naturalHeight) / Number(zoom.value);
+            if (categoryInput) {
+                canvas.width = canvas.height = Math.max(1, Math.floor(Math.min(500, side)));
+            }
             const x = (image.naturalWidth - side) * Number(horizontal.value) / 100;
             const y = (image.naturalHeight - side) * Number(vertical.value) / 100;
             ctx.fillStyle = '#fff';
@@ -62,6 +67,12 @@ window.addEventListener('load', () => {
             open.addEventListener('click', showCrop);
         }
 
+        categoryInput?.addEventListener('change', () => {
+            if (!categoryInput.files.length) return;
+            categoryCropApplied = false;
+            showCrop();
+        });
+
         const forwarded = new WeakSet();
         document.addEventListener('change', event => {
             const picker = event.target;
@@ -78,6 +89,8 @@ window.addEventListener('load', () => {
             if (previewUrl) URL.revokeObjectURL(previewUrl);
             previewUrl = null;
             image = null;
+
+            if (categoryInput && !categoryCropApplied) categoryInput.value = '';
 
             if (galleryInput) {
                 const picker = galleryInput;
@@ -109,7 +122,11 @@ window.addEventListener('load', () => {
                     choice.value = index + 1;
                     load();
                 } else {
-                    if (!galleryInput) input.dispatchEvent(new Event('change', {bubbles: true}));
+                    if (categoryInput) {
+                        categoryCropApplied = true;
+                    } else if (!galleryInput) {
+                        input.dispatchEvent(new Event('change', {bubbles: true}));
+                    }
                     dialog.close();
                 }
             }, 'image/jpeg', .9);
