@@ -33,6 +33,10 @@ class KavenegarController
         return view('berkay::admin.kavenegar', [
             'configured' => filled($this->settings->get('kavenegar.api_key')),
             'enabled' => (bool) $this->settings->get('kavenegar.enabled'),
+            'orderEvents' => SmsTemplates::ORDER_EVENTS,
+            'notifications' => collect(SmsTemplates::ORDER_EVENTS)->mapWithKeys(fn ($event) => [
+                $event => $this->templates->eventEnabled($event),
+            ]),
             'templates' => collect(SmsTemplates::EVENTS)->mapWithKeys(fn ($event) => [
                 $event => $this->settings->get('kavenegar.'.$event.'_template'),
             ]),
@@ -55,6 +59,9 @@ class KavenegarController
 
             $this->settings->put('kavenegar.enabled', (bool) $data['enabled']);
 
+            foreach ($data['notifications'] ?? [] as $event => $enabled) {
+                $this->settings->put('kavenegar.'.$event.'_enabled', (bool) $enabled);
+            }
             foreach (SmsTemplates::EVENTS as $event) {
                 $this->settings->put('kavenegar.'.$event.'_template', $data['templates'][$event] ?? null);
             }

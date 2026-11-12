@@ -109,19 +109,108 @@ html[lang=fa] body{font-family:Vazirmatn,Tahoma,sans-serif}html[lang=fa] body *:
 
 .bk-sms-template-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
-    gap: .85rem 1.25rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+    gap: 1rem;
 }
 
-.bk-sms-template-grid label,
-.bk-sms-template-grid small {
-    display: block;
+.bk-sms-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    border: 1px solid var(--seller-border);
+    border-radius: 14px;
+    background: var(--seller-panel);
+    overflow: hidden;
 }
 
-.bk-sms-template-grid small {
-    margin-top: .25rem;
-    line-height: 1.8;
+.bk-sms-card-heading {
+    display: flex;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: .65rem;
+    min-height: 4.75rem;
+    padding: .85rem 1rem;
+    border-bottom: 1px solid var(--seller-border);
+    background: var(--seller-bg);
 }
+
+.bk-sms-card-icon {
+    color: var(--seller-accent);
+    font-size: 1.3rem;
+}
+
+.bk-sms-card-heading h3 { font-weight: 700; }
+.bk-sms-card-heading p, .bk-sms-tokens { color: var(--seller-muted); font-size: .8rem; }
+.bk-sms-card-body { display: flex; flex: 1; flex-direction: column; gap: .5rem; padding: 1rem; }
+.bk-sms-card-body label { font-size: .9rem; font-weight: 600; }
+.bk-sms-panel .bk-sms-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    margin-inline-start: auto;
+    font-size: .75rem;
+}
+
+.bk-sms-panel .bk-sms-toggle input[type=checkbox] {
+    appearance: none;
+    display: grid;
+    align-items: center;
+    width: 2.5rem;
+    height: 1.45rem;
+    min-height: 0;
+    margin: 0;
+    padding: .15rem;
+    border-radius: 2rem;
+    background: var(--seller-border);
+    cursor: pointer;
+}
+
+.bk-sms-toggle input[type=checkbox]::before {
+    content: '';
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background: white;
+}
+
+.bk-sms-panel .bk-sms-toggle input[type=checkbox]:checked { background: var(--seller-accent); }
+.bk-sms-toggle input:checked::before { justify-self: end; }
+.bk-sms-toggle input:checked ~ .bk-sms-toggle-off,
+.bk-sms-toggle input:not(:checked) ~ .bk-sms-toggle-on { display: none; }
+
+.bk-sms-tokens { display: flex; flex-wrap: wrap; gap: .35rem .75rem; padding: 0; list-style: none; }
+.bk-sms-card code { display: inline-block; padding: .1rem .3rem; border-radius: .3rem; background: var(--seller-bg); }
+.bk-sms-example {
+    margin-block-start: auto;
+    border: 1px solid var(--seller-border);
+    border-inline-start: 3px solid var(--seller-accent);
+    border-radius: .55rem;
+    background: var(--seller-bg);
+    font-size: .85rem;
+}
+
+.bk-sms-example header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    padding: .4rem .7rem;
+    border-bottom: 1px solid var(--seller-border);
+}
+
+.bk-sms-panel .bk-sms-example button {
+    min-height: 2.25rem;
+    padding: .25rem .65rem;
+    border: 1px solid var(--seller-border);
+    border-radius: 2rem;
+    background: var(--seller-panel);
+    color: var(--seller-ink);
+    font-size: .8rem;
+}
+
+.bk-sms-example p, .bk-sms-example small { padding: .55rem .7rem; }
+.bk-sms-example p { margin: 0; overflow-wrap: anywhere; }
+.bk-sms-example small:not([hidden]) { display: block; }
 
 .bk-crop-dialog{inset:0;margin:auto;width:min(440px,calc(100% - 24px));max-height:calc(100dvh - 24px);padding:1rem;border:1px solid #ded5c8;border-radius:14px;background:#fff;color:#30231e;overflow:auto}
 .bk-crop-dialog[open]{display:grid;gap:.45rem}

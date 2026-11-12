@@ -20,6 +20,8 @@ class KavenegarSettingsRequest extends FormRequest
             'enabled' => ['required', 'boolean'],
             'api_key' => ['nullable', 'string', 'regex:/^[A-Za-z0-9]{16,512}$/'],
             'templates' => ['nullable', 'array:'.implode(',', SmsTemplates::EVENTS)],
+            'notifications' => ['sometimes', 'array:'.implode(',', SmsTemplates::ORDER_EVENTS)],
+            'notifications.*' => ['required', 'boolean'],
             'templates.*' => ['nullable', 'string', 'max:100', 'regex:/^[A-Za-z0-9_-]+$/'],
         ];
     }

@@ -1,6 +1,6 @@
 <x-admin::layouts>
     <x-slot:title>{{ trans('berkay::sms.panel') }}</x-slot>
-    <section class="bk-admin bk-editor">
+    <section class="bk-admin bk-editor bk-sms-panel">
         <div class="bk-toolbar">
             <h1>{{ trans('berkay::sms.panel') }}</h1>
             <a href="{{ route('admin.berkay.integrations.index') }}">{{ trans('berkay::app.back') }}</a>
@@ -21,16 +21,12 @@
                     <option value="1" @selected(old('enabled', $enabled))>{{ trans('berkay::app.yes') }}</option>
                 </select>
             </div>
-            @foreach (['account' => ['register', 'login', 'change', 'delete'], 'orders' => ['order', 'confirmed', 'shipped', 'completed', 'canceled', 'refunded', 'status'], 'extras' => ['coupon', 'test']] as $group => $events)
+            @foreach (['account' => ['login', 'register', 'change', 'delete'], 'orders' => $orderEvents, 'extras' => ['coupon', 'test']] as $group => $events)
                 <div class="bk-form-section">
                     <h2>{{ trans('berkay::sms.group-'.$group) }}</h2>
                     <div class="bk-sms-template-grid">
                         @foreach ($events as $event)
-                            <div>
-                                <label for="template-{{ $event }}">{{ trans('berkay::sms.template-'.$event) }}</label>
-                                <input id="template-{{ $event }}" name="templates[{{ $event }}]" value="{{ old('templates.'.$event, $templates[$event]) }}" maxlength="100" dir="ltr" aria-describedby="hint-{{ $event }}">
-                                <small id="hint-{{ $event }}">{{ trans('berkay::sms.example-'.$event) }}</small>
-                            </div>
+                            @include('berkay::admin.kavenegar-template-card')
                         @endforeach
                     </div>
                 </div>
@@ -57,4 +53,7 @@
             </form>
         @endif
     </section>
+    @pushOnce('scripts')
+        <script type="module" src="{{ asset('berkay/sms-settings.js') }}?v={{ filemtime(public_path('berkay/sms-settings.js')) }}"></script>
+    @endPushOnce
 </x-admin::layouts>

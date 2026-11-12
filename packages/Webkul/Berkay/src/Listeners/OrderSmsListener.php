@@ -25,6 +25,10 @@ class OrderSmsListener
             default => null,
         };
 
+        if ($event && ! $this->templates->eventEnabled($event)) {
+            return;
+        }
+
         if ($event && $this->templates->template($event)) {
             $this->enqueue($order->id, $event, $event);
 

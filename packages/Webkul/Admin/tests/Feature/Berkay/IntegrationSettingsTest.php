@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Http;
 use Webkul\Berkay\Models\IntegrationSetting;
 use Webkul\Berkay\Services\IntegrationSettings;
 use Webkul\Berkay\Services\KavenegarSms;
+use Webkul\Berkay\Services\SmsTemplates;
 
 beforeEach(function () {
     Http::preventStrayRequests();
@@ -61,4 +62,22 @@ it('denies provider changes to staff with only read access', function () {
     $this->get(route('admin.berkay.integrations.index'))->assertOk();
     $this->put(route('admin.berkay.integrations.update'), $this->integrationData)->assertUnauthorized();
     expect(IntegrationSetting::query()->count())->toBe(0);
+});
+
+it('keeps a saved pattern while disabling its order notification', function () {
+    $this->loginAsAdmin();
+    $settings = app(IntegrationSettings::class);
+    $settings->put('kavenegar.api_key', 'TESTCREDENTIAL123456789');
+    $url = route('admin.berkay.kavenegar.update');
+    $payload = ['enabled' => 1, 'templates' => ['login' => 'otp', 'shipped' => 'order-shipped']];
+    $templates = app(SmsTemplates::class);
+
+    $this->put($url, $payload + ['notifications' => ['shipped' => 0]])->assertSessionHasNoErrors()->assertRedirect();
+    expect($templates->template('shipped'))->toBeNull()
+        ->and($settings->get('kavenegar.shipped_template'))->toBe('order-shipped')
+        ->and($templates->template('login'))->toBe('otp');
+
+    $this->get(route('admin.berkay.kavenegar.index'))->assertOk()->assertSee('%token2')->assertDontSee('TESTCREDENTIAL123456789');
+    $this->put($url, $payload + ['notifications' => ['shipped' => 1]])->assertSessionHasNoErrors();
+    expect($templates->template('shipped'))->toBe('order-shipped');
 });
