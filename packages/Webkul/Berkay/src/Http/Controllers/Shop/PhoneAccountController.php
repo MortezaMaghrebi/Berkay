@@ -31,6 +31,10 @@ class PhoneAccountController
 
         $purpose = $request->routeIs('shop.customers.register.index') ? 'register' : 'login';
 
+        if ($purpose === 'login' && $request->boolean('checkout')) {
+            $request->session()->put('shop.url.intended', route('shop.checkout.onepage.index'));
+        }
+
         if ($request->boolean('start')) {
             $request->session()->forget(self::REGISTRATION_KEY);
         }
