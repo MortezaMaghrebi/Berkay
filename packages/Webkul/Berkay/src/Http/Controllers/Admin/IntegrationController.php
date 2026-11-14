@@ -20,7 +20,17 @@ class IntegrationController extends Controller
     {
         abort_unless(bouncer()->hasPermission('berkay.integrations'), 403);
 
+        $channel = core()->getCurrentChannel();
+        $currency = $channel?->base_currency?->code;
+
         return view('berkay::admin.integrations', [
+            'currency' => $currency,
+            'currencySupported' => in_array($currency, ['IRR', 'IRT'], true),
+            'zarinpalActive' => (bool) core()->getConfigData('sales.payment_methods.berkay_zarinpal.active'),
+            'smsConfigured' => filled($this->settings->get('kavenegar.api_key')),
+            'smsPaused' => (bool) config('berkay.kavenegar.paused'),
+            'smsEnabled' => (bool) $this->settings->get('kavenegar.enabled'),
+            'otpConfigured' => filled($this->settings->get('kavenegar.login_template')),
             'merchantConfigured' => filled($this->settings->get('zarinpal.merchant_id')),
             'sandbox' => $this->settings->get('zarinpal.sandbox') ?? true,
             'torobEnabled' => $this->settings->get('torob.enabled') ?? false,
@@ -31,6 +41,11 @@ class IntegrationController extends Controller
     public function update(IntegrationSettingsRequest $request): RedirectResponse
     {
         $data = $request->validated();
+        if ($data['zarinpal_active'] && blank($data['zarinpal_merchant_id'] ?? $this->settings->get('zarinpal.merchant_id'))) {
+            return back()->withErrors(['zarinpal_merchant_id' => trans('berkay::integrations.merchant-required')])
+                ->withInput($request->except('zarinpal_merchant_id'));
+        }
+
         DB::transaction(function () use ($data) {
             foreach (['zarinpal_merchant_id' => 'zarinpal.merchant_id'] as $field => $key) {
                 if (filled($data[$field] ?? null)) {

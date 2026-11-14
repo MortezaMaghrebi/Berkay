@@ -36,7 +36,7 @@
             @endif
         </form>
         @if (bouncer()->hasPermission('berkay.integrations.edit'))
-            <form method="post" action="{{ route('admin.berkay.kavenegar.send') }}" class="bk-form bk-form-section">
+            <form id="sms-manual" method="post" action="{{ route('admin.berkay.kavenegar.send') }}" class="bk-form bk-form-section">
                 @csrf
                 <h2>{{ trans('berkay::sms.manual') }}</h2>
                 <label for="message_type">{{ trans('berkay::sms.message-type') }}</label>
@@ -46,8 +46,10 @@
                 </select>
                 <label for="recipient">{{ trans('berkay::sms.phone') }}</label>
                 <input id="recipient" name="recipient" type="tel" value="{{ old('recipient') }}" dir="ltr" maxlength="32" required>
-                <label for="coupon">{{ trans('berkay::sms.coupon-code') }}</label>
-                <input id="coupon" name="coupon" value="{{ old('coupon') }}" dir="ltr" maxlength="100">
+                <div data-sms-coupon>
+                    <label for="coupon">{{ trans('berkay::sms.coupon-code') }}</label>
+                    <input id="coupon" name="coupon" value="{{ old('coupon') }}" dir="ltr" maxlength="100">
+                </div>
                 <p class="bk-help">{{ trans('berkay::sms.manual-help') }}</p>
                 <button type="submit">{{ trans('berkay::sms.send-message') }}</button>
             </form>

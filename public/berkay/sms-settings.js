@@ -19,3 +19,20 @@ document.addEventListener('click', async event => {
 
     status.hidden = false;
 });
+
+const manual = document.querySelector('#sms-manual');
+if (manual) {
+    const type = manual.elements.namedItem('message_type');
+    const coupon = manual.elements.namedItem('coupon');
+    const field = manual.querySelector('[data-sms-coupon]');
+
+    function updateCouponField() {
+        const show = type.value === 'coupon';
+        field.hidden = !show;
+        coupon.disabled = !show;
+        coupon.required = show;
+    }
+
+    type.addEventListener('change', updateCouponField);
+    updateCouponField();
+}
