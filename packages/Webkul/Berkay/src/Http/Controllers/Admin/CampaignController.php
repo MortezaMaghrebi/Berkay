@@ -30,7 +30,14 @@ class CampaignController
             ->latest('berkay_campaign_spins.id')
             ->paginate(20)->withQueryString();
 
-        return view('berkay::admin.campaign', ['settings' => $campaign->settings(), 'results' => $results, 'filter' => $filter]);
+        $event = $campaign->active();
+
+        return view('berkay::admin.campaign', [
+            'settings' => $campaign->settings(),
+            'results' => $results,
+            'filter' => $filter,
+            'activeRun' => ($event['wheel'] ?? false) ? $event['run'] : null,
+        ]);
     }
 
     public function update(Request $request, StoreCampaign $campaign): RedirectResponse
@@ -88,11 +95,23 @@ class CampaignController
     {
         abort_unless(bouncer()->hasPermission('berkay.campaigns.edit'), 403);
 
-        $query = DB::table('berkay_campaign_spins')->where(['id' => $id, 'channel_id' => core()->getCurrentChannel()->id]);
+        $query = DB::table('berkay_campaign_spins')
+            ->where(['id' => $id, 'channel_id' => core()->getCurrentChannel()->id, 'attempt_slot' => 'active']);
         $result = $query->first();
         abort_unless($result && json_decode($result->prize, true)['type'] === 'product', 404);
         $query->whereNull('fulfilled_at')->update(['fulfilled_at' => now(), 'updated_at' => now()]);
 
         return back()->with('success', 'تحویل هدیه ثبت شد.');
+    }
+
+    public function reset(int $id, StoreCampaign $campaign): RedirectResponse
+    {
+        abort_unless(bouncer()->hasPermission('berkay.campaigns.edit'), 403);
+
+        if (! $campaign->resetSpin($id)) {
+            return back()->withErrors(['reset' => 'فقط نتیجهٔ ریست‌نشدهٔ رویداد فعال قابل ریست است.']);
+        }
+
+        return back()->with('success', 'فرصت چرخش تمدید شد. این مشتری می‌تواند یک بار دیگر گردونه را بچرخاند.');
     }
 }

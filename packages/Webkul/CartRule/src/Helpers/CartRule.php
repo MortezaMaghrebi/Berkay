@@ -584,6 +584,7 @@ class CartRule
                         'coupon' => $coupon->code,
                         'customer_id' => $this->cart->customer_id,
                         'channel_id' => core()->getCurrentChannel()->id,
+                        'attempt_slot' => 'active',
                     ])->exists()) {
                     return false;
                 }

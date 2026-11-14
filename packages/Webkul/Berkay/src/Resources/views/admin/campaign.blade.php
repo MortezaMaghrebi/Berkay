@@ -87,7 +87,7 @@
             @else
                 <div class="bk-table-wrap">
                     <table class="bk-table">
-                        <thead><tr><th>مشتری</th><th>رویداد</th><th>جایزه</th><th>زمان</th><th>وضعیت</th></tr></thead>
+                        <thead><tr><th>مشتری</th><th>رویداد</th><th>جایزه</th><th>زمان</th><th>وضعیت</th><th>عملیات</th></tr></thead>
                         <tbody>
                             @foreach ($results as $result)
                                 @php($prize = json_decode($result->prize, true))
@@ -97,7 +97,9 @@
                                     <td>{{ $prize['label'] }}</td>
                                     <td><bdi>{{ $result->created_at }}</bdi></td>
                                     <td>
-                                        @if ($result->fulfilled_at)
+                                        @if ($result->reset_at)
+                                            {{ $result->fulfilled_at ? 'تحویل شد؛ فرصت چرخش تمدید شد' : 'فرصت چرخش تمدید شد' }}
+                                        @elseif ($result->fulfilled_at)
                                             تحویل شد
                                         @elseif ($prize['type'] === 'product' && $canEdit)
                                             <form method="post" action="{{ route('admin.berkay.campaigns.fulfill', $result->id) }}">
@@ -110,6 +112,14 @@
                                             کد خرید صادر شد
                                         @else
                                             بدون جایزه
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if ($canEdit && ! $result->reset_at && $result->run === $activeRun)
+                                            <form method="post" action="{{ route('admin.berkay.campaigns.reset', $result->id) }}" data-campaign-reset>
+                                                @csrf
+                                                <button type="submit" class="bk-outline-button">ریست فرصت چرخش</button>
+                                            </form>
                                         @endif
                                     </td>
                                 </tr>

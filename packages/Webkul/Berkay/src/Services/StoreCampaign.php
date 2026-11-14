@@ -68,7 +68,51 @@ class StoreCampaign
 
     public function result(string $run, int $customerId): ?object
     {
-        return DB::table('berkay_campaign_spins')->where(['run' => $run, 'customer_id' => $customerId])->first();
+        return DB::table('berkay_campaign_spins')
+            ->where(['run' => $run, 'customer_id' => $customerId, 'attempt_slot' => 'active'])
+            ->first();
+    }
+
+    public function resetSpin(int $id): bool
+    {
+        return $this->locked(function ($channel) use ($id) {
+            $event = $this->active();
+
+            if (! ($event['wheel'] ?? false)) {
+                return false;
+            }
+
+            $query = DB::table('berkay_campaign_spins')->where([
+                'id' => $id,
+                'channel_id' => $channel->id,
+                'run' => $event['run'],
+                'attempt_slot' => 'active',
+            ]);
+            $spin = $query->lockForUpdate()->first();
+
+            if (! $spin) {
+                return false;
+            }
+
+            $now = now();
+
+            if ($spin->coupon) {
+                $couponQuery = DB::table('cart_rule_coupons')->where('code', $spin->coupon);
+                $coupon = $couponQuery->lockForUpdate()->first();
+
+                if ($coupon && ! $coupon->times_used) {
+                    $couponQuery->update(['expired_at' => $now->copy()->subDay()->toDateString()]);
+                }
+            }
+
+            $query->update([
+                'attempt_slot' => (string) $spin->id,
+                'reset_at' => $now,
+                'updated_at' => $now,
+            ]);
+
+            return true;
+        });
     }
 
     public function wheelVersion(array $event): string

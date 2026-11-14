@@ -7,7 +7,9 @@
             <article>
                 <h2>{{ $prize['label'] }}</h2>
                 <p>{{ \Webkul\Berkay\Services\StoreCampaign::EVENTS[$result->event] ?? $result->event }}</p>
-                @if ($result->coupon)
+                @if ($result->reset_at)
+                    <p>{{ $result->fulfilled_at ? 'هدیه تحویل شد و فرصت چرخش تمدید شد.' : 'این نتیجه بسته شد و فرصت چرخش تمدید شد.' }}</p>
+                @elseif ($result->coupon)
                     <label for="reward-{{ $result->id }}">کد یک‌بار مصرف سبد خرید</label>
                     <input id="reward-{{ $result->id }}" class="bk-wheel-coupon" readonly dir="ltr" value="{{ $result->coupon }}">
                     <p>مهلت استفاده: <bdi>{{ \Illuminate\Support\Carbon::parse($result->created_at)->addDays($prize['days'])->format('Y/m/d H:i') }}</bdi></p>

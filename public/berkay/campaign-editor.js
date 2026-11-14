@@ -2,6 +2,13 @@ function initializeCampaignEditor() {
     const editor = document.getElementById('campaign-settings');
     if (!editor) return;
 
+    document.getElementById('campaign-results')?.addEventListener('submit', event => {
+        if (event.target.matches('[data-campaign-reset]')
+            && !window.confirm('فرصت چرخش این مشتری تمدید شود؟ جایزهٔ تحویل‌نشده یا کد استفاده‌نشدهٔ این نتیجه لغو می‌شود.')) {
+            event.preventDefault();
+        }
+    });
+
     const list = editor.querySelector('[data-prize-list]');
     const template = document.getElementById('campaign-prize-template');
     const add = editor.querySelector('[data-prize-add]');

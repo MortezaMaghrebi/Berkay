@@ -72,6 +72,8 @@ Route::middleware(['web', 'admin', NoCacheMiddleware::class])
         Route::put('campaigns', [\Webkul\Berkay\Http\Controllers\Admin\CampaignController::class, 'update'])->name('admin.berkay.campaigns.update');
         Route::post('campaigns/results/{id}/fulfill', [\Webkul\Berkay\Http\Controllers\Admin\CampaignController::class, 'fulfill'])
             ->whereNumber('id')->name('admin.berkay.campaigns.fulfill');
+        Route::post('campaigns/results/{id}/reset', [\Webkul\Berkay\Http\Controllers\Admin\CampaignController::class, 'reset'])
+            ->whereNumber('id')->name('admin.berkay.campaigns.reset');
         Route::get('integrations', [IntegrationController::class, 'index'])->name('admin.berkay.integrations.index');
         Route::put('integrations', [IntegrationController::class, 'update'])->name('admin.berkay.integrations.update');
         Route::get('kavenegar', [KavenegarController::class, 'index'])->name('admin.berkay.kavenegar.index');

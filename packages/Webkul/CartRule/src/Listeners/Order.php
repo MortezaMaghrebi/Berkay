@@ -47,6 +47,7 @@ class Order
             'coupon' => $order->coupon_code,
             'customer_id' => $order->customer_id,
             'channel_id' => $order->channel_id,
+            'attempt_slot' => 'active',
         ])->exists()) {
             throw new CouponUsageLimitExceededException(trans('shop::app.checkout.coupon.usage-limit-exceeded'));
         }
@@ -135,6 +136,11 @@ class Order
 
         if (! $coupon) {
             return;
+        }
+
+        if (str_starts_with(strtoupper($coupon->code), 'BK-WHEEL-')
+            && $coupon->expired_at?->lt(today())) {
+            throw new CouponUsageLimitExceededException(trans('shop::app.checkout.coupon.usage-limit-exceeded'));
         }
 
         /**

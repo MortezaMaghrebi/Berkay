@@ -2,7 +2,7 @@
 
 return [
     ['key' => 'berkay.campaigns', 'name' => 'رویدادهای فروشگاه', 'route' => 'admin.berkay.campaigns.index', 'sort' => 8],
-    ['key' => 'berkay.campaigns.edit', 'name' => 'berkay::app.edit', 'route' => ['admin.berkay.campaigns.update', 'admin.berkay.campaigns.fulfill'], 'sort' => 1],
+    ['key' => 'berkay.campaigns.edit', 'name' => 'berkay::app.edit', 'route' => ['admin.berkay.campaigns.update', 'admin.berkay.campaigns.fulfill', 'admin.berkay.campaigns.reset'], 'sort' => 1],
     ['key' => 'berkay.attributes', 'name' => 'berkay::app.variant-settings.title', 'route' => ['admin.berkay.attributes.index', 'admin.berkay.attributes.save'], 'sort' => 6],
     ['key' => 'berkay', 'name' => 'berkay::app.operations', 'route' => 'admin.berkay.index', 'sort' => 20],
     ['key' => 'berkay.users', 'name' => 'berkay::app.users.title', 'route' => ['admin.berkay.users.index', 'admin.berkay.users.create', 'admin.berkay.users.store', 'admin.berkay.users.edit', 'admin.berkay.users.update'], 'sort' => 5],
