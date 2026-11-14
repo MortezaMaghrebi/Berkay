@@ -1,7 +1,9 @@
-const editor = document.getElementById('campaign-settings');
-if (editor) {
+function initializeCampaignEditor() {
+    const editor = document.getElementById('campaign-settings');
+    if (!editor) return;
+
     const list = editor.querySelector('[data-prize-list]');
-    const template = editor.querySelector('[data-prize-template]');
+    const template = document.getElementById('campaign-prize-template');
     const add = editor.querySelector('[data-prize-add]');
     const title = editor.querySelector('#campaign-title');
     const description = editor.querySelector('#campaign-description');
@@ -51,7 +53,7 @@ if (editor) {
         if (add) add.disabled = rows.length >= 8;
     }
 
-    if (add) {
+    if (add && template) {
         add.hidden = false;
         add.addEventListener('click', () => {
             list.append(template.content.cloneNode(true));
@@ -87,3 +89,8 @@ if (editor) {
     updatePreview();
     updatePrizes();
 }
+
+// The admin Vue app replaces its markup on window load.
+const afterAdminMount = () => window.setTimeout(initializeCampaignEditor, 0);
+if (document.readyState === 'complete') afterAdminMount();
+else window.addEventListener('load', afterAdminMount, { once: true });

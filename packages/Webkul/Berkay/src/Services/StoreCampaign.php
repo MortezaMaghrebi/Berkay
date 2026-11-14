@@ -31,7 +31,18 @@ class StoreCampaign
     {
         $settings = $this->settings();
 
-        return isset(self::EVENTS[$settings['event'] ?? '']) ? $settings : null;
+        if (! isset(self::EVENTS[$settings['event'] ?? ''])) {
+            return null;
+        }
+
+        $settings['prizes'] = array_values(array_filter((array) ($settings['prizes'] ?? []), static fn ($prize) =>
+            is_array($prize) && isset($prize['label'], $prize['type'], $prize['weight'])
+            && isset(self::TYPES[$prize['type']]) && (int) $prize['weight'] > 0
+        ));
+        $settings['wheel'] = ! empty($settings['wheel']) && Str::isUuid($settings['run'] ?? '')
+            && count($settings['prizes']) >= 2 && count($settings['prizes']) <= 8;
+
+        return $settings;
     }
 
     public function locked(callable $callback): mixed
@@ -80,9 +91,11 @@ class StoreCampaign
                 return false;
             }
 
-            $draw = random_int(1, array_sum(array_column($event['prizes'], 'weight')));
+            // Each prize occupies exactly its configured weight in the draw; the visual wedges stay equal.
+            $weights = array_map('intval', array_column($event['prizes'], 'weight'));
+            $draw = random_int(1, array_sum($weights));
             foreach ($event['prizes'] as $index => $prize) {
-                $draw -= $prize['weight'];
+                $draw -= $weights[$index];
                 if ($draw <= 0) {
                     break;
                 }
@@ -90,9 +103,9 @@ class StoreCampaign
 
             $prize['segment'] = $index;
             $prize['wheel_version'] = $wheelVersion;
-            $prize['days'] = $event['days'];
+            $prize['days'] = (int) ($event['days'] ?? 7);
             $coupon = match ($prize['type']) {
-                'percent', 'credit', 'shipping' => $this->coupon($prize, $channel, $customer, $event['days']),
+                'percent', 'credit', 'shipping' => $this->coupon($prize, $channel, $customer, $prize['days']),
                 default => null,
             };
 

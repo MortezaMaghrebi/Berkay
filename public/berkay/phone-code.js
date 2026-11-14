@@ -69,6 +69,10 @@ function enhanceCodeEntry(group) {
         fields[index].value = digit;
     });
     syncCode();
+    if (document.activeElement === document.body || document.activeElement === code) {
+        const index = fields.findIndex(field => !field.value);
+        focus(index === -1 ? 0 : index);
+    }
 }
 
 function initialize() {

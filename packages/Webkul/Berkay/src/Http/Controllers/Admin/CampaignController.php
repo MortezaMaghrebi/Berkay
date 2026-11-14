@@ -79,7 +79,9 @@ class CampaignController
 
         return redirect()
             ->route('admin.berkay.campaigns.index')
-            ->with('success', 'تنظیمات رویداد ذخیره شد و رویداد انتخاب‌شده در فروشگاه نمایش داده می‌شود.');
+            ->with('success', $data['event']
+                ? 'تنظیمات ذخیره شد. بنر رویداد در صفحهٔ اول فروشگاه نمایش داده می‌شود.'
+                : 'تنظیمات ذخیره شد. بنر رویداد از صفحهٔ اول فروشگاه برداشته شد.');
     }
 
     public function fulfill(int $id): RedirectResponse

@@ -6,8 +6,8 @@
             $colors = ['#723b30', '#aa6836', '#466254', '#bc894e', '#53435d', '#965b60', '#345966', '#75513a'];
             $count = count($event['prizes']);
             $version = app(\Webkul\Berkay\Services\StoreCampaign::class)->wheelVersion($event);
-            $prize = $result ? json_decode($result->prize, true) : null;
-            $winningIndex = ($prize['wheel_version'] ?? null) === $version ? $prize['segment'] : null;
+            $prize = $result ? json_decode($result->prize, true) : [];
+            $winningIndex = ($prize['wheel_version'] ?? null) === $version ? ($prize['segment'] ?? null) : null;
             $segments = [];
             foreach ($event['prizes'] as $index => $option) {
                 $segments[] = $colors[$index].' '.(360 * $index / $count).'deg '.(360 * ($index + 1) / $count).'deg';
@@ -26,13 +26,13 @@
             <div>
                 <h1>گردونهٔ شانس</h1>
                 @if ($result)
-                    <p class="bk-wheel-result" role="status">نتیجهٔ شما: <strong>{{ $prize['label'] }}</strong></p>
+                    <p class="bk-wheel-result" role="status">نتیجهٔ شما: <strong>{{ $prize['label'] ?? 'نتیجه ثبت شده است' }}</strong></p>
                     @if ($result->coupon)
-                        <p>این کد یک‌بار مصرف را در سبد خرید وارد کنید. مهلت استفاده تا {{ \Illuminate\Support\Carbon::parse($result->created_at)->addDays($prize['days'])->format('Y/m/d H:i') }} است.</p>
+                        <p>این کد یک‌بار مصرف را در سبد خرید وارد کنید. مهلت استفاده تا {{ \Illuminate\Support\Carbon::parse($result->created_at)->addDays((int) ($prize['days'] ?? 7))->format('Y/m/d H:i') }} است.</p>
                         <label for="wheel-coupon">کد جایزه</label>
                         <input class="bk-wheel-coupon" id="wheel-coupon" dir="ltr" value="{{ $result->coupon }}" readonly>
                         <a class="bk-button" href="{{ route('shop.checkout.cart.index') }}">رفتن به سبد خرید</a>
-                    @elseif ($prize['type'] === 'product')
+                    @elseif (($prize['type'] ?? null) === 'product')
                         <p>{{ $result->fulfilled_at ? 'تحویل هدیه ثبت شده است.' : 'هدیهٔ شما ثبت شده است. برای هماهنگی تحویل با فروشگاه تماس بگیرید.' }}</p>
                         <a href="{{ route('shop.home.contact_us') }}">تماس با فروشگاه</a>
                     @endif
@@ -43,6 +43,7 @@
                         <input type="hidden" name="run" value="{{ $event['run'] }}">
                         <input type="hidden" name="wheel_version" value="{{ $version }}">
                         <button type="submit" class="bk-button">چرخاندن گردونه</button>
+                        <label hidden data-wheel-audio><input type="checkbox" checked> صدای گردونه</label>
                         <p data-wheel-status role="status"></p>
                     </form>
                 @else

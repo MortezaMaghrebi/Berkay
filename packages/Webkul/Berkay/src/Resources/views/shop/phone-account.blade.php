@@ -52,7 +52,7 @@
                 <div class="bk-otp" data-otp>
                     <div data-otp-fallback>
                         <label for="code">{{ trans('berkay::sms.code') }}</label>
-                        <input id="code" name="code" dir="ltr" inputmode="numeric" autocomplete="one-time-code" minlength="{{ $length }}" maxlength="{{ $length }}" required>
+                        <input id="code" name="code" dir="ltr" inputmode="numeric" autocomplete="one-time-code" minlength="{{ $length }}" maxlength="{{ $length }}" autofocus required>
                     </div>
                     <fieldset hidden dir="ltr">
                         <legend class="sr-only">{{ trans('berkay::sms.code') }}</legend>

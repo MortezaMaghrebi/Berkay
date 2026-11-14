@@ -60,15 +60,10 @@
                         @include('berkay::admin.campaign-prize')
                     @endforeach
                 </div>
-                @if ($canEdit)
-                    <template data-prize-template>
-                        @include('berkay::admin.campaign-prize', ['i' => 0, 'prize' => []])
-                    </template>
-                @endif
             </fieldset>
             @if ($canEdit)
                 <div class="bk-campaign-save">
-                    <span data-save-state aria-live="polite">{{ empty($settings['event']) ? 'رویدادی روی صفحهٔ اول فعال نیست' : 'رویداد منتشرشده: '.$events[$settings['event']] }}</span>
+                    <span data-save-state aria-live="polite">{{ isset($events[$settings['event'] ?? '']) ? 'رویداد منتشرشده: '.$events[$settings['event']] : 'رویدادی روی صفحهٔ اول فعال نیست' }}</span>
                     <button class="bk-button" type="submit" data-campaign-save>ذخیره و نمایش در فروشگاه</button>
                 </div>
             @endif
@@ -127,6 +122,11 @@
         </section>
     </section>
     @pushOnce('scripts')
+        @if ($canEdit)
+            <template id="campaign-prize-template">
+                @include('berkay::admin.campaign-prize', ['i' => 0, 'prize' => []])
+            </template>
+        @endif
         <script type="module" src="{{ asset('berkay/campaign-editor.js') }}?v={{ filemtime(public_path('berkay/campaign-editor.js')) }}"></script>
     @endPushOnce
 </x-admin::layouts>

@@ -39,7 +39,7 @@ class CampaignController
         return view('berkay::shop.campaign', [
             'event' => $event,
             'customer' => $customer,
-            'result' => $customer ? $campaign->result($event['run'], $customer->id) : null,
+            'result' => $customer && $event['wheel'] ? $campaign->result($event['run'], (int) $customer->id) : null,
         ]);
     }
 
