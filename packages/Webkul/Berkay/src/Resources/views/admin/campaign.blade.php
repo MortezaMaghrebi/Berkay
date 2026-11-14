@@ -69,7 +69,7 @@
             @if ($canEdit)
                 <div class="bk-campaign-save">
                     <span data-save-state aria-live="polite">{{ empty($settings['event']) ? 'رویدادی روی صفحهٔ اول فعال نیست' : 'رویداد منتشرشده: '.$events[$settings['event']] }}</span>
-                    <button class="bk-button" type="submit">ذخیره و نمایش در فروشگاه</button>
+                    <button class="bk-button" type="submit" data-campaign-save>ذخیره و نمایش در فروشگاه</button>
                 </div>
             @endif
         </form>

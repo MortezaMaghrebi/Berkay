@@ -7,6 +7,7 @@ if (editor) {
     const description = editor.querySelector('#campaign-description');
     const wheel = editor.querySelector('input[type=checkbox][name=wheel]');
     const preview = editor.querySelector('[data-event-preview]');
+    const saveButton = editor.querySelector('[data-campaign-save]');
     const image = preview.querySelector('img');
     const whole = new Intl.NumberFormat('fa-IR');
     const percent = new Intl.NumberFormat('fa-IR', {style: 'percent', maximumFractionDigits: 2});
@@ -73,6 +74,15 @@ if (editor) {
         updatePrizes();
         const saveState = editor.querySelector('[data-save-state]');
         if (saveState) saveState.textContent = 'تغییرات ذخیره نشده';
+    });
+    editor.addEventListener('submit', () => {
+        if (!saveButton) return;
+
+        saveButton.disabled = true;
+        saveButton.textContent = 'در حال ذخیره…';
+
+        const saveState = editor.querySelector('[data-save-state]');
+        if (saveState) saveState.textContent = 'تنظیمات در حال ذخیره است…';
     });
     updatePreview();
     updatePrizes();

@@ -77,7 +77,9 @@ class CampaignController
         $campaign->save($data);
         $this->forgetPages([$this->homePath()]);
 
-        return back()->with('success', 'تنظیمات رویداد ذخیره شد.');
+        return redirect()
+            ->route('admin.berkay.campaigns.index')
+            ->with('success', 'تنظیمات رویداد ذخیره شد و رویداد انتخاب‌شده در فروشگاه نمایش داده می‌شود.');
     }
 
     public function fulfill(int $id): RedirectResponse
