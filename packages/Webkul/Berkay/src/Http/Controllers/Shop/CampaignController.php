@@ -5,6 +5,7 @@ namespace Webkul\Berkay\Http\Controllers\Shop;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Webkul\Berkay\Services\StoreCampaign;
 
@@ -43,7 +44,7 @@ class CampaignController
         ]);
     }
 
-    public function rewards(Request $request): View|RedirectResponse
+    public function rewards(Request $request, StoreCampaign $campaign): View|RedirectResponse
     {
         $customer = auth()->guard('customer')->user();
         if (! $customer) {
@@ -52,11 +53,23 @@ class CampaignController
             return redirect()->route('shop.customer.session.index');
         }
 
-        $results = \Illuminate\Support\Facades\DB::table('berkay_campaign_spins')
+        $results = DB::table('berkay_campaign_spins')
             ->where(['customer_id' => $customer->id, 'channel_id' => core()->getCurrentChannel()->id])
-            ->latest('id')->simplePaginate(15);
+            ->latest('id')
+            ->simplePaginate(15);
 
-        return view('berkay::shop.campaign-rewards', compact('results'));
+        $codes = $results->getCollection()->pluck('coupon')->filter()->all();
+        $couponUses = $codes ? DB::table('cart_rule_coupons')
+            ->whereIn('code', $codes)
+            ->selectRaw('code, MAX(times_used) as times_used')
+            ->groupBy('code')
+            ->pluck('times_used', 'code') : collect();
+
+        return view('berkay::shop.campaign-rewards', [
+            'results' => $results,
+            'couponUses' => $couponUses,
+            'wheelAvailable' => (bool) ($campaign->active()['wheel'] ?? false),
+        ]);
     }
 
     public function spin(Request $request, StoreCampaign $campaign): RedirectResponse|JsonResponse

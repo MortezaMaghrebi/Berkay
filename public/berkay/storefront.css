@@ -709,10 +709,85 @@ html{-webkit-text-size-adjust:100%}
     .bk-campaign-wheel { width: min(72vw, 255px); }
 }
 
-.bk-campaign-rewards { max-width: 760px; margin: 32px auto; }
-.bk-campaign-rewards h1 { font-size: 26px; font-weight: 750; }
-.bk-campaign-rewards article { padding: 16px; margin-block: 12px; border: 1px solid #e5d5c5; border-radius: 10px; }
-.bk-campaign-rewards article h2 { font-weight: 700; }
+.bk-campaign-rewards {
+    width: min(900px, 100%);
+    margin-inline: auto;
+    padding: clamp(24px, 5vw, 58px) clamp(18px, 4vw, 32px);
+    color: var(--bk-ink);
+}
+.bk-rewards-header, .bk-reward-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px 20px;
+}
+.bk-rewards-header { margin-block-end: 22px; }
+.bk-rewards-header h1 { margin: 5px 0 2px; font-size: clamp(24px, 4vw, 32px); font-weight: 800; }
+.bk-rewards-header p, .bk-reward-heading p, .bk-reward-details, .bk-rewards-empty p {
+    color: #6b5850;
+    font-size: .875rem;
+    line-height: 1.8;
+}
+.bk-reward, .bk-rewards-empty {
+    margin-block-end: 12px;
+    padding: clamp(15px, 3vw, 24px);
+    border: 1px solid #e5dbd1;
+    border-radius: 10px;
+    background: #fff;
+}
+.bk-reward-heading > div, .bk-reward-ticket > div { min-width: 0; }
+.bk-reward h2, .bk-rewards-empty h2 { font-size: clamp(17px, 2vw, 21px); font-weight: 750; overflow-wrap: anywhere; }
+.bk-reward-status { padding: 3px 10px; border-radius: 14px; background: #f2eeea; color: #61534b; font-size: .8rem; }
+.bk-reward-status[data-tone="active"] { color: #284b32; background: #eaf1e7; }
+.bk-reward-status[data-tone="pending"] { color: #75501e; background: #faf0da; }
+.bk-reward-details { display: flex; flex-wrap: wrap; gap: 4px 20px; margin-block: 8px 14px; }
+.bk-reward-details :is(time, strong) { color: #382820; font-variant-numeric: tabular-nums; }
+.bk-reward-details time { display: inline-block; }
+.bk-reward-ticket {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 8px 12px;
+    border-radius: 8px;
+    background: #f6efe6;
+    padding: 12px 14px;
+}
+.bk-reward-ticket label { display: block; color: #6b5850; font-size: .82rem; }
+.bk-reward-ticket input {
+    width: 100%;
+    padding-block: 5px;
+    border: 0;
+    background: transparent;
+    text-align: start;
+    font: 700 clamp(13px, 2.5vw, 19px)/1.6 ui-monospace, monospace;
+}
+.bk-reward-copy-feedback { grid-column: 1 / -1; color: #4c3a30; font-size: .82rem; }
+.bk-reward-copy-feedback:empty { position: absolute; }
+.bk-rewards-action, .bk-rewards-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 44px;
+    color: #704a34;
+    font-weight: 650;
+    font-size: .875rem;
+}
+.bk-rewards-action { padding-inline: 13px; border: 1px solid #dbc5b0; border-radius: 8px; }
+.bk-rewards-action:hover { background: #f5ece2; }
+.bk-rewards-action--primary { background: #573928; border-color: #573928; color: #fff; }
+.bk-rewards-action--primary:hover { background: #6d4731; }
+.bk-rewards-link:hover { text-decoration: underline; text-underline-offset: 4px; }
+.bk-campaign-rewards :focus-visible { outline: 2px solid #815433; outline-offset: 3px; }
+.bk-rewards-empty { background: #fbf8f4; }
+.bk-rewards-empty p { margin-block: 6px 12px; }
+.bk-rewards-pages { display: flex; flex-wrap: wrap; gap: 8px; margin-block-start: 18px; }
+@media (max-width: 480px) {
+    .bk-reward-ticket { grid-template-columns: minmax(0, 1fr); }
+    .bk-reward-ticket input { text-align: end; }
+    .bk-reward-ticket button { justify-self: start; }
+}
 
 .bk-campaign-banner {
     --campaign-ink: #38261e;

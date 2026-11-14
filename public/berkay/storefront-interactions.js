@@ -108,6 +108,24 @@ function enableMouseDrag(track) {
     updateDraggable();
 }
 
+document.addEventListener('click', async event => {
+    const button = event.target.closest('[data-reward-copy]');
+    const ticket = button?.closest('[data-reward-ticket]');
+    if (!ticket) return;
+
+    const code = ticket.querySelector('input');
+    const feedback = ticket.querySelector('[data-reward-copy-feedback]');
+
+    try {
+        await navigator.clipboard.writeText(code.value);
+        feedback.textContent = 'کد جایزه کپی شد.';
+    } catch {
+        code.focus();
+        code.select();
+        feedback.textContent = 'کد انتخاب شد. آن را از منوی دستگاه کپی کنید.';
+    }
+});
+
 window.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('.bk-category-strip.bk-drag-scroll').forEach(enableMouseDrag);
 
