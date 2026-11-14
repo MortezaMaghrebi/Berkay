@@ -46,6 +46,11 @@ class CartRule
     protected $itemTotals = [];
 
     /**
+     * The eligible merchandise subtotal caps keyed by campaign rule ID.
+     */
+    protected array $campaignSubtotalLimits = [];
+
+    /**
      * Create a new helper instance.
      *
      * @return void
@@ -70,6 +75,8 @@ class CartRule
         $this->cart = $cart;
 
         $this->canProcessRuleCache = [];
+        $this->itemTotals = [];
+        $this->campaignSubtotalLimits = [];
 
         /**
          * If cart rules are not available then don't process further.
@@ -182,6 +189,8 @@ class CartRule
                 case 'by_percent':
                     $rulePercent = min(100, $rule->discount_amount);
 
+                    $rulePercent *= $this->campaignDiscountRate($rule);
+
                     $discountAmount = ($quantity * $item->price - $item->discount_amount) * ($rulePercent / 100);
 
                     $baseDiscountAmount = ($quantity * $item->base_price - $item->base_discount_amount) * ($rulePercent / 100);
@@ -205,19 +214,21 @@ class CartRule
                     break;
 
                 case 'cart_fixed':
-                    if ($this->itemTotals[$rule->id]['total_items'] <= 1) {
-                        $discountAmount = core()->convertPrice($rule->discount_amount);
+                    $totalBasePrice = $this->itemTotals[$rule->id]['base_total_price'];
 
-                        $baseDiscountAmount = min($item->base_price * $quantity, $rule->discount_amount);
-                    } else {
-                        $discountRate = $item->base_price * $quantity / $this->itemTotals[$rule->id]['base_total_price'];
-
-                        $maxDiscount = $rule->discount_amount * $discountRate;
-
-                        $discountAmount = core()->convertPrice($maxDiscount);
-
-                        $baseDiscountAmount = min($item->base_price * $quantity, $maxDiscount);
+                    if ($totalBasePrice <= 0) {
+                        continue 2;
                     }
+
+                    $fixedAmount = $rule->discount_amount;
+
+                    if (isset($this->campaignSubtotalLimits[$rule->id])) {
+                        $fixedAmount = min($fixedAmount, $this->campaignSubtotalLimits[$rule->id]);
+                    }
+
+                    $discountRate = $item->base_price * $quantity / $totalBasePrice;
+                    $baseDiscountAmount = min($item->base_price * $quantity, $fixedAmount * $discountRate);
+                    $discountAmount = core()->convertPrice($baseDiscountAmount);
 
                     break;
 
@@ -559,6 +570,22 @@ class CartRule
     }
 
     /**
+     * Allocate the campaign's capped subtotal proportionally across cart items.
+     */
+    protected function campaignDiscountRate($rule): float
+    {
+        $limit = $this->campaignSubtotalLimits[$rule->id] ?? null;
+
+        if ($limit === null) {
+            return 1.0;
+        }
+
+        $subtotal = (float) $this->cart->items->sum('base_total');
+
+        return $subtotal > $limit ? $limit / $subtotal : 1.0;
+    }
+
+    /**
      * Resolve whether a cart rule can be applied (uncached).
      *
      * @param  \Webkul\CartRule\Contracts\CartRule  $rule
@@ -580,14 +607,18 @@ class CartRule
                 $coupon
                 && $coupon->code === $this->cart->coupon_code
             ) {
-                if (StoreCampaign::isWheelCoupon($coupon->code)
-                    && ! StoreCampaign::allowsCoupon(
+                if (StoreCampaign::isWheelCoupon($coupon->code)) {
+                    $prize = StoreCampaign::couponPrize(
                         $coupon->code,
                         $this->cart->customer_id,
                         core()->getCurrentChannel()->id,
-                        (float) $this->cart->items->sum('base_total'),
-                    )) {
-                    return false;
+                    );
+
+                    if ($prize === null) {
+                        return false;
+                    }
+
+                    $this->campaignSubtotalLimits[$rule->id] = $prize['max_purchase_base'] ?? null;
                 }
 
                 if (

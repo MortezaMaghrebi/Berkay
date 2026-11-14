@@ -44,12 +44,11 @@ class Order
             return;
         }
 
-        if ($wheelCoupon && ! StoreCampaign::allowsCoupon(
+        if ($wheelCoupon && StoreCampaign::couponPrize(
             $order->coupon_code,
             $order->customer_id,
             $order->channel_id,
-            (float) $order->base_sub_total,
-        )) {
+        ) === null) {
             throw new CouponUsageLimitExceededException(trans('shop::app.checkout.coupon.usage-limit-exceeded'));
         }
 

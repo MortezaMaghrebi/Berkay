@@ -35,8 +35,7 @@ class StoreCampaign
             return null;
         }
 
-        $settings['prizes'] = array_values(array_filter((array) ($settings['prizes'] ?? []), static fn ($prize) =>
-            is_array($prize) && isset($prize['label'], $prize['type'], $prize['weight'])
+        $settings['prizes'] = array_values(array_filter((array) ($settings['prizes'] ?? []), static fn ($prize) => is_array($prize) && isset($prize['label'], $prize['type'], $prize['weight'])
             && isset(self::TYPES[$prize['type']]) && (int) $prize['weight'] > 0
         ));
         $settings['wheel'] = ! empty($settings['wheel']) && Str::isUuid($settings['run'] ?? '')
@@ -125,10 +124,13 @@ class StoreCampaign
         return preg_match('/\A(?:BK-WHEEL-.*|BW-[A-Z0-9]{7})\z/i', (string) $code) === 1;
     }
 
-    public static function allowsCoupon(string $code, ?int $customerId, int $channelId, float $subtotal): bool
+    /**
+     * Retrieve the active prize owned by the customer on this channel.
+     */
+    public static function couponPrize(string $code, ?int $customerId, int $channelId): ?array
     {
         if (! $customerId) {
-            return false;
+            return null;
         }
 
         $spin = DB::table('berkay_campaign_spins')->where([
@@ -139,13 +141,10 @@ class StoreCampaign
         ])->first();
 
         if (! $spin) {
-            return false;
+            return null;
         }
 
-        $prize = json_decode($spin->prize, true);
-        $limit = $prize['max_purchase_base'] ?? null;
-
-        return $limit === null || round($subtotal, 2) <= $limit;
+        return json_decode($spin->prize, true);
     }
 
     public function spin(string $run, $customer, ?string $version = null): bool

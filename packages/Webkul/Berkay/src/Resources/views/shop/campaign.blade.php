@@ -30,7 +30,7 @@
                     @if ($result->coupon)
                         <p>این کد یک‌بار مصرف را در سبد خرید وارد کنید. مهلت استفاده تا {{ \Illuminate\Support\Carbon::parse($result->created_at)->addDays((int) ($prize['days'] ?? 7))->format('Y/m/d H:i') }} است.</p>
                         @if (! empty($prize['max_purchase']))
-                            <p>سقف مبلغ سبد: {{ number_format($prize['max_purchase']) }} تومان</p>
+                            <p>سقف مبلغ مشمول تخفیف: {{ number_format($prize['max_purchase']) }} تومان</p>
                         @endif
                         <label for="wheel-coupon">کد جایزه</label>
                         <input class="bk-wheel-coupon" id="wheel-coupon" dir="ltr" value="{{ $result->coupon }}" readonly>
