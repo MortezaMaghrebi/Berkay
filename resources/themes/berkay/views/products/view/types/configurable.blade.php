@@ -1,7 +1,7 @@
 @if (Webkul\Product\Helpers\ProductType::hasVariants($product->type))
     {!! view_render_event('bagisto.shop.products.view.configurable-options.before', ['product' => $product]) !!}
 
-    <v-product-configurable-options :errors="errors"></v-product-configurable-options>
+    <v-product-configurable-options ref="configurableOptions" :errors="errors"></v-product-configurable-options>
 
     {!! view_render_event('bagisto.shop.products.view.configurable-options.after', ['product' => $product]) !!}
 
@@ -88,7 +88,7 @@
                                                 :id="'attribute_' + attribute.id"
                                                 :aria-label="option.label"
                                                 class="peer sr-only"
-                                                @click="configure(attribute, $event.target.value)"
+                                                @change="configure(attribute, $event.target.value)"
                                             />
                                         </v-field>
 
@@ -225,6 +225,17 @@
 
                         galleryImages: [],
                     }
+                },
+
+                computed: {
+                    needsColor() {
+                        return this.childAttributes.some(attribute =>
+                            attribute.code === 'color'
+                            && !attribute.disabled
+                            && !attribute.selectedValue
+                            && attribute.options.some(option => option.id)
+                        );
+                    },
                 },
 
                 mounted() {

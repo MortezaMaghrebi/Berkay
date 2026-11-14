@@ -365,6 +365,7 @@ return [
         'before-selling' => 'Before accepting orders',
     ],
     'storefront' => [
+        'color-required' => 'Please select a color.',
         'loading-cart' => 'Loading your cart…',
         'cart-load-failed' => 'Your cart could not be loaded. Check your connection and try again.',
         'retry' => 'Try again',

@@ -260,7 +260,7 @@
             >
                 <form
                     ref="formData"
-                    @submit="handleSubmit($event, addToCart)"
+                    @submit="submitPurchase($event, handleSubmit)"
                 >
                     <input
                         type="hidden"
@@ -596,6 +596,20 @@
                 },
 
                 methods: {
+                    submitPurchase(event, handleSubmit) {
+                        if (this.$refs.configurableOptions?.needsColor) {
+                            event.preventDefault();
+                            this.$emitter.emit('add-flash', {
+                                type: 'warning',
+                                message: @js(trans('berkay::app.storefront.color-required')),
+                            });
+
+                            return;
+                        }
+
+                        return handleSubmit(event, this.addToCart);
+                    },
+
                     addToCart(params) {
                         const operation = this.is_buy_now ? 'buyNow' : 'addToCart';
 
