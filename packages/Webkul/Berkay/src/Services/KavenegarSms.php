@@ -34,6 +34,10 @@ class KavenegarSms
     /** Send a verified template without exposing the API key in exceptions. */
     public function lookup(string $phone, string $template, string $token, ?string $token2 = null): void
     {
+        if (config('berkay.kavenegar.paused')) {
+            throw new RuntimeException('Kavenegar delivery is paused.');
+        }
+
         $key = app(IntegrationSettings::class)->get('kavenegar.api_key');
 
         if (

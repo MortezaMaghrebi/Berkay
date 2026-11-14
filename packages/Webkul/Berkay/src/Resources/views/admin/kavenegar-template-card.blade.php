@@ -19,6 +19,15 @@
         'status' => 'status-pattern',
         default => null,
     };
+    $suggestedName = match ($event) {
+        'login' => 'otp',
+        'order' => 'new-order-user',
+        'stage_review' => 'order-awaiting-review',
+        'stage_approved' => 'order-approved',
+        'shipped' => 'order-shipped-user',
+        'status' => 'order-status-user',
+        default => null,
+    };
     $editable = bouncer()->hasPermission('berkay.integrations.edit');
 @endphp
 <article class="bk-sms-card" aria-labelledby="sms-{{ $event }}-title">
@@ -47,7 +56,7 @@
     <div class="bk-sms-card-body">
         <label for="template-{{ $event }}">{{ trans('berkay::sms.pattern-name') }}</label>
         <input id="template-{{ $event }}" name="templates[{{ $event }}]" value="{{ $pattern }}"
-            maxlength="100" dir="ltr" aria-describedby="hint-{{ $event }}" @readonly(! $editable)>
+            maxlength="100" dir="ltr" placeholder="{{ $suggestedName }}" aria-describedby="hint-{{ $event }}" @readonly(! $editable)>
         @error('templates.'.$event)
             <small class="text-red-700 dark:text-red-400">{{ $message }}</small>
         @enderror

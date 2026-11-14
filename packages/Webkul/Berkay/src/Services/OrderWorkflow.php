@@ -61,6 +61,8 @@ class OrderWorkflow
                     'updated_at' => now(),
                 ]);
 
+                SendOrderSms::dispatch($order->id, 'stage_review');
+
                 return $order;
             });
         });
@@ -118,7 +120,7 @@ class OrderWorkflow
         });
 
         if ($action === 'approve') {
-            SendOrderSms::dispatch($order->id, 'confirmed');
+            SendOrderSms::dispatch($order->id, 'stage_approved');
         }
     }
 

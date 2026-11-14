@@ -4,6 +4,7 @@ use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Webkul\Berkay\Jobs\SendOrderSms;
 use Webkul\Berkay\Services\IntegrationSettings;
+use Webkul\Berkay\Services\OrderWorkflow;
 use Webkul\Customer\Models\Customer;
 use Webkul\Sales\Models\Order;
 
@@ -78,7 +79,6 @@ it('does not create a challenge when Kavenegar rejects the message', function ()
     assertGuest('customer');
 });
 
-
 it('sends a shipment template with tracking and prevents duplicate sends', function () {
     app(IntegrationSettings::class)->put('kavenegar.shipped_template', 'berkay-shipped');
 
@@ -96,4 +96,28 @@ it('sends a shipment template with tracking and prevents duplicate sends', funct
         && $request['template'] === 'berkay-shipped'
         && $request['token'] === (string) $order->increment_id
         && $request['token2'] === '1234567890');
+});
+
+it('sends a manual approval only while the order is still awaiting payment', function () {
+    app(IntegrationSettings::class)->put('kavenegar.stage_approved_template', 'order-approved');
+    $customer = Customer::factory()->create(['phone' => '09990000124']);
+    $order = Order::factory()->create(['customer_id' => $customer->id, 'base_grand_total' => 100]);
+    $workflow = app(OrderWorkflow::class);
+    $workflow->query()->insert(['order_id' => $order->id, 'review' => 'approved']);
+
+    Http::fake(['api.kavenegar.com/*' => Http::response(['return' => ['status' => 200]])]);
+    $job = new SendOrderSms($order->id, 'stage_approved');
+    config(['berkay.kavenegar.paused' => true]);
+    app()->call([$job, 'handle']);
+    Http::assertNothingSent();
+
+    config(['berkay.kavenegar.paused' => false]);
+    $workflow->query()->where('order_id', $order->id)->update(['review' => 'waiting']);
+    app()->call([$job, 'handle']);
+    Http::assertNothingSent();
+
+    $workflow->query()->where('order_id', $order->id)->update(['review' => 'approved']);
+    app()->call([$job, 'handle']);
+    Http::assertSentCount(1);
+    Http::assertSent(fn (Request $request) => $request['template'] === 'order-approved');
 });

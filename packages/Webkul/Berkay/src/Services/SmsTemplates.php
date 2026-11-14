@@ -6,11 +6,11 @@ class SmsTemplates
 {
     public const EVENTS = [
         'register', 'login', 'change', 'delete', 'order', 'confirmed', 'shipped',
-        'completed', 'canceled', 'refunded', 'status', 'coupon', 'test',
+        'completed', 'canceled', 'refunded', 'stage_review', 'stage_approved', 'status', 'coupon', 'test',
     ];
 
     /** Order notifications with independent delivery switches. */
-    public const ORDER_EVENTS = ['order', 'confirmed', 'shipped', 'completed', 'canceled', 'refunded', 'status'];
+    public const ORDER_EVENTS = ['order', 'confirmed', 'shipped', 'completed', 'canceled', 'refunded', 'stage_review', 'stage_approved', 'status'];
 
     public function __construct(protected IntegrationSettings $settings) {}
 
@@ -22,7 +22,7 @@ class SmsTemplates
 
     public function template(string $event): ?string
     {
-        if (! $this->settings->get('kavenegar.enabled') || ! $this->settings->get('kavenegar.api_key')) {
+        if (config('berkay.kavenegar.paused') || ! $this->settings->get('kavenegar.enabled') || ! $this->settings->get('kavenegar.api_key')) {
             return null;
         }
 

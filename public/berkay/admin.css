@@ -209,7 +209,7 @@ html[lang=fa] body{font-family:Vazirmatn,Tahoma,sans-serif}html[lang=fa] body *:
 }
 
 .bk-sms-example p, .bk-sms-example small { padding: .55rem .7rem; }
-.bk-sms-example p { margin: 0; overflow-wrap: anywhere; }
+.bk-sms-example p { margin: 0; overflow-wrap: anywhere; white-space: pre-line; }
 .bk-sms-example small:not([hidden]) { display: block; }
 
 .bk-crop-dialog{inset:0;margin:auto;width:min(440px,calc(100% - 24px));max-height:calc(100dvh - 24px);padding:1rem;border:1px solid #ded5c8;border-radius:14px;background:#fff;color:#30231e;overflow:auto}

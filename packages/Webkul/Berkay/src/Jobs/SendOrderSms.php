@@ -8,6 +8,7 @@ use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Cache;
 use InvalidArgumentException;
 use Webkul\Berkay\Services\KavenegarSms;
+use Webkul\Berkay\Services\OrderWorkflow;
 use Webkul\Berkay\Services\SmsTemplates;
 use Webkul\Sales\Repositories\OrderRepository;
 
@@ -53,6 +54,20 @@ class SendOrderSms implements ShouldQueue
 
         if (! $order || Cache::has($key)) {
             return;
+        }
+
+        if (in_array($event, ['stage_review', 'stage_approved'], true)) {
+            $workflow = app(OrderWorkflow::class);
+            $expected = $event === 'stage_review' ? 'waiting' : 'approved';
+
+            if (
+                $workflow->record($order)?->review !== $expected
+                || $workflow->ended($order)
+                || (float) $order->base_grand_total <= 0
+                || $workflow->paid($order)
+            ) {
+                return;
+            }
         }
 
         $phone = null;
