@@ -22,7 +22,7 @@
                                 style="height: 40px; width: 110px;"
                             />
                         @else
-                            <img src="{{ asset('berkay/brand-logo.jpg') }}" alt="{{ config('app.name') }}" width="64" height="64">
+                            <img src="{{ asset('berkay/brand-logo.png') }}" alt="{{ config('app.name') }}" width="64" height="64">
                         @endif
                     </a>
                 </div>

@@ -12,7 +12,7 @@
 
         <!-- Logo -->
         <a href="{{ route('admin.berkay.index') }}" class="shrink-0">
-            <img src="{{ asset('berkay/brand-logo.jpg') }}" class="h-9 w-9 rounded-md object-contain sm:h-11 sm:w-11" alt="{{ config('app.name') }}">
+            <img src="{{ asset('berkay/brand-logo.png') }}" class="h-9 w-9 rounded-md object-contain sm:h-11 sm:w-11" alt="{{ config('app.name') }}">
         </a>
 
         <span class="bk-panel-name">{{ trans('berkay::app.seller.your-store') }}</span>
@@ -77,7 +77,7 @@
             <x-slot:content class="p-0!">
                 <div class="flex items-center gap-1.5 border border-b-gray-300 px-4 py-2 dark:border-gray-800 sm:px-5 sm:py-2.5">
                     <img
-                        src="{{ asset('berkay/brand-logo.jpg') }}"
+                        src="{{ asset('berkay/brand-logo.png') }}"
                         class="sm:h-6 sm:w-6"
                         width="20"
                         height="20"
@@ -127,7 +127,7 @@
     <!-- Drawer Header -->
     <x-slot:header>
         <div class="flex items-center justify-between">
-            <img src="{{ asset('berkay/brand-logo.jpg') }}" class="h-9 w-9 rounded-md object-contain sm:h-11 sm:w-11" alt="{{ config('app.name') }}">
+            <img src="{{ asset('berkay/brand-logo.png') }}" class="h-9 w-9 rounded-md object-contain sm:h-11 sm:w-11" alt="{{ config('app.name') }}">
         </div>
     </x-slot>
 

@@ -6,7 +6,7 @@
 <header class="bk-header">
     <div class="bk-header-main">
         <a class="bk-brand" href="{{ route('shop.home.index') }}" aria-label="{{ $brandName }}">
-            <img class="rounded-md object-contain" src="{{ asset('berkay/brand-logo.jpg') }}" alt="" width="50" height="50">
+            <img class="rounded-md object-contain" src="{{ asset('berkay/brand-logo.png') }}" alt="" width="50" height="50">
             <span><strong>{{ $brandName }}</strong><small>{{ core()->getConfigData('berkay.store.identity.tagline') ?: trans('berkay::app.tagline-default') }}</small></span>
         </a>
         <form class="bk-search" action="{{ route('shop.search.index') }}" role="search">

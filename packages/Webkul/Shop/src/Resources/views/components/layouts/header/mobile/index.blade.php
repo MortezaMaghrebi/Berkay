@@ -28,7 +28,7 @@
             >
                 <img
                     class="block"
-                    src="{{ asset('berkay/brand-logo.jpg') }}"
+                    src="{{ asset('berkay/brand-logo.png') }}"
                     alt="{{ core()->getCurrentChannel()->logo_alt ?: config('app.name') }}"
                     width="131"
                     height="29"
@@ -268,7 +268,7 @@
                     <div class="flex items-center justify-between">
                         <a href="{{ route('shop.home.index') }}">
                             <img
-                                src="{{ asset('berkay/brand-logo.jpg') }}"
+                                src="{{ asset('berkay/brand-logo.png') }}"
                                 alt="{{ core()->getCurrentChannel()->logo_alt ?: config('app.name') }}"
                                 width="131"
                                 height="29"

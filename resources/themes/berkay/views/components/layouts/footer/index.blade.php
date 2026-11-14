@@ -1,5 +1,5 @@
 <footer class="bk-footer">
-    <div><a class="bk-footer-brand inline-flex items-center gap-3" href="{{ route('shop.home.index') }}"><img class="rounded-md object-contain" src="{{ asset('berkay/brand-logo.jpg') }}" alt="" width="56" height="56"> {{ core()->getConfigData('berkay.store.identity.name') ?: trans('berkay::app.brand') }}</a><p>{{ trans('berkay::app.footer-text') }}</p></div>
+    <div><a class="bk-footer-brand inline-flex items-center gap-3" href="{{ route('shop.home.index') }}"><img class="rounded-md object-contain" src="{{ asset('berkay/brand-logo.png') }}" alt="" width="56" height="56"> {{ core()->getConfigData('berkay.store.identity.name') ?: trans('berkay::app.brand') }}</a><p>{{ trans('berkay::app.footer-text') }}</p></div>
     <nav aria-label="{{ trans('berkay::app.catalog') }}">
         <a href="{{ route('shop.search.index') }}">{{ trans('berkay::app.all-products') }}</a>
         <a href="{{ route('shop.berkay.magazine.index') }}">{{ trans('berkay::app.magazine') }}</a>

@@ -11,7 +11,7 @@
 
                 <img
                     class="mb-6 h-10"
-                    src="{{ asset('berkay/brand-logo.jpg') }}"
+                    src="{{ asset('berkay/brand-logo.png') }}"
                     id="logo-image"
                     alt="{{ config('app.name') }}"
                 />

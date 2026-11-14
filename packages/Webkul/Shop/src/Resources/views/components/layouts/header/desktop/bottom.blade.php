@@ -14,7 +14,7 @@
             aria-label="@lang('shop::app.components.layouts.header.desktop.bottom.bagisto')"
         >
             <img
-                src="{{ asset('berkay/brand-logo.jpg') }}"
+                src="{{ asset('berkay/brand-logo.png') }}"
                 width="48" height="48"
                 alt="{{ core()->getCurrentChannel()->logo_alt ?: config('app.name') }}"
             >

@@ -26,7 +26,7 @@
                 aria-label="@lang('shop::app.customers.login-form.bagisto')"
             >
                 <img
-                    src="{{ asset('berkay/brand-logo.jpg') }}"
+                    src="{{ asset('berkay/brand-logo.png') }}"
                     alt="{{ core()->getCurrentChannel()->logo_alt ?: config('app.name') }}"
                     width="131"
                     height="29"

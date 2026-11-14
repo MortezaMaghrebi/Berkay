@@ -7,7 +7,7 @@
     <div class="flex h-screen items-center justify-center">
         <div class="flex flex-col items-center gap-5">
             <!-- Logo -->            
-            <img class="rounded-md object-contain" src="{{ asset('berkay/brand-logo.jpg') }}" alt="{{ config('app.name') }}" width="64" height="64">
+            <img class="rounded-md object-contain" src="{{ asset('berkay/brand-logo.png') }}" alt="{{ config('app.name') }}" width="64" height="64">
 
             <div class="box-shadow flex min-w-75 flex-col rounded-md bg-white dark:bg-gray-900">
                 <!-- Login Form -->

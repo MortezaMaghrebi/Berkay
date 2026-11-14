@@ -48,8 +48,8 @@
 
         <link
             rel="icon"
-            sizes="16x16"
-            href="{{ asset('berkay/brand-logo.jpg') }}"
+            type="image/png"
+            href="{{ asset('berkay/brand-logo.png') }}"
         />
 
         @bagistoVite(['src/Resources/assets/css/app.css', 'src/Resources/assets/js/app.js'])

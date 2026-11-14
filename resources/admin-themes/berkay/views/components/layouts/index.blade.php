@@ -67,10 +67,10 @@
     <link
         rel="preload"
         as="image"
-        href="{{ asset('berkay/brand-logo.jpg') }}"
+        href="{{ asset('berkay/brand-logo.png') }}"
     >
 
-    <link rel="icon" type="image/jpeg" href="{{ asset('berkay/brand-logo.jpg') }}">
+    <link rel="icon" type="image/png" href="{{ asset('berkay/brand-logo.png') }}">
 
     @stack('styles')
 

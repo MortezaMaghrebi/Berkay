@@ -6,7 +6,7 @@
     <div class="flex h-screen items-center justify-center px-4">
         <div class="flex w-full max-w-105 flex-col items-center gap-6">
             <!-- Logo -->
-            <img class="rounded-md object-contain" src="{{ asset('berkay/brand-logo.jpg') }}" alt="{{ config('app.name') }}" width="64" height="64">
+            <img class="rounded-md object-contain" src="{{ asset('berkay/brand-logo.png') }}" alt="{{ config('app.name') }}" width="64" height="64">
 
             <!-- Card -->
             <div class="box-shadow w-full overflow-hidden rounded-xl bg-white dark:bg-gray-900">
