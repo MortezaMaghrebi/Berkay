@@ -81,3 +81,37 @@ it('keeps a saved pattern while disabling its order notification', function () {
     $this->put($url, $payload + ['notifications' => ['shipped' => 1]])->assertSessionHasNoErrors();
     expect($templates->template('shipped'))->toBe('order-shipped');
 });
+
+
+it('stores a normalized manager recipient and enables each alert independently', function () {
+    $this->loginAsAdmin();
+    $settings = app(IntegrationSettings::class);
+    $settings->put('kavenegar.api_key', 'TESTCREDENTIAL123456789');
+    $payload = [
+        'enabled' => 1,
+        'admin_recipient' => '+۹۸۹۱۲۳۴۵۶۷۸۹',
+        'templates' => ['login' => 'otp', 'admin_new_order' => 'new-order-admin', 'admin_order_paid' => 'order-paid-admin'],
+        'notifications' => ['admin_new_order' => 1, 'admin_order_paid' => 0],
+    ];
+
+    $this->put(route('admin.berkay.kavenegar.update'), $payload)->assertSessionHasNoErrors()->assertRedirect();
+
+    $templates = app(SmsTemplates::class);
+    expect($templates->adminRecipient())->toBe('09123456789')
+        ->and($templates->template('admin_new_order'))->toBe('new-order-admin')
+        ->and($templates->template('admin_order_paid'))->toBeNull();
+
+    $this->get(route('admin.berkay.kavenegar.index'))->assertOk()->assertSee('09123456789');
+    Http::assertNothingSent();
+});
+
+it('requires a manager number and pattern before enabling an alert', function () {
+    $this->loginAsAdmin();
+    $url = route('admin.berkay.kavenegar.update');
+    $payload = ['enabled' => 0, 'admin_recipient' => '123', 'notifications' => ['admin_new_order' => 1]];
+
+    $this->put($url, $payload)->assertSessionHasErrors('admin_recipient');
+    $this->put($url, array_replace($payload, ['admin_recipient' => '09123456789']))
+        ->assertSessionHasErrors('admin_recipient');
+    expect(app(SmsTemplates::class)->eventEnabled('admin_new_order'))->toBeFalse();
+});

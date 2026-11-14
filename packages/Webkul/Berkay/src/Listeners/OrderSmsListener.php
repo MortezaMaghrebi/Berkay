@@ -14,6 +14,12 @@ class OrderSmsListener
     public function created($order): void
     {
         $this->enqueue($order->id, 'created', 'order');
+        $this->enqueue($order->id, 'admin_new_order', 'admin_new_order');
+    }
+
+    public function paid(int $orderId): void
+    {
+        $this->enqueue($orderId, 'admin_order_paid', 'admin_order_paid');
     }
 
     public function statusChanged($order): void

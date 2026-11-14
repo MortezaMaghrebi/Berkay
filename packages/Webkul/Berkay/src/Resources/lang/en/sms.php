@@ -1,6 +1,17 @@
 <?php
 
 return [
+    'group-admin' => 'Store manager notifications',
+    'admin-phone' => 'Recipient mobile number',
+    'admin-phone-help' => 'Both alerts use this number. Enable each alert after Kavenegar approves its pattern.',
+    'admin-phone-invalid' => 'Enter a valid Iranian mobile number.',
+    'admin-requirements' => 'Enter a recipient and pattern name for every enabled manager alert.',
+    'template-admin_new_order' => 'New order alert',
+    'template-admin_order_paid' => 'Payment received alert',
+    'admin-new-order-help' => 'Sent when an order is placed, even before payment.',
+    'admin-order-paid-help' => 'Sent after a live Zarinpal payment is verified and recorded.',
+    'example-admin_new_order' => 'New order %token was placed. Charm Berkay',
+    'example-admin_order_paid' => 'Payment for order %token was confirmed. Charm Berkay',
     'login' => 'Sign in with mobile',
     'register' => 'Register with mobile',
     'change' => 'Change mobile number',

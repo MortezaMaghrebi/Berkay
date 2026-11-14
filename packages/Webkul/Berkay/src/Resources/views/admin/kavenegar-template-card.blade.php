@@ -2,7 +2,7 @@
     $example = trans('berkay::sms.example-'.$event);
     $pattern = old('templates.'.$event, $templates[$event]);
     $token = match ($group) {
-        'orders' => 'order-number',
+        'orders', 'admin' => 'order-number',
         'extras' => $event === 'coupon' ? 'coupon-token' : 'account-code',
         default => 'account-code',
     };
@@ -16,6 +16,8 @@
         'register', 'change', 'delete', 'test' => 'fallback-code',
         'coupon' => 'manual-pattern',
         'order' => 'order-pattern',
+        'admin_new_order' => 'admin-new-order-help',
+        'admin_order_paid' => 'admin-order-paid-help',
         'status' => 'status-pattern',
         default => null,
     };
@@ -31,6 +33,8 @@
         'coupon' => 'coupon',
         'test' => 'test-sms',
         'order' => 'new-order-user',
+        'admin_new_order' => 'new-order-admin',
+        'admin_order_paid' => 'order-paid-admin',
         'stage_review' => 'order-awaiting-review',
         'stage_approved' => 'order-approved',
         'shipped' => 'order-shipped-user',
@@ -41,14 +45,14 @@
 @endphp
 <article class="bk-sms-card" aria-labelledby="sms-{{ $event }}-title">
     <header class="bk-sms-card-heading">
-        <span class="bk-sms-card-icon {{ $group === 'orders' ? 'icon-sales' : 'icon-settings' }}" aria-hidden="true"></span>
+        <span class="bk-sms-card-icon {{ in_array($group, ['orders', 'admin'], true) ? 'icon-sales' : 'icon-settings' }}" aria-hidden="true"></span>
         <div>
             <h3 id="sms-{{ $event }}-title">{{ trans('berkay::sms.template-'.$event) }}</h3>
             @if ($description)
                 <p>{{ trans('berkay::sms.'.$description) }}</p>
             @endif
         </div>
-        @if ($group === 'orders')
+        @if (in_array($group, ['orders', 'admin'], true))
             <label class="bk-sms-toggle">
                 @if ($editable)
                     <input type="hidden" name="notifications[{{ $event }}]" value="0">

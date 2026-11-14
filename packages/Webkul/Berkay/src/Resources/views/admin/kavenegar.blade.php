@@ -21,9 +21,19 @@
                     <option value="1" @selected(old('enabled', $enabled))>{{ trans('berkay::app.yes') }}</option>
                 </select>
             </div>
-            @foreach (['account' => ['login', 'register', 'change', 'delete'], 'orders' => $orderEvents, 'extras' => ['coupon', 'test']] as $group => $events)
+            @foreach (['account' => ['login', 'register', 'change', 'delete'], 'orders' => $orderEvents, 'admin' => $adminEvents, 'extras' => ['coupon', 'test']] as $group => $events)
                 <div class="bk-form-section">
                     <h2>{{ trans('berkay::sms.group-'.$group) }}</h2>
+                    @if ($group === 'admin')
+                        <div>
+                            <label for="admin_recipient">{{ trans('berkay::sms.admin-phone') }}</label>
+                            <input id="admin_recipient" name="admin_recipient" type="tel" dir="ltr" maxlength="32"
+                                value="{{ old('admin_recipient', $adminRecipient) }}" placeholder="09123456789"
+                                aria-describedby="admin-recipient-help" @readonly(! bouncer()->hasPermission('berkay.integrations.edit'))>
+                            <p id="admin-recipient-help">{{ trans('berkay::sms.admin-phone-help') }}</p>
+                            @error('admin_recipient')<small class="bk-error">{{ $message }}</small>@enderror
+                        </div>
+                    @endif
                     <div class="bk-sms-template-grid">
                         @foreach ($events as $event)
                             @include('berkay::admin.kavenegar-template-card')

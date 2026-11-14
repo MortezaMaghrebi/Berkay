@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Throwable;
+use Webkul\Berkay\Listeners\OrderSmsListener;
 use Webkul\Berkay\Payment\Zarinpal;
 use Webkul\Berkay\Repositories\PaymentAttemptRepository;
 use Webkul\Berkay\Services\IranianMoney;
@@ -220,6 +221,10 @@ class ZarinpalController extends Controller
                         'invoice_id' => $invoice->id,
                         'amount' => $order->grand_total,
                     ]);
+
+                    if ($verified->amount_rial > 0 && ($verified->gateway_context['sandbox'] ?? null) === false) {
+                        app(OrderSmsListener::class)->paid($order->id);
+                    }
                 });
             });
 

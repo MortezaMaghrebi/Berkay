@@ -49,7 +49,18 @@ class SendOrderSms implements ShouldQueue
             return;
         }
 
+        $forAdmin = in_array($event, SmsTemplates::ADMIN_EVENTS, true);
+        $recipient = $forAdmin ? $templates->adminRecipient() : null;
+
         $key = 'berkay:sms:'.$this->orderId.':'.$this->event;
+
+        if ($forAdmin) {
+            if (! $recipient) {
+                return;
+            }
+
+            $key .= ':'.hash('sha256', $recipient);
+        }
         $order = $orders->find($this->orderId);
 
         if (! $order || Cache::has($key)) {
@@ -72,7 +83,9 @@ class SendOrderSms implements ShouldQueue
 
         $phone = null;
 
-        foreach ([$order->customer?->phone, $order->billing_address?->phone] as $candidate) {
+        $candidates = $forAdmin ? [$recipient] : [$order->customer?->phone, $order->billing_address?->phone];
+
+        foreach ($candidates as $candidate) {
             try {
                 $phone = $sms->normalizePhone((string) $candidate);
                 break;

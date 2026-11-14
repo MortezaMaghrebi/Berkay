@@ -34,7 +34,9 @@ class KavenegarController
             'configured' => filled($this->settings->get('kavenegar.api_key')),
             'enabled' => (bool) $this->settings->get('kavenegar.enabled'),
             'orderEvents' => SmsTemplates::ORDER_EVENTS,
-            'notifications' => collect(SmsTemplates::ORDER_EVENTS)->mapWithKeys(fn ($event) => [
+            'adminEvents' => SmsTemplates::ADMIN_EVENTS,
+            'adminRecipient' => $this->templates->adminRecipient(),
+            'notifications' => collect(SmsTemplates::NOTIFICATION_EVENTS)->mapWithKeys(fn ($event) => [
                 $event => $this->templates->eventEnabled($event),
             ]),
             'templates' => collect(SmsTemplates::EVENTS)->mapWithKeys(fn ($event) => [
@@ -52,7 +54,26 @@ class KavenegarController
                 ->withInput($request->except('api_key'));
         }
 
-        DB::transaction(function () use ($data) {
+        $recipient = array_key_exists('admin_recipient', $data)
+            ? (filled($data['admin_recipient']) ? $this->sms->normalizePhone($data['admin_recipient']) : null)
+            : $this->templates->adminRecipient();
+
+        foreach (SmsTemplates::ADMIN_EVENTS as $event) {
+            if (! ($data['notifications'][$event] ?? $this->templates->eventEnabled($event))) {
+                continue;
+            }
+
+            if (! $recipient || blank(array_key_exists($event, $data['templates'] ?? []) ? $data['templates'][$event] : $this->settings->get('kavenegar.'.$event.'_template'))) {
+                return back()->withErrors(['admin_recipient' => trans('berkay::sms.admin-requirements')])
+                    ->withInput($request->except('api_key'));
+            }
+        }
+
+        DB::transaction(function () use ($data, $recipient) {
+            if (array_key_exists('admin_recipient', $data)) {
+                $this->settings->put('kavenegar.admin_recipient', $recipient);
+            }
+
             if (filled($data['api_key'] ?? null)) {
                 $this->settings->put('kavenegar.api_key', $data['api_key']);
             }
@@ -63,6 +84,10 @@ class KavenegarController
                 $this->settings->put('kavenegar.'.$event.'_enabled', (bool) $enabled);
             }
             foreach (SmsTemplates::EVENTS as $event) {
+                if (in_array($event, SmsTemplates::ADMIN_EVENTS, true) && ! array_key_exists($event, $data['templates'] ?? [])) {
+                    continue;
+                }
+
                 $this->settings->put('kavenegar.'.$event.'_template', $data['templates'][$event] ?? null);
             }
         });
