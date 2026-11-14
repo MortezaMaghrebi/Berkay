@@ -42,6 +42,10 @@ while IFS= read -r -d '' relative; do
     else
         /bin/cp -p -- "$SOURCE/$relative" "$target"
     fi
+    if [[ "$relative" == public/berkay/event-banners/*.jpg ]]; then
+        chmod 0755 -- "$WEBROOT/berkay" "$WEBROOT/berkay/event-banners"
+        chmod 0644 -- "$target"
+    fi
     count=$((count + 1))
 done < "$MANIFEST"
 printf 'Copied %s tracked application files with /bin/cp. Existing uploads and obsolete files were not deleted.\n' "$count"

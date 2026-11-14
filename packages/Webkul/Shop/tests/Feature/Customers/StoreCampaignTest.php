@@ -40,7 +40,7 @@ it('renders the active event on the homepage and serves its packaged art', funct
     $this->get(route('shop.home.index'))
         ->assertOk()
         ->assertSee('جشن چرم شب یلدا')
-        ->assertSee(route('shop.berkay.campaign.artwork', ['event' => 'yalda'], false));
+        ->assertSee(asset('berkay/event-banners/yalda.jpg'));
 
     $this->get(route('shop.berkay.campaign.artwork', ['event' => 'yalda']))
         ->assertOk()

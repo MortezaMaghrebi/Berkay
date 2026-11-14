@@ -22,7 +22,7 @@
                     @foreach ($events as $key => $name)
                         <label>
                             <input type="radio" name="event" value="{{ $key }}" @checked(old('event', $settings['event'] ?? null) === $key)>
-                            <img src="{{ route('shop.berkay.campaign.artwork', ['event' => $key], false) }}" width="480" height="268" alt="" loading="lazy">
+                            <img src="{{ asset('berkay/event-banners/'.$key.'.jpg') }}" width="480" height="268" alt="" loading="lazy">
                             <span>{{ $name }}</span>
                         </label>
                     @endforeach

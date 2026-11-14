@@ -7,6 +7,6 @@
             @if (! empty($event['description']))<p>{{ $event['description'] }}</p>@endif
             <a class="bk-button" href="{{ $event['wheel'] ? route('shop.berkay.campaign.index') : route('shop.search.index') }}">{{ $event['wheel'] ? 'شرکت در گردونه' : 'دیدن محصولات' }}</a>
         </div>
-        <img src="{{ route('shop.berkay.campaign.artwork', ['event' => $event['event']], false) }}" width="480" height="268" alt="" decoding="async">
+        <img src="{{ asset('berkay/event-banners/'.$event['event'].'.jpg') }}" width="480" height="268" alt="" decoding="async">
     </section>
 @endif

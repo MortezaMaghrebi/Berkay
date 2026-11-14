@@ -13,7 +13,7 @@ class CampaignController
     {
         abort_unless(isset(StoreCampaign::EVENTS[$event]), 404);
 
-        $file = __DIR__.'/../../../Resources/campaigns/'.$event.'.jpg';
+        $file = public_path('berkay/event-banners/'.$event.'.jpg');
         abort_unless(is_file($file), 404);
 
         $response = response()->file($file, [
