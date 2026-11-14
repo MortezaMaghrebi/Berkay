@@ -14,17 +14,43 @@ function note(audio, pitch, volume = .06, delay = 0, length = .045) {
     oscillator.stop(now + length);
 }
 
+function celebrate() {
+    const layer = document.createElement('div');
+    layer.className = 'bk-wheel-confetti';
+    layer.setAttribute('aria-hidden', 'true');
+    const colors = ['#dba54e', '#7b4131', '#f4d59a', '#496d5c', '#ac5563'];
+    for (let i = 0; i < 64; i++) {
+        const piece = document.createElement('i');
+        piece.style.left = Math.random() * 100 + '%';
+        piece.style.background = colors[i % colors.length];
+        layer.append(piece);
+    }
+    document.body.append(layer);
+    for (const piece of layer.children) {
+        piece.animate([
+            {transform: 'translateY(0) rotate(0deg)'},
+            {transform: 'translate(' + (Math.random() * 180 - 90) + 'px, 105vh) rotate(' + (540 + Math.random() * 720) + 'deg)'},
+        ], {duration: 1000 + Math.random() * 750, delay: Math.random() * 260, fill: 'both'});
+    }
+    return new Promise(resolve => window.setTimeout(() => { layer.remove(); resolve(); }, 2050));
+}
+
 function initializeWheel() {
     const form = document.querySelector('[data-campaign-spin]');
     const disc = document.querySelector('.bk-wheel-disc');
     if (!form || !disc || typeof disc.animate !== 'function') return;
-    const button = form.querySelector('button');
+    const button = form.querySelector('button[type=submit]');
     const status = form.querySelector('[data-wheel-status]');
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const Audio = window.AudioContext || window.webkitAudioContext;
-    const audioLabel = form.querySelector('[data-wheel-audio]');
-    const sound = audioLabel.querySelector('input');
-    audioLabel.hidden = !Audio;
+    const audioButton = form.querySelector('[data-wheel-audio]');
+    let muted = false;
+    audioButton.hidden = !Audio;
+    audioButton.addEventListener('click', () => {
+        muted = !muted;
+        audioButton.setAttribute('aria-pressed', String(muted));
+        audioButton.setAttribute('aria-label', muted ? 'روشن کردن صدای گردونه' : 'بی‌صدا کردن گردونه');
+    });
 
     form.addEventListener('submit', async event => {
         event.preventDefault();
@@ -32,7 +58,7 @@ function initializeWheel() {
         button.disabled = true;
         status.textContent = 'در حال ثبت نتیجهٔ گردونه…';
         let audio;
-        if (Audio && sound.checked) {
+        if (Audio && !muted) {
             try {
                 audio = new Audio();
                 audio.resume().catch(() => {});
@@ -61,7 +87,7 @@ function initializeWheel() {
                 const tick = time => {
                     const step = Math.floor((animation.effect.getComputedTiming().progress ?? 0) * stop * count / 360);
                     if (step !== previous && time - lastTick >= 45) {
-                        if (sound.checked) note(audio, step % 2 ? 620 : 780);
+                        if (!muted) note(audio, step % 2 ? 620 : 780);
                         previous = step;
                         lastTick = time;
                     }
@@ -72,11 +98,15 @@ function initializeWheel() {
                 finally { if (frame !== undefined) cancelAnimationFrame(frame); }
             }
 
-            if (sound.checked && audio?.state === 'running' && Number.isInteger(result.segment)) {
+            if (result.won) status.textContent = 'تبریک! جایزهٔ شما: ' + result.label;
+
+            let celebration = result.won && !motion.matches ? celebrate() : null;
+            if (!muted && audio?.state === 'running' && Number.isInteger(result.segment)) {
                 note(audio, 523, .08, 0, .16);
-                note(audio, 784, .08, .11, .21);
-                await new Promise(resolve => window.setTimeout(resolve, 370));
+                note(audio, result.won ? 784 : 392, .08, .11, .21);
+                celebration ??= new Promise(resolve => window.setTimeout(resolve, 370));
             }
+            await celebration;
 
             const target = new URL(result.url, window.location.href);
             if (target.origin !== window.location.origin) throw new Error('Invalid destination');

@@ -5,7 +5,9 @@
             <p>رویداد چرم برکای</p>
             <h2>{{ $title }}</h2>
             @if (! empty($event['description']))<p>{{ $event['description'] }}</p>@endif
-            <a class="bk-button" href="{{ $event['wheel'] ? route('shop.berkay.campaign.index') : route('shop.search.index') }}">{{ $event['wheel'] ? 'شرکت در گردونه' : 'دیدن محصولات' }}</a>
+            <a class="bk-button bk-campaign-link" href="{{ $event['wheel'] ? route('shop.berkay.campaign.index').'#wheel' : route('shop.search.index') }}">
+                {{ $event['wheel'] ? 'شرکت در گردونه' : 'دیدن محصولات' }} <span aria-hidden="true">←</span>
+            </a>
         </div>
         <div class="bk-campaign-visual">
             <img src="{{ asset('berkay/event-banners/'.$event['event'].'.jpg') }}" width="480" height="268" alt="" decoding="async">

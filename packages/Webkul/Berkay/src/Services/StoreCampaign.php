@@ -120,6 +120,34 @@ class StoreCampaign
         return hash('sha256', json_encode($event['prizes'], JSON_THROW_ON_ERROR));
     }
 
+    public static function isWheelCoupon(?string $code): bool
+    {
+        return preg_match('/\A(?:BK-WHEEL-.*|BW-[A-Z0-9]{7})\z/i', (string) $code) === 1;
+    }
+
+    public static function allowsCoupon(string $code, ?int $customerId, int $channelId, float $subtotal): bool
+    {
+        if (! $customerId) {
+            return false;
+        }
+
+        $spin = DB::table('berkay_campaign_spins')->where([
+            'coupon' => $code,
+            'customer_id' => $customerId,
+            'channel_id' => $channelId,
+            'attempt_slot' => 'active',
+        ])->first();
+
+        if (! $spin) {
+            return false;
+        }
+
+        $prize = json_decode($spin->prize, true);
+        $limit = $prize['max_purchase_base'] ?? null;
+
+        return $limit === null || round($subtotal, 2) <= $limit;
+    }
+
     public function spin(string $run, $customer, ?string $version = null): bool
     {
         return $this->locked(function ($channel) use ($run, $customer, $version) {
@@ -148,6 +176,9 @@ class StoreCampaign
             $prize['segment'] = $index;
             $prize['wheel_version'] = $wheelVersion;
             $prize['days'] = (int) ($event['days'] ?? 7);
+            if (! empty($prize['max_purchase'])) {
+                $prize['max_purchase_base'] = (int) $prize['max_purchase'] * ($channel->base_currency->code === 'IRR' ? 10 : 1);
+            }
             $coupon = match ($prize['type']) {
                 'percent', 'credit', 'shipping' => $this->coupon($prize, $channel, $customer, $prize['days']),
                 default => null,
@@ -170,7 +201,10 @@ class StoreCampaign
 
     private function coupon(array $prize, $channel, $customer, int $days): string
     {
-        $code = 'BK-WHEEL-'.strtoupper(Str::random(24));
+        do {
+            $code = 'BW-'.strtoupper(Str::random(7));
+        } while (DB::table('cart_rule_coupons')->where('code', $code)->exists()
+            || DB::table('berkay_campaign_spins')->where('coupon', $code)->exists());
         $amount = $prize['value'] ?? 0;
         if ($prize['type'] === 'credit' && $channel->base_currency->code === 'IRR') {
             $amount *= 10;

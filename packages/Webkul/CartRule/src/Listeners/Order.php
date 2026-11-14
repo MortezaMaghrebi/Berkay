@@ -2,6 +2,7 @@
 
 namespace Webkul\CartRule\Listeners;
 
+use Webkul\Berkay\Services\StoreCampaign;
 use Webkul\CartRule\Exceptions\CouponUsageLimitExceededException;
 use Webkul\CartRule\Repositories\CartRuleCouponRepository;
 use Webkul\CartRule\Repositories\CartRuleCouponUsageRepository;
@@ -37,18 +38,18 @@ class Order
      */
     public function manageCartRule($order)
     {
-        $wheelCoupon = str_starts_with(strtoupper((string) $order->coupon_code), 'BK-WHEEL-');
+        $wheelCoupon = StoreCampaign::isWheelCoupon($order->coupon_code);
 
         if (! $order->discount_amount && ! $wheelCoupon) {
             return;
         }
 
-        if ($wheelCoupon && ! \Illuminate\Support\Facades\DB::table('berkay_campaign_spins')->where([
-            'coupon' => $order->coupon_code,
-            'customer_id' => $order->customer_id,
-            'channel_id' => $order->channel_id,
-            'attempt_slot' => 'active',
-        ])->exists()) {
+        if ($wheelCoupon && ! StoreCampaign::allowsCoupon(
+            $order->coupon_code,
+            $order->customer_id,
+            $order->channel_id,
+            (float) $order->base_sub_total,
+        )) {
             throw new CouponUsageLimitExceededException(trans('shop::app.checkout.coupon.usage-limit-exceeded'));
         }
 
@@ -138,7 +139,7 @@ class Order
             return;
         }
 
-        if (str_starts_with(strtoupper($coupon->code), 'BK-WHEEL-')
+        if (StoreCampaign::isWheelCoupon($coupon->code)
             && $coupon->expired_at?->lt(today())) {
             throw new CouponUsageLimitExceededException(trans('shop::app.checkout.coupon.usage-limit-exceeded'));
         }

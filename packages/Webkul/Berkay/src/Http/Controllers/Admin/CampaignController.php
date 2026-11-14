@@ -51,11 +51,12 @@ class CampaignController
             'wheel' => ['required', 'boolean'],
             'days' => ['required', 'integer', 'min:1', 'max:90'],
             'prizes' => ['nullable', 'array', 'max:8'],
-            'prizes.*' => ['array:label,type,value,weight'],
+            'prizes.*' => ['array:label,type,value,weight,max_purchase'],
             'prizes.*.label' => ['nullable', 'string', 'max:45'],
             'prizes.*.type' => ['nullable', Rule::in(array_keys(StoreCampaign::TYPES))],
             'prizes.*.weight' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'prizes.*.value' => ['nullable', 'integer', 'min:0', 'max:9000000'],
+            'prizes.*.max_purchase' => ['nullable', 'integer', 'min:1', 'max:9999999'],
         ]);
 
         $data['prizes'] = array_values(array_filter($data['prizes'] ?? [], fn ($prize) => filled($prize['label'] ?? null)));
@@ -77,6 +78,12 @@ class CampaignController
                 || ($type === 'credit' && ($value < 1 || ! in_array(core()->getCurrentChannel()->base_currency->code, ['IRR', 'IRT'], true)))
             ) {
                 throw ValidationException::withMessages(['prizes' => 'نوع، وزن و مقدار هر جایزه را بررسی کنید. درصد باید بین ۱ تا ۱۰۰ باشد و اعتبار خرید به تومان یا ریال نیاز دارد.']);
+            }
+
+            if (! empty($prize['max_purchase'])
+                && in_array($type, ['percent', 'credit', 'shipping'], true)
+                && ! in_array(core()->getCurrentChannel()->base_currency->code, ['IRR', 'IRT'], true)) {
+                throw ValidationException::withMessages(['prizes' => 'برای تعیین سقف خرید به تومان، واحد پول فروشگاه باید تومان یا ریال باشد.']);
             }
         }
 

@@ -20,4 +20,10 @@
     <label>وزن شانس
         <input name="prizes[{{ $i }}][weight]" data-prize-field="weight" type="number" min="1" max="10000" value="{{ $prize['weight'] ?? 1 }}" required>
     </label>
+    <label data-prize-cap @if (! in_array($prize['type'] ?? null, ['percent', 'credit', 'shipping'], true)) hidden @endif>
+        سقف مبلغ سبد برای کد (تومان)
+        <input name="prizes[{{ $i }}][max_purchase]" data-prize-field="max_purchase" type="number" min="1" max="9999999"
+            value="{{ $prize['max_purchase'] ?? '' }}" placeholder="بدون سقف">
+        <small>مجموع قیمت کالاها پیش از تخفیف و بدون ارسال</small>
+    </label>
 </article>

@@ -46,6 +46,9 @@ function initializeCampaignEditor() {
             row.querySelector('[data-prize-chance]').textContent = total && weights[index]
                 ? 'شانس ' + percent.format(weights[index] / total) : '';
             const kind = row.querySelector('select').value;
+            const cap = row.querySelector('[data-prize-cap]');
+            cap.hidden = !['percent', 'credit', 'shipping'].includes(kind);
+            cap.querySelector('input').disabled = cap.hidden;
             const amount = row.querySelector('[data-prize-value]');
             amount.hidden = !['percent', 'credit'].includes(kind);
             amount.querySelector('span').textContent = kind === 'percent' ? 'درصد تخفیف' : 'مبلغ به تومان';

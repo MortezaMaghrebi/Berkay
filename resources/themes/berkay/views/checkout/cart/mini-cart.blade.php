@@ -102,13 +102,13 @@
                             {!! view_render_event('bagisto.shop.checkout.mini-cart.drawer.content.image.after') !!}
 
                             <!-- Cart Item Information -->
-                            <div class="grid flex-1 place-content-start justify-stretch gap-y-2.5">
-                                <div class="flex justify-between gap-2 max-md:gap-0 max-sm:flex-wrap">
+                            <div class="bk-mini-cart-item-info grid flex-1 place-content-start justify-stretch gap-y-2.5">
+                                <div class="bk-mini-cart-item-line">
 
                                     {!! view_render_event('bagisto.shop.checkout.mini-cart.drawer.content.name.before') !!}
 
                                     <a
-                                        class="max-w-4/5 max-md:w-full"
+                                        class="bk-mini-cart-item-name"
                                         :href="'{{ route('shop.product_or_category.index', ':slug') }}'.replace(':slug', item.product_url_key)"
                                     >
                                         <p class="text-base font-medium max-md:font-normal max-sm:text-sm">

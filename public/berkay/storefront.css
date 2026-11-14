@@ -721,6 +721,8 @@ html{-webkit-text-size-adjust:100%}
     background: var(--campaign-paper);
     color: var(--campaign-ink);
     isolation: isolate;
+    position: relative;
+    background: linear-gradient(150deg, color-mix(in srgb, var(--campaign-paper) 86%, var(--campaign-accent)), var(--campaign-paper) 65%);
 }
 .bk-campaign-banner:is([data-event="yalda"], [data-event="valentine"]) {
     --campaign-paper: #782a38;
@@ -735,12 +737,14 @@ html{-webkit-text-size-adjust:100%}
 .bk-campaign-banner[data-event="nowruz"] { --campaign-paper: #e0e8da; --campaign-accent: #47604a; }
 .bk-campaign-banner[data-event="autumn"] { --campaign-paper: #edd0a6; --campaign-accent: #824620; }
 .bk-campaign-copy {
-    margin: 11px;
-    padding: clamp(18px, 3.3vw, 52px);
-    border: 1px dashed color-mix(in srgb, currentColor 34%, transparent);
-    border-radius: 10px;
+    padding: clamp(24px, 4vw, 56px);
+    overflow-wrap: anywhere;
 }
 .bk-campaign-copy .bk-button { background: var(--campaign-accent); color: #fff8ee; }
+.bk-campaign-copy > p:first-child { font-size: .85rem; font-weight: 650; opacity: .85; }
+.bk-campaign-link { gap: .75em; }
+.bk-campaign-link::after { content: ''; position: absolute; inset: 0; z-index: 2; }
+.bk-campaign-banner:focus-within { outline: 2px solid #9b6945; outline-offset: 4px; }
 .bk-campaign-visual { position: relative; overflow: hidden; min-width: 0; }
 .bk-campaign-visual img { display: block; }
 .bk-campaign-visual::after {
@@ -786,16 +790,24 @@ html{-webkit-text-size-adjust:100%}
     border-radius: 50%; background: var(--key-color); color: white;
 }
 .bk-wheel-result { padding: 12px 15px; margin-block: 10px; border-inline-start: 3px solid #8a5636; background: #f2e3cb; }
+.bk-campaign-game { position: relative; scroll-margin-top: 9rem; }
 .bk-campaign-game button:disabled { opacity: .75; cursor: wait; }
+.bk-wheel-audio { position: absolute; inset-block-start: 12px; inset-inline-end: 12px; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; background: #f2e6d6; }
+.bk-wheel-audio[hidden], .bk-wheel-audio[aria-pressed="false"] .bk-sound-off, .bk-wheel-audio[aria-pressed="true"] .bk-sound-on { display: none; }
+.bk-wheel-confetti { position: fixed; inset: 0; z-index: 100; pointer-events: none; overflow: hidden; }
+.bk-wheel-confetti i { position: absolute; top: -14px; width: 8px; height: 13px; border-radius: 2px; }
+.bk-mini-cart-item-info { min-inline-size: 0; grid-template-columns: minmax(0, 1fr); }
+.bk-mini-cart-item-line { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .35rem .75rem; }
+.bk-mini-cart-item-name { flex: 1 1 9rem; min-inline-size: 0; max-inline-size: 100%; overflow-wrap: anywhere; white-space: normal; }
 @media (prefers-reduced-motion: no-preference) {
     .bk-campaign-banner { animation: bk-event-arrive .55s ease-out both; }
     .bk-campaign-visual img { animation: bk-event-photo 1.2s cubic-bezier(.2,.65,.25,1) both; }
-    .bk-campaign-visual::after { animation: bk-event-light 1.45s .2s ease-out both; }
+    .bk-campaign-visual::after { animation: bk-event-light 7s .3s ease-in-out infinite; }
     .bk-wheel-result { animation: bk-event-arrive .38s ease-out both; }
 }
 @keyframes bk-event-arrive { from { opacity: 0; transform: translateY(10px); } }
 @keyframes bk-event-photo { from { transform: scale(1.06); } }
-@keyframes bk-event-light { to { transform: translateX(105%); } }
+@keyframes bk-event-light { 0% { transform: translateX(-105%); } 24%, 100% { transform: translateX(105%); } }
 @media (max-width: 660px) {
     .bk-campaign-visual { order: -1; }
     .bk-campaign-wheel { width: min(72vw, 280px); }

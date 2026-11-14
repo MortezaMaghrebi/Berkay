@@ -29,6 +29,9 @@
                     <p class="bk-wheel-result" role="status">نتیجهٔ شما: <strong>{{ $prize['label'] ?? 'نتیجه ثبت شده است' }}</strong></p>
                     @if ($result->coupon)
                         <p>این کد یک‌بار مصرف را در سبد خرید وارد کنید. مهلت استفاده تا {{ \Illuminate\Support\Carbon::parse($result->created_at)->addDays((int) ($prize['days'] ?? 7))->format('Y/m/d H:i') }} است.</p>
+                        @if (! empty($prize['max_purchase']))
+                            <p>سقف مبلغ سبد: {{ number_format($prize['max_purchase']) }} تومان</p>
+                        @endif
                         <label for="wheel-coupon">کد جایزه</label>
                         <input class="bk-wheel-coupon" id="wheel-coupon" dir="ltr" value="{{ $result->coupon }}" readonly>
                         <a class="bk-button" href="{{ route('shop.checkout.cart.index') }}">رفتن به سبد خرید</a>
@@ -43,7 +46,13 @@
                         <input type="hidden" name="run" value="{{ $event['run'] }}">
                         <input type="hidden" name="wheel_version" value="{{ $version }}">
                         <button type="submit" class="bk-button">چرخاندن گردونه</button>
-                        <label hidden data-wheel-audio><input type="checkbox" checked> صدای گردونه</label>
+                        <button class="bk-wheel-audio" type="button" hidden data-wheel-audio aria-label="بی‌صدا کردن گردونه" aria-pressed="false">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M11 5 6 9H3v6h3l5 4z"/>
+                                <path class="bk-sound-on" d="M15 9a4 4 0 0 1 0 6m2-9a8 8 0 0 1 0 12"/>
+                                <path class="bk-sound-off" d="m16 10 5 5m0-5-5 5"/>
+                            </svg>
+                        </button>
                         <p data-wheel-status role="status"></p>
                     </form>
                 @else

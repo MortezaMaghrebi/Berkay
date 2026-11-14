@@ -5,6 +5,7 @@ namespace Webkul\CartRule\Helpers;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Webkul\Berkay\Services\StoreCampaign;
 use Webkul\CartRule\Repositories\CartRuleCouponRepository;
 use Webkul\CartRule\Repositories\CartRuleCouponUsageRepository;
 use Webkul\CartRule\Repositories\CartRuleCustomerRepository;
@@ -406,7 +407,7 @@ class CartRule
                 $freeShippingApplied = true;
             }
 
-            if (str_starts_with(strtoupper((string) $this->cart->coupon_code), 'BK-WHEEL-')
+            if (StoreCampaign::isWheelCoupon($this->cart->coupon_code)
                 && $rule->cart_rule_coupon?->code === $this->cart->coupon_code
                 && in_array($selectedShipping->carrier, ['berkay_post', 'berkay_freight'], true)) {
                 $selectedShipping->charge_mode = 'free';
@@ -579,13 +580,13 @@ class CartRule
                 $coupon
                 && $coupon->code === $this->cart->coupon_code
             ) {
-                if (str_starts_with(strtoupper($coupon->code), 'BK-WHEEL-')
-                    && ! \Illuminate\Support\Facades\DB::table('berkay_campaign_spins')->where([
-                        'coupon' => $coupon->code,
-                        'customer_id' => $this->cart->customer_id,
-                        'channel_id' => core()->getCurrentChannel()->id,
-                        'attempt_slot' => 'active',
-                    ])->exists()) {
+                if (StoreCampaign::isWheelCoupon($coupon->code)
+                    && ! StoreCampaign::allowsCoupon(
+                        $coupon->code,
+                        $this->cart->customer_id,
+                        core()->getCurrentChannel()->id,
+                        (float) $this->cart->items->sum('base_total'),
+                    )) {
                     return false;
                 }
 

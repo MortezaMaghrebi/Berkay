@@ -43,14 +43,18 @@ class CampaignController
         ]);
     }
 
-    public function rewards(): View
+    public function rewards(Request $request): View|RedirectResponse
     {
         $customer = auth()->guard('customer')->user();
-        abort_unless($customer, 403);
+        if (! $customer) {
+            $request->session()->put('shop.url.intended', route('shop.berkay.campaign.rewards'));
+
+            return redirect()->route('shop.customer.session.index');
+        }
 
         $results = \Illuminate\Support\Facades\DB::table('berkay_campaign_spins')
             ->where(['customer_id' => $customer->id, 'channel_id' => core()->getCurrentChannel()->id])
-            ->latest('id')->paginate(15);
+            ->latest('id')->simplePaginate(15);
 
         return view('berkay::shop.campaign-rewards', compact('results'));
     }
@@ -72,7 +76,12 @@ class CampaignController
             $result = $spun ? $campaign->result($data['run'], $customer->id) : null;
             $prize = $result ? json_decode($result->prize, true, flags: JSON_THROW_ON_ERROR) : [];
 
-            return response()->json(['segment' => $prize['segment'] ?? null, 'url' => $url]);
+            return response()->json([
+                'segment' => $prize['segment'] ?? null,
+                'won' => isset($prize['type']) && $prize['type'] !== 'none',
+                'label' => $prize['label'] ?? null,
+                'url' => $url,
+            ]);
         }
 
         return redirect()->to($url);
