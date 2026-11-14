@@ -4,16 +4,18 @@ use App\Http\Middleware\EncryptCookies;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Cookie\Middleware\EncryptCookies as BaseEncryptCookies;
 use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Bootstrap\LoadConfiguration;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
 use Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance;
+use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Http\Request;
 use Webkul\Core\Http\Middleware\PreventSessionRevival;
 use Webkul\Core\Http\Middleware\SecureHeaders;
 use Webkul\Installer\Http\Middleware\CanInstall;
 
-return Application::configure(basePath: dirname(__DIR__))
+$app = Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
@@ -54,10 +56,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->preventRequestForgery(except: [
             'stripe/*',
         ]);
-
-        if ($proxies = config('berkay.trusted_proxies')) {
-            $middleware->trustProxies(at: $proxies, headers: Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_PROTO);
-        }
     })
     ->withSchedule(function (Schedule $schedule) {
         //
@@ -65,3 +63,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->dontFlash(['code', 'api_key', 'zarinpal_merchant_id', 'kavenegar_api_key', 'recovery_code']);
     })->create();
+
+$app->afterBootstrapping(LoadConfiguration::class, function (Application $app) {
+    if ($proxies = $app['config']->get('berkay.trusted_proxies')) {
+        TrustProxies::at($proxies);
+        TrustProxies::withHeaders(Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_PROTO);
+    }
+});
+
+return $app;
