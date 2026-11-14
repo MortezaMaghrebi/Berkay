@@ -70,21 +70,7 @@
         href="{{ url('cache/logo/bagisto.png') }}"
     >
 
-    @if ($favicon = core()->getConfigData('general.design.admin_logo.favicon'))
-        <link
-            type="image/x-icon"
-            href="{{ Storage::url($favicon) }}"
-            rel="shortcut icon"
-            sizes="16x16"
-        >
-    @else
-        <link
-            type="image/x-icon"
-            href="{{ bagisto_asset('images/favicon.ico') }}"
-            rel="shortcut icon"
-            sizes="16x16"
-        />
-    @endif
+    <link rel="icon" type="image/jpeg" href="{{ asset('berkay/brand-logo.jpg') }}">
 
     @stack('styles')
 

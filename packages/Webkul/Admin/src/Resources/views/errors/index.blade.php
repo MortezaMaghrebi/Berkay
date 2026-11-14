@@ -8,15 +8,10 @@
 	<div class="flex h-screen items-center justify-center bg-white dark:bg-gray-900">
         <div class="flex max-w-186.25 items-center gap-5">
             <div class="w-full">
-                @php
-                    $logoUrl = core()->getConfigData('general.design.admin_logo.logo_image') 
-                                ? Storage::url(core()->getConfigData('general.design.admin_logo.logo_image')) 
-                                : bagisto_asset('images/logo.svg');
-                @endphp
 
                 <img
                     class="mb-6 h-10"
-                    src="{{ $logoUrl }}"
+                    src="{{ asset('berkay/brand-logo.jpg') }}"
                     id="logo-image"
                     alt="{{ config('app.name') }}"
                 />

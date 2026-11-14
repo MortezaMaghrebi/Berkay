@@ -29,7 +29,7 @@
                     aria-label="@lang('shop::app.checkout.cart.index.bagisto')"
                 >
                     <img
-                        src="{{ core()->getCurrentChannel()->logo_url ?? bagisto_asset('images/logo.svg') }}"
+                        src="{{ asset('berkay/brand-logo.jpg') }}"
                         alt="{{ core()->getCurrentChannel()->logo_alt ?: config('app.name') }}"
                         width="131"
                         height="29"

@@ -22,11 +22,7 @@
                                 style="height: 40px; width: 110px;"
                             />
                         @else
-                            <img
-                                src="{{ bagisto_asset('images/logo.svg', 'admin') }}"
-                                alt="{{ config('app.name') }}"
-                                style="width: 156px;height: 40px;"
-                            />
+                            <img src="{{ asset('berkay/brand-logo.jpg') }}" alt="{{ config('app.name') }}" width="64" height="64">
                         @endif
                     </a>
                 </div>

@@ -6,19 +6,7 @@
     <div class="flex h-screen items-center justify-center px-4">
         <div class="flex w-full max-w-105 flex-col items-center gap-6">
             <!-- Logo -->
-            @if ($logo = core()->getConfigData('general.design.admin_logo.logo_image'))
-                <img
-                    class="h-10 w-27.5"
-                    src="{{ Storage::url($logo) }}"
-                    alt="{{ config('app.name') }}"
-                />
-            @else
-                <img
-                    class="w-max"
-                    src="{{ bagisto_asset('images/logo.svg') }}"
-                    alt="{{ config('app.name') }}"
-                />
-            @endif
+            <img class="rounded-md object-contain" src="{{ asset('berkay/brand-logo.jpg') }}" alt="{{ config('app.name') }}" width="64" height="64">
 
             <!-- Card -->
             <div class="box-shadow w-full overflow-hidden rounded-xl bg-white dark:bg-gray-900">

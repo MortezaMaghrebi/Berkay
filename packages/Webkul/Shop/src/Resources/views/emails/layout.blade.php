@@ -28,21 +28,7 @@
                 <!-- Email Header -->
                 <div style="margin-bottom: 65px;">
                     <a href="{{ route('shop.home.index') }}">
-                        @if ($logo = core()->getCurrentChannel()->logo_url)
-                            <img
-                                src="{{ $logo }}"
-                                alt="{{ core()->getCurrentChannel()->logo_alt ?: config('app.name') }}"
-                                style="height: 40px; width: 110px;"
-                            />
-                        @else
-                            <img
-                                src="{{ bagisto_asset('images/logo.svg', 'shop') }}"
-                                alt="{{ config('app.name') }}"
-                                width="131"
-                                height="29"
-                                style="width: 156px;height: 40px;"
-                            />
-                        @endif
+                        <img src="{{ asset('berkay/brand-logo.jpg') }}" alt="{{ config('app.name') }}" width="64" height="64">
                     </a>
                 </div>
 

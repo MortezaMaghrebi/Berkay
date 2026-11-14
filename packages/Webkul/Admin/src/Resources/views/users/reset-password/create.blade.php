@@ -7,19 +7,7 @@
     <div class="flex h-screen items-center justify-center">
         <div class="flex flex-col items-center gap-5">
             <!-- Logo -->
-            @if ($logo = core()->getConfigData('general.design.admin_logo.logo_image'))
-                <img
-                    class="h-10 w-27.5"
-                    src="{{ Storage::url($logo) }}"
-                    alt="{{ config('app.name') }}"
-                />
-            @else
-                <img
-                    class="w-max" 
-                    src="{{ bagisto_asset('images/logo.svg') }}"
-                    alt="{{ config('app.name') }}"
-                />
-            @endif
+            <img class="rounded-md object-contain" src="{{ asset('berkay/brand-logo.jpg') }}" alt="{{ config('app.name') }}" width="64" height="64">
 
             <div class="box-shadow flex min-w-75 flex-col rounded-md bg-white dark:bg-gray-900">
                 <!-- Login Form -->
