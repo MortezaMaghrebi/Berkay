@@ -356,3 +356,37 @@ html[lang=fa] body{font-family:Vazirmatn,Tahoma,sans-serif}html[lang=fa] body *:
 .bk-campaign-prize > div { min-width: 0; }
 .bk-campaign-results { margin-block-start: 30px; }
 @media (max-width: 750px) { .bk-campaign-prize { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+
+.bk-campaign-editor [hidden] { display: none !important; }
+.bk-campaign-heading, .bk-prize-toolbar, .bk-prize-heading, .bk-campaign-save {
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+}
+.bk-campaign-heading { margin-bottom: 22px; }
+.bk-campaign-heading p, .bk-prize-heading output, .bk-campaign-save span { color: var(--seller-muted); }
+.bk-campaign-preview {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    overflow: hidden; margin-top: 14px; border: 1px solid var(--seller-border);
+    border-radius: 12px; background: var(--seller-accent-soft);
+}
+.bk-campaign-preview img { width: 100%; height: 100%; object-fit: cover; }
+.bk-campaign-preview > div { align-self: center; padding: clamp(14px, 3vw, 30px); overflow-wrap: anywhere; }
+.bk-campaign-preview strong { display: block; font-size: clamp(20px, 3vw, 30px); margin-block: 5px; }
+.bk-campaign-prizes { display: grid; gap: 12px; }
+.bk-campaign-prize {
+    border: 1px solid var(--seller-border); border-radius: 10px;
+    padding: 12px 15px; background: var(--seller-bg);
+    grid-template-columns: repeat(2, minmax(0, 2fr)) repeat(2, minmax(0, 1fr));
+}
+.bk-prize-heading { grid-column: 1 / -1; }
+.bk-prize-heading button { margin-inline-start: auto; }
+.bk-campaign-prize label { margin-top: 0; }
+.bk-campaign-prize input, .bk-campaign-prize select { margin-top: 6px; }
+.bk-campaign-save { padding: 12px 16px; background: var(--seller-panel); border: 1px solid var(--seller-border); border-radius: 10px; }
+.bk-campaign-save .bk-button { margin: 0; }
+@media (max-width: 730px) {
+    .bk-campaign-preview, .bk-campaign-prize { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 420px) { .bk-campaign-preview { grid-template-columns: 1fr; } }
+.bk-campaign-filter { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.bk-campaign-filter select { min-height: 44px; padding: 6px 10px; background: var(--seller-panel); border: 1px solid var(--seller-border); border-radius: 8px; }

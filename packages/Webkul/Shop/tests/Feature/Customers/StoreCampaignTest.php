@@ -32,3 +32,17 @@ it('issues only one persisted coupon per customer and rejects a stale run', func
     $campaign->save(array_replace($settings, ['event' => 'nowruz']));
     expect($campaign->spin($run, $customer))->toBeFalse();
 });
+
+it('renders the active event on the homepage and serves its packaged art', function () {
+    $campaign = app(StoreCampaign::class);
+    $campaign->save(['event' => 'yalda', 'title' => 'جشن چرم شب یلدا', 'wheel' => false]);
+
+    $this->get(route('shop.home.index'))
+        ->assertOk()
+        ->assertSee('جشن چرم شب یلدا')
+        ->assertSee(route('shop.berkay.campaign.artwork', ['event' => 'yalda'], false));
+
+    $this->get(route('shop.berkay.campaign.artwork', ['event' => 'yalda']))
+        ->assertOk()
+        ->assertHeader('Content-Type', 'image/jpeg');
+});

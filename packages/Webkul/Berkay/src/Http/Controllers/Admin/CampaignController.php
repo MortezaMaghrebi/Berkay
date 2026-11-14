@@ -8,22 +8,29 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Webkul\FPC\Concerns\ForgetsPages;
 use Webkul\Berkay\Services\StoreCampaign;
 
 class CampaignController
 {
-    public function index(StoreCampaign $campaign): View
+    use ForgetsPages;
+
+    public function index(Request $request, StoreCampaign $campaign): View
     {
         abort_unless(bouncer()->hasPermission('berkay.campaigns'), 403);
 
+        $filter = $request->query('event_filter');
+        $filter = is_string($filter) && isset(StoreCampaign::EVENTS[$filter]) ? $filter : null;
+
         $results = DB::table('berkay_campaign_spins')
+            ->when($filter, fn ($query) => $query->where('berkay_campaign_spins.event', $filter))
             ->leftJoin('customers', 'customers.id', '=', 'berkay_campaign_spins.customer_id')
             ->where('berkay_campaign_spins.channel_id', core()->getCurrentChannel()->id)
             ->select('berkay_campaign_spins.*', 'customers.first_name', 'customers.last_name')
             ->latest('berkay_campaign_spins.id')
-            ->paginate(20);
+            ->paginate(20)->withQueryString();
 
-        return view('berkay::admin.campaign', ['settings' => $campaign->settings(), 'results' => $results]);
+        return view('berkay::admin.campaign', ['settings' => $campaign->settings(), 'results' => $results, 'filter' => $filter]);
     }
 
     public function update(Request $request, StoreCampaign $campaign): RedirectResponse
@@ -68,6 +75,7 @@ class CampaignController
 
         $data['event'] ??= null;
         $campaign->save($data);
+        $this->forgetPages([$this->homePath()]);
 
         return back()->with('success', 'تنظیمات رویداد ذخیره شد.');
     }

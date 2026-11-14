@@ -9,9 +9,20 @@ use Webkul\Berkay\Services\StoreCampaign;
 
 class CampaignController
 {
-    public function banner(StoreCampaign $campaign): View
+    public function artwork(string $event): \Symfony\Component\HttpFoundation\BinaryFileResponse
     {
-        return view('berkay::shop.campaign-banner', ['event' => $campaign->active()]);
+        abort_unless(isset(StoreCampaign::EVENTS[$event]), 404);
+
+        $file = __DIR__.'/../../../Resources/campaigns/'.$event.'.jpg';
+        abort_unless(is_file($file), 404);
+
+        $response = response()->file($file, [
+            'Content-Type' => 'image/jpeg',
+            'Cache-Control' => 'public, max-age=86400',
+        ])->setAutoEtag();
+        $response->isNotModified(request());
+
+        return $response;
     }
 
     public function index(Request $request, StoreCampaign $campaign): View

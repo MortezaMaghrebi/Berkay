@@ -4,11 +4,13 @@
         $canEdit = bouncer()->hasPermission('berkay.campaigns.edit');
         $events = \Webkul\Berkay\Services\StoreCampaign::EVENTS;
         $types = \Webkul\Berkay\Services\StoreCampaign::TYPES;
-        $prizes = old('prizes', $settings['prizes'] ?? []);
+        $prizes = array_values(array_filter((array) old('prizes', $settings['prizes'] ?? []), 'is_array'));
     @endphp
     <section class="bk-admin bk-campaign-editor" dir="rtl">
-        <h1>رویدادهای فروشگاه</h1>
-        <p>یک مناسبت را در صفحهٔ اول نمایش دهید یا نمایش همهٔ رویدادها را خاموش کنید.</p>
+        <header class="bk-campaign-heading">
+            <div><h1>رویدادهای فروشگاه</h1><p>بنر صفحهٔ اول، گردونه و جایزه‌های مشتریان</p></div>
+            <a class="bk-outline-button" href="{{ route('shop.home.index') }}" target="_blank" rel="noopener">دیدن صفحهٔ اول</a>
+        </header>
         @include('berkay::admin.seller-feedback')
         <form class="bk-form" id="campaign-settings" method="post" action="{{ route('admin.berkay.campaigns.update') }}">
             @csrf
@@ -20,7 +22,7 @@
                     @foreach ($events as $key => $name)
                         <label>
                             <input type="radio" name="event" value="{{ $key }}" @checked(old('event', $settings['event'] ?? null) === $key)>
-                            <img src="{{ asset('berkay/campaigns/'.$key.'.jpg') }}" width="480" height="268" alt="" loading="lazy">
+                            <img src="{{ route('shop.berkay.campaign.artwork', ['event' => $key], false) }}" width="480" height="268" alt="" loading="lazy">
                             <span>{{ $name }}</span>
                         </label>
                     @endforeach
@@ -29,6 +31,15 @@
                 <input name="title" id="campaign-title" maxlength="100" value="{{ old('title', $settings['title'] ?? '') }}" placeholder="نام مناسبت">
                 <label for="campaign-description">متن کوتاه بنر</label>
                 <textarea name="description" id="campaign-description" maxlength="240" rows="2">{{ old('description', $settings['description'] ?? '') }}</textarea>
+                <div class="bk-campaign-preview" data-event-preview hidden>
+                    <img width="480" height="268" alt="" data-preview-image>
+                    <div>
+                        <p>پیش‌نمایش بنر</p>
+                        <strong data-preview-title></strong>
+                        <p data-preview-description></p>
+                        <small data-preview-action></small>
+                    </div>
+                </div>
             </fieldset>
 
             <fieldset class="bk-form-section" @disabled(! $canEdit)>
@@ -38,28 +49,46 @@
                 <p>هر حساب تأییدشده در هر نوبت رویداد یک بار بازی می‌کند. تغییر متن یا جوایز نوبت را از نو شروع نمی‌کند. ذخیرهٔ یک مناسبت دیگر یا «بدون رویداد» این نوبت را پایان می‌دهد.</p>
                 <label for="campaign-days">اعتبار کد جایزه، به روز</label>
                 <input id="campaign-days" name="days" type="number" min="1" max="90" value="{{ old('days', $settings['days'] ?? 7) }}" required>
-                <p>شانس هر گزینه برابر وزن آن تقسیم بر مجموع وزن‌هاست. برای حذف یک گزینه، عنوانش را پاک کنید. برای هدیهٔ محصولی، نام دقیق هدیه را در عنوان وارد کنید.</p>
-                <div class="bk-campaign-prizes">
-                    @for ($i = 0; $i < 8; $i++)
-                        <div class="bk-campaign-prize">
-                            <div><label for="prize-label-{{ $i }}">عنوان جایزهٔ {{ $i + 1 }}</label><input id="prize-label-{{ $i }}" name="prizes[{{ $i }}][label]" maxlength="45" value="{{ $prizes[$i]['label'] ?? '' }}"></div>
-                            <div><label for="prize-type-{{ $i }}">نوع</label><select id="prize-type-{{ $i }}" name="prizes[{{ $i }}][type]">
-                                @foreach ($types as $type => $label)
-                                    <option value="{{ $type }}" @selected(($prizes[$i]['type'] ?? 'none') === $type)>{{ $label }}</option>
-                                @endforeach
-                            </select></div>
-                            <div><label for="prize-value-{{ $i }}">درصد یا تومان</label><input id="prize-value-{{ $i }}" name="prizes[{{ $i }}][value]" type="number" min="0" max="9000000" value="{{ $prizes[$i]['value'] ?? '' }}"></div>
-                            <div><label for="prize-weight-{{ $i }}">وزن شانس</label><input id="prize-weight-{{ $i }}" name="prizes[{{ $i }}][weight]" type="number" min="1" max="10000" value="{{ $prizes[$i]['weight'] ?? 1 }}"></div>
-                        </div>
-                    @endfor
+                <p>وزن بیشتر یعنی احتمال بیشتر. برای هدیهٔ محصولی، نام دقیق محصول را در عنوان بنویسید.</p>
+                <div class="bk-prize-toolbar">
+                    <span data-prize-count role="status"></span>
+                    @if ($canEdit)<button class="bk-outline-button" type="button" data-prize-add hidden>افزودن گزینه</button>@endif
                 </div>
+                <p data-prize-empty @if ($prizes) hidden @endif>هنوز گزینه‌ای ندارید. برای فعال کردن گردونه حداقل دو گزینه اضافه کنید.</p>
+                <div class="bk-campaign-prizes" data-prize-list>
+                    @foreach ($prizes as $i => $prize)
+                        @include('berkay::admin.campaign-prize')
+                    @endforeach
+                </div>
+                @if ($canEdit)
+                    <template data-prize-template>
+                        @include('berkay::admin.campaign-prize', ['i' => 0, 'prize' => []])
+                    </template>
+                @endif
             </fieldset>
-            @if ($canEdit)<button class="bk-button" type="submit">ذخیرهٔ رویداد</button>@endif
+            @if ($canEdit)
+                <div class="bk-campaign-save">
+                    <span data-save-state aria-live="polite">{{ empty($settings['event']) ? 'رویدادی روی صفحهٔ اول فعال نیست' : 'رویداد منتشرشده: '.$events[$settings['event']] }}</span>
+                    <button class="bk-button" type="submit">ذخیره و نمایش در فروشگاه</button>
+                </div>
+            @endif
         </form>
-        <section class="bk-form-section bk-campaign-results">
-            <h2>نتایج گردونه</h2>
+        <section class="bk-form-section bk-campaign-results" id="campaign-results">
+            <div class="bk-prize-toolbar">
+                <h2>نتایج گردونه</h2>
+                <form class="bk-campaign-filter" method="get" action="{{ route('admin.berkay.campaigns.index') }}#campaign-results">
+                    <label for="event-filter">مناسبت</label>
+                    <select id="event-filter" name="event_filter">
+                        <option value="">همهٔ مناسبت‌ها</option>
+                        @foreach ($events as $key => $name)
+                            <option value="{{ $key }}" @selected($filter === $key)>{{ $name }}</option>
+                        @endforeach
+                    </select>
+                    <button class="bk-outline-button">اعمال فیلتر</button>
+                </form>
+            </div>
             @if ($results->isEmpty())
-                <p>هنوز کسی در گردونه شرکت نکرده است.</p>
+                <p>نتیجه‌ای برای این فهرست ثبت نشده است.</p>
             @else
                 <div class="bk-table-wrap">
                     <table class="bk-table">
@@ -97,4 +126,7 @@
             @endif
         </section>
     </section>
+    @pushOnce('scripts')
+        <script type="module" src="{{ asset('berkay/campaign-editor.js') }}?v={{ filemtime(public_path('berkay/campaign-editor.js')) }}"></script>
+    @endPushOnce
 </x-admin::layouts>

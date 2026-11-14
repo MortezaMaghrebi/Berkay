@@ -26,8 +26,9 @@ use Webkul\Berkay\Services\ProductCollections;
 use Webkul\Core\Http\Middleware\NoCacheMiddleware;
 
 Route::middleware(['web', 'shop'])->group(function () {
-    Route::get('berkay/campaign-banner', [\Webkul\Berkay\Http\Controllers\Shop\CampaignController::class, 'banner'])
-        ->middleware(NoCacheMiddleware::class)->name('shop.berkay.campaign.banner');
+    Route::get('berkay/campaign-art/{event}.jpg', [\Webkul\Berkay\Http\Controllers\Shop\CampaignController::class, 'artwork'])
+        ->whereIn('event', array_keys(\Webkul\Berkay\Services\StoreCampaign::EVENTS))
+        ->name('shop.berkay.campaign.artwork');
     Route::get('store-campaign', [\Webkul\Berkay\Http\Controllers\Shop\CampaignController::class, 'index'])
         ->middleware(NoCacheMiddleware::class)->name('shop.berkay.campaign.index');
     Route::get('store-campaign/rewards', [\Webkul\Berkay\Http\Controllers\Shop\CampaignController::class, 'rewards'])
