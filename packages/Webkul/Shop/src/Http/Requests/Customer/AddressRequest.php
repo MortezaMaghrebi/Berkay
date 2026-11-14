@@ -3,6 +3,7 @@
 namespace Webkul\Shop\Http\Requests\Customer;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Webkul\Berkay\Services\KavenegarSms;
 use Webkul\Core\Rules\PhoneNumber;
 use Webkul\Core\Rules\PostCode;
 use Webkul\Core\Rules\StateBelongsToCountry;
@@ -38,11 +39,20 @@ class AddressRequest extends FormRequest
                 new StateBelongsToCountry($this->input('country')),
             ],
             'city' => ['required', 'string'],
-            'postcode' => core()->isPostCodeRequired() ? ['required', new PostCode] : [new PostCode],
+            'postcode' => [core()->isPostCodeRequired() ? 'required' : 'nullable', 'string', 'max:255', new PostCode],
             'phone' => ['required', new PhoneNumber],
             'vat_id' => [(new VatIdRule)->setCountry($this->input('country'))],
             'email' => ['nullable', 'email', 'max:255'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        foreach (['phone', 'postcode'] as $field) {
+            if (is_string($value = $this->input($field))) {
+                $this->merge([$field => KavenegarSms::westernDigits(trim($value))]);
+            }
+        }
     }
 
     /**

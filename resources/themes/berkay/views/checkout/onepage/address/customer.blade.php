@@ -136,7 +136,7 @@
                     this.loadFailed = false;
                     try {
                         const {data} = this.cart.is_guest ? {data: {data: []}}
-                            : await this.$axios.get(@js(route('shop.api.customers.account.addresses.index')));
+                            : await this.$axios.get(@js(route('shop.api.customers.account.addresses.index', [], false)));
                         if (!Array.isArray(data.data)) throw new Error('Invalid address list');
                         this.saved = data.data;
                         for (const kind of ['billing', 'shipping']) {
@@ -189,8 +189,8 @@
                         if (!this.cart.is_guest && (previous.address_type === 'customer' || this.rememberAddress)) {
                             const editingSaved = previous.address_type === 'customer';
                             const response = editingSaved
-                                ? await this.$axios.put(@js(route('shop.api.customers.account.addresses.update')).replace(/\/$/, '') + '/' + previous.id, payload)
-                                : await this.$axios.post(@js(route('shop.api.customers.account.addresses.store')), payload);
+                                ? await this.$axios.put(@js(route('shop.api.customers.account.addresses.update', [], false)).replace(/\/$/, '') + '/' + previous.id, payload)
+                                : await this.$axios.post(@js(route('shop.api.customers.account.addresses.store', [], false)), payload);
                             const address = response.data.data;
                             if (!address?.id) throw new Error('Invalid saved address');
                             if (editingSaved) {
@@ -228,18 +228,34 @@
                     const payload = {billing: {...this.selected.billing, use_for_shipping: this.sameAddress}};
                     if (this.addressKinds.includes('shipping')) payload.shipping = this.selected.shipping;
                     try {
-                        const {data} = await this.$axios.post(@js(route('shop.checkout.onepage.addresses.store')), payload);
-                        const result = data.redirect === undefined ? data.data : data;
+                        const {data} = await this.$axios.post(@js(route('shop.checkout.onepage.addresses.store', [], false)), payload, {
+                            headers: {Accept: 'application/json'},
+                        });
+                        const result = typeof data?.redirect === 'boolean' ? data : data?.data;
+                        if (typeof result?.redirect !== 'boolean') throw new Error('Unexpected checkout response');
                         if (result.redirect) {
                             window.location.href = result.redirect_url || result.data;
                             return;
                         }
-                        const methods = this.cart.have_stockable_items ? result.data?.shippingMethods : result.data?.payment_methods;
-                        this.$emit('processing', this.cart.have_stockable_items ? 'shipping' : 'payment');
-                        this.$emit('processed', methods ?? []);
+                        const shipping = this.cart.have_stockable_items;
+                        const methods = shipping ? result.data?.shippingMethods : result.data?.payment_methods;
+                        if (!methods || typeof methods !== 'object') throw new Error('Missing checkout methods');
+                        this.$emit('processing', shipping ? 'shipping' : 'payment');
+                        this.$emit('processed', methods);
                     } catch (error) {
-                        this.feedback = Object.values(error.response?.data?.errors ?? {}).flat()[0]
-                            || error.response?.data?.message || 'تأیید آدرس ممکن نشد. دوباره تلاش کنید.';
+                        const response = error.response;
+                        const errors = response?.data?.errors ?? {};
+                        const field = Object.keys(errors).find(key => /^(billing|shipping)\./.test(key));
+                        if (field && response.status === 422) {
+                            const kind = field.split('.')[0];
+                            if (this.selected[kind]) {
+                                this.openEditor(kind, this.selected[kind]);
+                            }
+                        }
+                        this.feedback = response?.status === 419
+                            ? 'نشست شما منقضی شده است. صفحه را تازه کنید و دوباره ادامه دهید.'
+                            : Object.values(errors).flat()[0] || (response?.status < 500 ? response.data?.message : null)
+                                || 'تأیید آدرس انجام نشد. لطفاً دوباره تلاش کنید.';
                     } finally {
                         this.isStoring = false;
                     }

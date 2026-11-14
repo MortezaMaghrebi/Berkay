@@ -3,6 +3,7 @@
 namespace Webkul\Shop\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Webkul\Berkay\Services\KavenegarSms;
 use Webkul\Checkout\Facades\Cart;
 use Webkul\Core\Rules\PhoneNumber;
 use Webkul\Core\Rules\PostCode;
@@ -31,9 +32,8 @@ class CartAddressRequest extends FormRequest
      */
     public function rules(): array
     {
-        if ($this->has('billing')) {
-            $this->mergeAddressRules('billing');
-        }
+        $this->mergeWithRules(['billing' => ['present', 'array']]);
+        $this->mergeAddressRules('billing');
 
         if (
             ! $this->input('billing.use_for_shipping')
@@ -45,6 +45,25 @@ class CartAddressRequest extends FormRequest
         return $this->rules;
     }
 
+    protected function prepareForValidation(): void
+    {
+        foreach (['billing', 'shipping'] as $type) {
+            $address = $this->input($type);
+
+            if (! is_array($address)) {
+                continue;
+            }
+
+            foreach (['phone', 'postcode'] as $field) {
+                if (is_string($address[$field] ?? null)) {
+                    $address[$field] = KavenegarSms::westernDigits(trim($address[$field]));
+                }
+            }
+
+            $this->merge([$type => $address]);
+        }
+    }
+
     /**
      * Merge new address rules.
      */
@@ -52,18 +71,18 @@ class CartAddressRequest extends FormRequest
     {
         $this->mergeWithRules([
             "{$addressType}.company_name" => ['nullable'],
-            "{$addressType}.first_name" => ['required'],
-            "{$addressType}.last_name" => ['required'],
+            "{$addressType}.first_name" => ['required', 'string', 'max:255'],
+            "{$addressType}.last_name" => ['required', 'string', 'max:255'],
             "{$addressType}.email" => ['nullable', 'email', 'max:255'],
             "{$addressType}.address" => ['required', 'array', 'min:1'],
-            "{$addressType}.city" => ['required'],
+            "{$addressType}.city" => ['required', 'string', 'max:255'],
             "{$addressType}.country" => core()->isCountryRequired() ? ['required'] : ['nullable'],
             "{$addressType}.state" => [
                 core()->isStateRequired() ? 'required' : 'nullable',
                 new StateBelongsToCountry($this->input("{$addressType}.country")),
             ],
-            "{$addressType}.postcode" => core()->isPostCodeRequired() ? ['required', new PostCode] : [new PostCode],
-            "{$addressType}.phone" => ['required', new PhoneNumber],
+            "{$addressType}.postcode" => [core()->isPostCodeRequired() ? 'required' : 'nullable', 'string', 'max:255', new PostCode],
+            "{$addressType}.phone" => ['required', 'string', 'max:255', new PhoneNumber],
         ]);
 
         if ($addressType == 'billing') {

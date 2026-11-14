@@ -270,7 +270,8 @@
                         type="text"
                         ::name="controlName + '.postcode'"
                         ::value="address.postcode"
-                        rules="{{ core()->isPostCodeRequired() ? 'required' : '' }}|postcode"
+                        rules="{{ core()->isPostCodeRequired() ? 'required|' : '' }}bk-address-postcode"
+                        inputmode="numeric"
                         :label="trans('shop::app.checkout.onepage.address.postcode')"
                         :placeholder="trans('shop::app.checkout.onepage.address.postcode')"
                         ::id="controlName + '_postcode'"
@@ -292,7 +293,8 @@
                     type="text"
                     ::name="controlName + '.phone'"
                     ::value="address.phone"
-                    rules="required|phone"
+                    rules="required|bk-address-phone"
+                    inputmode="tel"
                     :label="trans('shop::app.checkout.onepage.address.phone')"
                     :placeholder="trans('shop::app.checkout.onepage.address.phone')"
                     ::id="controlName + '_phone'"
@@ -306,6 +308,13 @@
     </script>
 
     <script type="module">
+        const westernDigits = value => value.replace(/[۰-۹٠-٩]/g, digit => String(digit.charCodeAt(0) & 15)).trim();
+
+        defineRule('bk-address-phone', value => !value || /^\+?[\s(]*\d[\d\s.\-()]*$/.test(westernDigits(value))
+            || @js(trans('core::validation.phone-number')));
+        defineRule('bk-address-postcode', value => !value || /^[a-zA-Z0-9][a-zA-Z0-9\s-]*[a-zA-Z0-9]$/.test(westernDigits(value))
+            || @js(trans('core::validation.postcode')));
+
         app.component('v-checkout-address-form', {
             template: '#v-checkout-address-form-template',
 

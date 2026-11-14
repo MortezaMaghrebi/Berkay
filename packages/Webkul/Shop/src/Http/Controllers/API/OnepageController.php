@@ -42,10 +42,11 @@ class OnepageController extends APIController
     public function storeAddress(CartAddressRequest $cartAddressRequest): JsonResource
     {
         $params = $cartAddressRequest->all();
+        $cart = Cart::getCart();
 
         if (
             ! auth()->guard('customer')->check()
-            && ! Cart::getCart()->hasGuestCheckoutItems()
+            && $cart && ! $cart->hasGuestCheckoutItems()
         ) {
             session()->put('shop.url.intended', route('shop.checkout.onepage.index'));
 
