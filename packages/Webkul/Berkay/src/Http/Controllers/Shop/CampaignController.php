@@ -2,6 +2,7 @@
 
 namespace Webkul\Berkay\Http\Controllers\Shop;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -54,14 +55,26 @@ class CampaignController
         return view('berkay::shop.campaign-rewards', compact('results'));
     }
 
-    public function spin(Request $request, StoreCampaign $campaign): RedirectResponse
+    public function spin(Request $request, StoreCampaign $campaign): RedirectResponse|JsonResponse
     {
         $customer = auth()->guard('customer')->user();
         abort_unless($customer && $customer->status && $customer->is_verified && ! $customer->is_suspended
             && (int) $customer->channel_id === (int) core()->getCurrentChannel()->id, 403);
-        $data = $request->validate(['run' => ['required', 'uuid']]);
-        $campaign->spin($data['run'], $customer);
+        $data = $request->validate([
+            'run' => ['required', 'uuid'],
+            'wheel_version' => ['required', 'regex:/^[a-f0-9]{64}$/'],
+        ]);
 
-        return redirect()->route('shop.berkay.campaign.index');
+        $spun = $campaign->spin($data['run'], $customer, $data['wheel_version']);
+        $url = route('shop.berkay.campaign.index').'#wheel';
+
+        if ($request->expectsJson()) {
+            $result = $spun ? $campaign->result($data['run'], $customer->id) : null;
+            $prize = $result ? json_decode($result->prize, true, flags: JSON_THROW_ON_ERROR) : [];
+
+            return response()->json(['segment' => $prize['segment'] ?? null, 'url' => $url]);
+        }
+
+        return redirect()->to($url);
     }
 }
