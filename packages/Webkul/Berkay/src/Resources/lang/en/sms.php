@@ -1,6 +1,10 @@
 <?php
 
 return [
+    'complete-profile' => 'Complete your account',
+    'confirm-phone' => 'Verify your mobile number',
+    'verified-profile' => 'Your number is verified. Enter your name to finish creating your account.',
+    'code-digit' => 'Digit :position of :length',
     'group-admin' => 'Store manager notifications',
     'admin-phone' => 'Recipient mobile number',
     'admin-phone-help' => 'Both alerts use this number. Enable each alert after Kavenegar approves its pattern.',
@@ -19,7 +23,7 @@ return [
     'phone' => 'Mobile number',
     'code' => 'One-time code',
     'verify' => 'Verify code',
-    'sent' => 'A six-digit code was sent to :phone and expires in five minutes.',
+    'sent' => 'A verification code was sent to :phone and expires in five minutes.',
     'send-code' => 'Send SMS code',
     'start-over' => 'Resend or edit number',
     'login-help' => 'Enter your account mobile number to receive a sign-in code.',
@@ -65,7 +69,7 @@ return [
     'copy-failed' => 'Select the text and copy it manually.',
     'event-enabled' => 'Enabled',
     'event-disabled' => 'Disabled',
-    'account-code' => 'Six-digit verification code',
+    'account-code' => 'Four-digit verification code',
     'order-number' => 'Order number',
     'tracking-number' => 'Tracking number',
     'order-status' => 'Order status',

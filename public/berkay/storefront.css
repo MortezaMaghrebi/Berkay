@@ -638,3 +638,44 @@ html{-webkit-text-size-adjust:100%}
         aspect-ratio: 1;
     }
 }
+
+.bk-section.bk-phone-account {
+    width: min(calc(100% - 24px), 470px);
+    min-height: 0;
+    margin: clamp(24px, 5vw, 65px) auto;
+    padding: clamp(18px, 5vw, 36px);
+    border: 1px solid #e2d7c8;
+    border-radius: 18px;
+    background: #fcf9f4;
+}
+.bk-phone-heading { display: grid; justify-items: center; gap: 12px; margin-bottom: 16px; }
+.bk-phone-heading h1 { font-size: clamp(21px, 4vw, 27px); text-align: center; }
+.bk-phone-account .bk-form > .bk-button { width: 100%; margin-top: 8px; }
+.bk-phone-account .bk-otp [hidden] { display: none; }
+.bk-phone-account .bk-otp fieldset {
+    display: flex;
+    justify-content: center;
+    gap: clamp(4px, 2vw, 10px);
+    margin-block: 12px;
+    min-width: 0;
+}
+.bk-phone-account .bk-otp fieldset input {
+    width: clamp(44px, 13vw, 55px);
+    flex: 0 1 auto;
+    min-width: 0;
+    min-height: 0;
+    aspect-ratio: 1;
+    padding: 0;
+    text-align: center;
+    font-size: clamp(19px, 5vw, 25px);
+    font-variant-numeric: tabular-nums;
+    border: 1px solid #b7987c;
+    border-radius: 9px;
+    background: #fff;
+    color: #362417;
+}
+.bk-phone-account .bk-otp fieldset input:focus-visible {
+    outline: 2px solid #805638;
+    outline-offset: 2px;
+}
+.bk-phone-account nav { border-top: 1px solid #e2d7c8; padding-top: 8px; }

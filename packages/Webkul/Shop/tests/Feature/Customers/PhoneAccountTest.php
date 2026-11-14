@@ -37,7 +37,7 @@ it('signs in a customer by Iranian mobile and rejects a wrong code', function ()
     Http::assertSent(fn (Request $request) => $request['receptor'] === $customer->phone && $request['template'] === 'berkay-login');
     $code = Http::recorded()->first()[0]['token'];
 
-    post(route('shop.berkay.phone.login.verify'), ['code' => $code === '123456' ? '123457' : '123456'])
+    post(route('shop.berkay.phone.login.verify'), ['code' => $code === '1234' ? '1235' : '1234'])
         ->assertSessionHasErrors('code');
     assertGuest('customer');
 
@@ -57,8 +57,10 @@ it('registers a phone-only account after verification', function () {
     expect(Customer::where('phone', $phone)->exists())->toBeFalse();
     Http::assertSent(fn (Request $request) => $request['template'] === 'berkay-register');
 
+    post(route('shop.berkay.phone.register.verify'), ['code' => Http::recorded()->first()[0]['token']])
+        ->assertRedirect(route('shop.customers.register.index'));
+
     post(route('shop.berkay.phone.register.verify'), [
-        'code' => Http::recorded()->first()[0]['token'],
         'first_name' => 'کاربر',
         'last_name' => 'آزمایشی',
     ])->assertRedirect();
@@ -67,6 +69,26 @@ it('registers a phone-only account after verification', function () {
     assertAuthenticatedAs($customer, 'customer');
     expect($customer->email)->toBeNull()
         ->and($customer->password)->toBeNull();
+});
+
+it('completes a new account from login without sending a second code', function () {
+    $phone = '09990000125';
+    Http::fake(['api.kavenegar.com/*' => Http::response(['return' => ['status' => 200]])]);
+
+    post(route('shop.customer.session.create'), ['phone' => $phone])->assertRedirect();
+    $code = Http::recorded()->first()[0]['token'];
+    expect($code)->toMatch('/^[0-9]{4}$/');
+
+    post(route('shop.berkay.phone.login.verify'), ['code' => $code])
+        ->assertRedirect(route('shop.customers.register.index'));
+    assertGuest('customer');
+
+    post(route('shop.berkay.phone.register.verify'), ['first_name' => 'کاربر', 'last_name' => 'آزمایشی'])
+        ->assertRedirect();
+
+    assertAuthenticatedAs(Customer::where('phone', $phone)->firstOrFail(), 'customer');
+    expect(session()->has('berkay.phone.registration'))->toBeFalse();
+    Http::assertSentCount(1);
 });
 
 it('does not create a challenge when Kavenegar rejects the message', function () {

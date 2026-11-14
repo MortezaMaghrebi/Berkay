@@ -15,6 +15,8 @@ use Webkul\Sales\Models\Order;
 
 class PhoneAccountController
 {
+    private const REGISTRATION_KEY = 'berkay.phone.registration';
+
     public function __construct(
         protected PhoneVerification $verification,
         protected CustomerRepository $customers,
@@ -28,6 +30,10 @@ class PhoneAccountController
         }
 
         $purpose = $request->routeIs('shop.customers.register.index') ? 'register' : 'login';
+
+        if ($request->boolean('start')) {
+            $request->session()->forget(self::REGISTRATION_KEY);
+        }
 
         return $this->form($request, $purpose);
     }
@@ -45,18 +51,20 @@ class PhoneAccountController
         $guard = auth()->guard('customer');
         abort_if($guard->check(), 403);
         $purpose = $request->routeIs('shop.berkay.phone.register.verify') ? 'register' : 'login';
-        $rules = ['code' => ['required', 'string', 'max:12']];
+        $registration = $purpose === 'register' ? $this->pendingRegistration($request) : null;
+        $channelId = core()->getCurrentChannel()->id;
 
-        if ($purpose === 'register') {
-            $rules += [
+        if ($registration) {
+            $data = $request->validate([
                 'first_name' => ['required', 'string', 'max:100'],
                 'last_name' => ['required', 'string', 'max:100'],
-            ];
+            ]);
+            $phone = $registration['phone'];
+        } else {
+            $data = $request->validate(['code' => ['required', 'string', 'max:6']]);
+            $phone = $this->verification->consume($request, $purpose, $data['code']);
         }
 
-        $data = $request->validate($rules);
-        $phone = $this->verification->consume($request, $purpose, $data['code']);
-        $channelId = core()->getCurrentChannel()->id;
         $customer = $this->customers->findOneWhere(['phone' => $phone]);
 
         if ($customer && ($customer->channel_id !== $channelId || ! $customer->status || $customer->is_suspended)) {
@@ -64,9 +72,15 @@ class PhoneAccountController
         }
 
         if (! $customer) {
-            if ($purpose !== 'register') {
-                return redirect()->route('shop.customers.register.index')->withInput(['phone' => $phone])
-                    ->with('info', trans('berkay::sms.register-first'));
+            if (! $registration) {
+                $request->session()->regenerate();
+                $request->session()->put(self::REGISTRATION_KEY, [
+                    'phone' => $phone,
+                    'channel' => $channelId,
+                    'expires' => now()->addMinutes(10)->timestamp,
+                ]);
+
+                return redirect()->route('shop.customers.register.index');
             }
 
             $group = $this->groups->findOneByField('code', core()->getConfigData('customer.settings.create_new_account_options.default_group') ?: 'general')
@@ -91,6 +105,7 @@ class PhoneAccountController
             $customer->forceFill(['is_verified' => true])->save();
         }
 
+        $request->session()->forget(self::REGISTRATION_KEY);
         $guard->login($customer);
         $request->session()->regenerate();
         $request->session()->put('berkay.phone.verified', ['phone' => $phone, 'at' => now()->timestamp]);
@@ -165,6 +180,7 @@ class PhoneAccountController
     {
         return view('berkay::shop.phone-account', [
             'purpose' => $purpose,
+            'registration' => $purpose === 'register' ? $this->pendingRegistration($request) : null,
             'challenge' => $request->boolean('start') ? null : $this->verification->pending($request, $purpose, $customerId),
         ]);
     }
@@ -173,12 +189,28 @@ class PhoneAccountController
     {
         $phone = $registeredPhone ?? $request->validate(['phone' => ['required', 'string', 'max:32']])['phone'];
         $this->verification->issue($request, $purpose, $this->verification->normalize($phone), $customerId);
+        $request->session()->forget(self::REGISTRATION_KEY);
 
         return match ($purpose) {
             'login' => redirect()->route('shop.customer.session.index'),
             'register' => redirect()->route('shop.customers.register.index'),
             default => redirect()->route('shop.berkay.phone.settings', $purpose),
         };
+    }
+
+    private function pendingRegistration(Request $request): ?array
+    {
+        $registration = $request->session()->get(self::REGISTRATION_KEY);
+
+        if (
+            ! $registration
+            || $registration['channel'] !== core()->getCurrentChannel()->id
+            || $registration['expires'] <= now()->timestamp
+        ) {
+            return null;
+        }
+
+        return $registration;
     }
 
     private function recentlyVerified(Request $request): bool

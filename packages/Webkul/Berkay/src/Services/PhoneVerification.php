@@ -12,6 +12,8 @@ use RuntimeException;
 
 class PhoneVerification
 {
+    public const CODE_LENGTH = 4;
+
     private const SESSION_KEY = 'berkay.phone.challenge';
 
     public function __construct(
@@ -47,7 +49,7 @@ class PhoneVerification
 
         RateLimiter::hit($limitKey, 3600);
         $id = (string) Str::uuid();
-        $code = (string) random_int(100000, 999999);
+        $code = self::generateCode();
 
         try {
             $this->sms->lookup($phone, $template, $code);
@@ -61,9 +63,15 @@ class PhoneVerification
             'purpose' => $purpose,
             'channel' => core()->getCurrentChannel()->id,
             'customer' => $customerId,
+            'length' => self::CODE_LENGTH,
             'hash' => $this->digest($id, $code),
             'expires' => now()->addMinutes(5)->timestamp,
         ]);
+    }
+
+    public static function generateCode(): string
+    {
+        return str_pad((string) random_int(0, 9999), self::CODE_LENGTH, '0', STR_PAD_LEFT);
     }
 
     public function pending(Request $request, string $purpose, ?int $customerId = null): ?array
@@ -89,10 +97,12 @@ class PhoneVerification
 
         if ($challenge) {
             $id = $challenge['id'];
+            $recipient = hash_hmac('sha256', $challenge['phone'], config('app.key'));
             $attempts = RateLimiter::hit('berkay:sms:attempt:'.$id, 300);
 
             if (
                 $attempts <= 5
+                && RateLimiter::increment('berkay:sms:verify:'.$recipient, 600) <= 10
                 && hash_equals($challenge['hash'], $this->digest($id, KavenegarSms::westernDigits($code)))
                 && Cache::add('berkay:sms:consumed:'.$id, true, 300)
             ) {

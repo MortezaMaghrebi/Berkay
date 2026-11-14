@@ -109,7 +109,7 @@ class KavenegarController
 
         if ($data['message_type'] === 'test') {
             $template ??= $this->templates->template('login');
-            $token = (string) random_int(100000, 999999);
+            $token = PhoneVerification::generateCode();
         } else {
             $channelId = core()->getCurrentChannel()->id;
             $customer = $customers->findOneWhere(['phone' => $phone, 'channel_id' => $channelId, 'status' => 1, 'is_verified' => 1]);
