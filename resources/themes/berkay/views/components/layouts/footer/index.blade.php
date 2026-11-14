@@ -5,11 +5,21 @@
         <a href="{{ route('shop.berkay.magazine.index') }}">{{ trans('berkay::app.magazine') }}</a>
         <a href="{{ route('shop.home.contact_us') }}">{{ trans('berkay::app.contact') }}</a>
     </nav>
+    <nav aria-label="راهنمای خرید">
+        <a href="{{ route('shop.berkay.policies', 'terms') }}">شرایط خرید و بازگشت کالا</a>
+        <a href="{{ route('shop.berkay.policies', 'privacy') }}">حریم خصوصی</a>
+        @foreach (['instagram' => 'اینستاگرام', 'telegram' => 'تلگرام', 'whatsapp' => 'واتس‌اپ'] as $network => $label)
+            @php($socialUrl = core()->getConfigData('berkay.store.identity.'.$network.'_url'))
+            @if (is_string($socialUrl) && filter_var($socialUrl, FILTER_VALIDATE_URL) && parse_url($socialUrl, PHP_URL_SCHEME) === 'https')
+                <a href="{{ $socialUrl }}" target="_blank" rel="noopener noreferrer">{{ $label }}</a>
+            @endif
+        @endforeach
+    </nav>
     <div><h2>{{ trans('berkay::app.support') }}</h2>
         @if ($phone = core()->getConfigData('berkay.store.identity.support_phone'))
             <a dir="ltr" href="tel:{{ preg_replace('/[^+0-9]/', '', $phone) }}">{{ $phone }}</a>
         @endif
-        <a href="{{ route('shop.customer.session.create') }}">{{ trans('berkay::app.account') }}</a>
+        <a href="{{ route('shop.customer.session.index') }}">{{ trans('berkay::app.account') }}</a>
     </div>
     @if (core()->getConfigData('berkay.store.identity.show_enamad'))
         <div>

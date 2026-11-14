@@ -1,14 +1,15 @@
 <!-- SEO Meta Content -->
 @push('meta')
     <link rel="canonical" href="{{ $category->url }}">
+    @include('berkay::shop.social-meta', [
+        'shareTitle' => $category->meta_title ?: $category->name,
+        'shareDescription' => $category->meta_description ?: \Illuminate\Support\Str::limit(trim(strip_tags($category->description ?? '')), 155, ''),
+        'shareUrl' => $category->url,
+        'shareImage' => $category->logo_url ?: asset('berkay/brand-logo.png'),
+    ])
     <meta
         name="description"
-        content="{{ trim($category->meta_description) != "" ? $category->meta_description : \Illuminate\Support\Str::limit(strip_tags($category->description), 120, '') }}"
-    />
-
-    <meta
-        name="keywords"
-        content="{{ $category->meta_keywords }}"
+        content="{{ $category->meta_description ?: \Illuminate\Support\Str::limit(trim(strip_tags($category->description ?? '')), 155, '') }}"
     />
 
     @if (core()->getConfigData('catalog.rich_snippets.categories.enable'))
@@ -21,7 +22,7 @@
 <x-shop::layouts>
     <!-- Page Title -->
     <x-slot:title>
-        {{ trim($category->meta_title) != "" ? $category->meta_title : $category->name }}
+        {{ $category->meta_title ?: $category->name }}
     </x-slot>
 
     {!! view_render_event('bagisto.shop.categories.view.banner_path.before') !!}

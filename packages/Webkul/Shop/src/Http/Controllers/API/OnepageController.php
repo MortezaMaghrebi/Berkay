@@ -122,7 +122,8 @@ class OnepageController extends APIController
     public function storePaymentMethod()
     {
         $validatedData = $this->validate(request(), [
-            'payment' => 'required',
+            'payment' => ['required', 'array'],
+            'payment.method' => ['required', 'string', 'max:100'],
         ]);
 
         if (

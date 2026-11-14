@@ -18,6 +18,7 @@ class Product extends BaseProduct implements Sitemapable
             ! $this->url_key
             || ! $this->status
             || ! $this->visible_individually
+            || str_starts_with((string) $this->sku, 'BK-SAMPLE-')
         ) {
             return [];
         }

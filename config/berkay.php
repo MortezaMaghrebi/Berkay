@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'trusted_proxies' => array_values(array_filter(array_map('trim', explode(',', (string) env('BERKAY_TRUSTED_PROXIES', ''))))),
     'zarinpal' => [
         'merchant_id' => env('ZARINPAL_MERCHANT_ID'),
         'sandbox' => env('ZARINPAL_SANDBOX', true),

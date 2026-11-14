@@ -1,5 +1,11 @@
 # SEO action plan
 
+## Current release
+
+1. Deploy the release, then verify that `/robots.txt` advertises the public HTTPS sitemap and that `/sitemap.xml` includes both child maps. Set the production APP_URL and channel hostname to the public HTTPS address.
+2. Check an active product and a published article on the live site against their canonical URLs and social metadata. Submit the main sitemap to Search Console once its child files return valid XML.
+3. Complete the seller identity, complaint address and support details in Berkay store settings. Add only the official social profile URLs. Verify those links and the sales policies in the footer and checkout.
+
 Implemented: category H1/canonical, product canonical and sample exclusion, private/development noindex, magazine metadata and Article schema, published guides, homepage editorial links and an editorial sitemap discoverable through robots.
 
 Before launch:

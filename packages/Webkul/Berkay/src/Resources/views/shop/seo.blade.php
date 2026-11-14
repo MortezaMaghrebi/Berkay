@@ -1,8 +1,7 @@
 @php
-    $privatePage = request()->is('customer/*', 'checkout/*', 'search', 'compare', 'admin/*');
+    $privatePage = request()->is('customer', 'customer/*', 'checkout/*', 'search', 'compare', 'store-campaign/rewards');
     $localSite = in_array(request()->getHost(), ['localhost', '127.0.0.1', '::1']);
-    $samplePage = isset($product) && str_starts_with((string) $product->sku, 'BK-SAMPLE-');
 @endphp
-@if ($privatePage || $localSite || $samplePage)
-    <meta name="robots" content="noindex, follow">
+@if ($privatePage || $localSite)
+    <meta name="robots" content="noindex, {{ request()->is('search') ? 'follow' : 'nofollow' }}">
 @endif

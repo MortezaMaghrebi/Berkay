@@ -32,6 +32,8 @@ class SitemapController extends Controller
         $disk = Storage::disk('public');
 
         $sitemapIndex = SitemapIndex::create();
+        $sitemapIndex->add($baseUrl.'/catalog-sitemap.xml');
+        $sitemapIndex->add($baseUrl.'/content-sitemap.xml');
 
         $sitemaps = $this->sitemapRepository->scopeQuery(function ($query) use ($channel) {
             return $query->whereHas('channels', fn ($sub) => $sub->where('channel_id', $channel->id));
@@ -66,7 +68,6 @@ class SitemapController extends Controller
             '',
             'Content-Signal: search=yes, ai-train=no, ai-input=no',
             'Sitemap: '.$baseUrl.'/sitemap.xml',
-            'Sitemap: '.$baseUrl.'/content-sitemap.xml',
             '',
         ];
 
@@ -86,6 +87,19 @@ class SitemapController extends Controller
             $baseUrl = 'https://'.ltrim($baseUrl, '/');
         }
 
+        if (app()->isProduction() && $this->isLocalUrl($baseUrl)) {
+            $appUrl = rtrim((string) config('app.url'), '/');
+
+            return $this->isLocalUrl($appUrl) ? 'https://charmberkay.ir' : $appUrl;
+        }
+
         return $baseUrl;
+    }
+
+    private function isLocalUrl(string $url): bool
+    {
+        $host = parse_url($url, PHP_URL_HOST);
+
+        return ! $host || in_array($host, ['localhost', '127.0.0.1', '[::1]'], true);
     }
 }

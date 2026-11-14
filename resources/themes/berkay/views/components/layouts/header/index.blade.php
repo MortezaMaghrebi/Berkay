@@ -16,7 +16,7 @@
         </form>
         <div class="bk-account-actions">
             <span id="bk-staff-access" data-session-url="{{ route('shop.berkay.editor_session') }}" data-labels="{{ json_encode(trans('berkay::app.storefront-editor')) }}"></span>
-            <a href="{{ auth()->guard('customer')->check() ? route('shop.customers.account.profile.index') : route('shop.customer.session.create') }}">{{ trans('berkay::app.account') }}</a>
+            <a href="{{ auth()->guard('customer')->check() ? route('shop.customers.account.profile.index') : route('shop.customer.session.index') }}">{{ trans('berkay::app.account') }}</a>
             @include('shop::checkout.cart.mini-cart')
         </div>
     </div>

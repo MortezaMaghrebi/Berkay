@@ -8,6 +8,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
 use Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance;
+use Illuminate\Http\Request;
 use Webkul\Core\Http\Middleware\PreventSessionRevival;
 use Webkul\Core\Http\Middleware\SecureHeaders;
 use Webkul\Installer\Http\Middleware\CanInstall;
@@ -54,11 +55,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'stripe/*',
         ]);
 
-        $middleware->trustProxies(at: '*');
+        if ($proxies = config('berkay.trusted_proxies')) {
+            $middleware->trustProxies(at: $proxies, headers: Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_PROTO);
+        }
     })
     ->withSchedule(function (Schedule $schedule) {
         //
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        $exceptions->dontFlash(['code', 'api_key']);
+        $exceptions->dontFlash(['code', 'api_key', 'zarinpal_merchant_id', 'kavenegar_api_key', 'recovery_code']);
     })->create();

@@ -108,6 +108,18 @@
                                     </label>
                                 </div>
                                 {!! view_render_event('bagisto.shop.checkout.onepage.payment_methods.after') !!}
+                                <div class="mt-4" v-if="selectedPaymentMethod !== 'paypal_smart_button'">
+                                    <button type="button" class="bk-checkout-primary" :disabled="!canPlaceOrder || stageBusy || isPlacingOrder" @click="placeOrder">
+                                        @{{ isPlacingOrder ? 'در حال ثبت سفارش…' : 'ثبت سفارش و ادامه به پرداخت' }}
+                                    </button>
+                                    <p v-if="!canPlaceOrder && Object.keys(paymentMethods ?? {}).length" class="bk-checkout-muted" role="status">
+                                        @{{ stageBusy ? 'در حال تأیید روش پرداخت…' : 'روش پرداخت را انتخاب کنید.' }}
+                                    </p>
+                                </div>
+                                <p class="bk-checkout-muted mt-3">
+                                    پیش از ثبت سفارش، <a class="bk-checkout-link" target="_blank" rel="noopener" href="{{ route('shop.berkay.policies', 'terms') }}">شرایط خرید و بازگشت کالا</a>
+                                    و <a class="bk-checkout-link" target="_blank" rel="noopener" href="{{ route('shop.berkay.policies', 'privacy') }}">سیاست حریم خصوصی</a> را بخوانید.
+                                </p>
                             </section>
                         </template>
                     </div>
@@ -119,7 +131,7 @@
 
                         <div
                             class="flex justify-end"
-                            v-if="canPlaceOrder"
+                            v-if="canPlaceOrder && selectedPaymentMethod === 'paypal_smart_button'"
                         >
                             <template v-if="(selectedPaymentMethod || cart.payment_method) == 'paypal_smart_button'">
                                 {!! view_render_event('bagisto.shop.checkout.onepage.summary.paypal_smart_button.before') !!}
@@ -130,16 +142,6 @@
                                 {!! view_render_event('bagisto.shop.checkout.onepage.summary.paypal_smart_button.after') !!}
                             </template>
 
-                            <template v-else>
-                                <x-shop::button
-                                    type="button"
-                                    class="bk-checkout-primary w-full"
-                                    :title="trans('shop::app.checkout.onepage.summary.place-order')"
-                                    ::disabled="isPlacingOrder"
-                                    ::loading="isPlacingOrder"
-                                    @click="placeOrder"
-                                />
-                            </template>
                         </div>
                     </aside>
                 </div>
@@ -234,6 +236,7 @@
                             this.shippingMethods = data;
                         } else if (this.currentStep == 'payment') {
                             this.paymentMethods = data;
+                            if (!this.stageBusy) this.selectOnlyPayment();
                         } else if (this.currentStep === 'review') {
                             this.canPlaceOrder = true;
                         }
@@ -242,7 +245,9 @@
                     },
 
                     scrollToCurrentStep() {
-                        const container = document.getElementById('bk-checkout-' + this.currentStep);
+                        const step = this.currentStep === 'review' && this.selectedPaymentMethod !== 'paypal_smart_button'
+                            ? 'payment' : this.currentStep;
+                        const container = document.getElementById('bk-checkout-' + step);
 
                         if (! container) {
                             return;
@@ -272,6 +277,15 @@
                         } finally {
                             this.stageBusy = false;
                         }
+
+                        if (this.currentStep === 'payment') await this.selectOnlyPayment();
+                    },
+
+                    selectOnlyPayment() {
+                        const methods = Object.values(this.paymentMethods ?? {});
+                        if (methods.length === 1 && methods[0].method !== 'paypal_smart_button') {
+                            return this.choosePayment(methods[0]);
+                        }
                     },
 
                     async choosePayment(payment) {
@@ -299,7 +313,7 @@
                     },
 
                     placeOrder() {
-                        if (!this.canPlaceOrder || this.isPlacingOrder || (this.selectedPaymentMethod || this.cart.payment_method) == 'paypal_smart_button') {
+                        if (!this.canPlaceOrder || this.stageBusy || this.isPlacingOrder || this.selectedPaymentMethod === 'paypal_smart_button') {
                             return;
                         }
 

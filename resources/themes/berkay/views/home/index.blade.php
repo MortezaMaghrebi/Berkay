@@ -34,8 +34,13 @@
 @endphp
 @push('meta')
     <meta name="description" content="{{ ($channel->home_seo['meta_description'] ?? '') ?: trans('berkay::app.home-meta-description') }}">
-    <meta name="keywords" content="{{ ($channel->home_seo['meta_keywords'] ?? '') ?: trans('berkay::app.home-meta-keywords') }}">
     <link rel="canonical" href="{{ route('shop.home.index') }}">
+    @include('berkay::shop.social-meta', [
+        'shareTitle' => ($channel->home_seo['meta_title'] ?? '') ?: trans('berkay::app.home-meta-title'),
+        'shareDescription' => ($channel->home_seo['meta_description'] ?? '') ?: trans('berkay::app.home-meta-description'),
+        'shareUrl' => route('shop.home.index'),
+        'shareImage' => asset('berkay/hero-v2.webp'),
+    ])
 @endpush
 <x-shop::layouts :has-feature="false">
     <x-slot:title>{{ ($channel->home_seo['meta_title'] ?? '') ?: trans('berkay::app.home-meta-title') }}</x-slot>

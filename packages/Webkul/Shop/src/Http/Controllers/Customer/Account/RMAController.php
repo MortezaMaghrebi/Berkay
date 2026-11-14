@@ -135,10 +135,10 @@ class RMAController extends Controller
             'rma_qty' => 'required|integer|min:1',
             'resolution_type' => ['required', new Enum(DefaultRMAResolution::class)],
             'rma_reason_id' => 'required',
-            'information' => 'nullable|string',
+            'information' => 'nullable|string|max:5000',
             'package_condition' => 'nullable|in:open,packed',
-            'images' => 'nullable|array|min:1',
-            'images.*' => 'nullable|file|mimetypes:'.core()->getConfigData('sales.rma.setting.allowed_file_extension'),
+            'images' => 'nullable|array|min:1|max:10',
+            'images.*' => 'nullable|file|max:10240|mimetypes:'.core()->getConfigData('sales.rma.setting.allowed_file_extension'),
             'agreement' => 'accepted',
         ]);
 
@@ -456,8 +456,8 @@ class RMAController extends Controller
     {
         $this->validate(request(), [
             'rma_id' => 'required|integer|exists:rma,id',
-            'message' => 'nullable|string',
-            'file' => 'nullable|file|mimetypes:'.core()->getConfigData('sales.rma.setting.allowed_file_extension'),
+            'message' => 'nullable|string|max:5000',
+            'file' => 'nullable|file|max:10240|mimetypes:'.core()->getConfigData('sales.rma.setting.allowed_file_extension'),
         ]);
 
         $rma = $this->rmaRepository->findOrFail(request()->input('rma_id'));

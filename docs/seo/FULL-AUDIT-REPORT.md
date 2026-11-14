@@ -1,5 +1,12 @@
 # Berkay SEO implementation audit
 
+## Production follow-up, 2026-11-15
+
+- High, confirmed: the live `robots.txt` advertised two loopback URLs and the live sitemap index contained no maps. The release indexes the live catalog and published content directly and falls back to the verified public host if production still has a loopback URL configured.
+- Medium, confirmed in source: home and category templates lacked complete social sharing cards, and product descriptions differed across search and social tags. The release shares a common Open Graph and Twitter partial for home, categories, products, and articles.
+- Medium, confirmed in source: rewards and admin pages lacked consistent indexing directives. The release adds explicit noindex signals for those surfaces.
+- Pending: post-deploy XML, rendered HTML, canonical redirects, Search Console coverage and field Core Web Vitals. The installed SEO scripts could not run without Requests and Beautiful Soup. Live robots and sitemap evidence was obtained directly with curl.
+
 Scope: local storefront, category, product, magazine, three editorial guides, robots and content sitemap. Evidence: HTTP responses and parsed HTML collected with the installed seo skill's parse_html.py, plus local HTTP/XML checks. This is deployment readiness, not a live Google visibility score.
 
 ## Confirmed findings and fixes

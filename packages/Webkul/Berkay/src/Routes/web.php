@@ -49,6 +49,8 @@ Route::middleware(['web', 'shop'])->group(function () {
     Route::put(config('app.admin_url').'/berkay/storefront/products/{id}/editor', [StorefrontEditorController::class, 'saveEditor'])->whereNumber('id')->middleware([NoCacheMiddleware::class, ProductEditorAccess::class, 'throttle:30,1'])->name('shop.berkay.full_editor.update');
     Route::patch('berkay/products/{id}/inline', [StorefrontEditorController::class, 'update'])->whereNumber('id')->middleware([NoCacheMiddleware::class, ProductEditorAccess::class, 'throttle:30,1'])->name('shop.berkay.inline_product');
     Route::get('content-sitemap.xml', [ContentSitemapController::class, 'index'])->name('shop.berkay.content_sitemap');
+    Route::get('catalog-sitemap.xml', [ContentSitemapController::class, 'catalog'])->name('shop.berkay.catalog_sitemap');
+    Route::view('policies/{policy}', 'berkay::shop.policies')->whereIn('policy', ['terms', 'privacy'])->name('shop.berkay.policies');
     Route::get('magazine', [MagazineController::class, 'index'])->name('shop.berkay.magazine.index');
     Route::get('magazine/{slug}', [MagazineController::class, 'show'])->name('shop.berkay.magazine.show');
     Route::get('custom-order', [CustomRequestController::class, 'create'])->name('shop.berkay.custom_order.create');

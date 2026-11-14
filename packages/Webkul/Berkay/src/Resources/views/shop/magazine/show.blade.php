@@ -13,16 +13,17 @@
 @push('meta')
     <meta name="description" content="{{ $article->meta_description ?: $article->excerpt }}">
     <link rel="canonical" href="{{ route('shop.berkay.magazine.show', $article->slug) }}">
-    <meta property="og:title" content="{{ $article->meta_title ?: $article->title }}">
-    <meta property="og:image" content="{{ $article->cover_url }}">
+    @include('berkay::shop.social-meta', [
+        'shareType' => 'article',
+        'shareTitle' => $article->meta_title ?: $article->title,
+        'shareDescription' => $article->meta_description ?: $article->excerpt,
+        'shareUrl' => route('shop.berkay.magazine.show', $article->slug),
+        'shareImage' => $article->cover_url,
+    ])
     <meta property="og:image:alt" content="{{ $article->cover_alt ?: $article->title }}">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta property="og:type" content="article">
-    <meta property="og:description" content="{{ $article->meta_description ?: $article->excerpt }}">
     <meta property="article:published_time" content="{{ $article->published_at->toAtomString() }}">
     <meta property="article:modified_time" content="{{ $article->updated_at->toAtomString() }}">
     <script type="application/ld+json">{!! json_encode(['@context' => 'https://schema.org', '@type' => 'Article', 'headline' => $article->title, 'image' => [$article->cover_url], 'description' => $article->excerpt, 'mainEntityOfPage' => route('shop.berkay.magazine.show', $article->slug), 'datePublished' => $article->published_at->toAtomString(), 'dateModified' => $article->updated_at->toAtomString(), 'inLanguage' => 'fa', 'author' => ['@type' => 'Organization', 'name' => core()->getConfigData('berkay.store.identity.name') ?: trans('berkay::app.brand'), 'url' => route('shop.home.index')]], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
-    <meta property="og:url" content="{{ route('shop.berkay.magazine.show', $article->slug) }}">
 @endpush
 <x-shop::layouts>
     <x-slot:title>{{ $article->meta_title ?: $article->title }}</x-slot>
