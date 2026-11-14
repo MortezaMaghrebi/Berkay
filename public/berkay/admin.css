@@ -343,3 +343,16 @@ html[lang=fa] body{font-family:Vazirmatn,Tahoma,sans-serif}html[lang=fa] body *:
     .bk-integrations-overview a span { grid-column: 1 / -1; }
     .bk-integration-save { position: static; }
 }
+
+
+.bk-campaign-editor legend { font-weight: 750; padding-inline: 8px; }
+.bk-campaign-editor fieldset { min-width: 0; }
+.bk-campaign-picker { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(135px, 100%), 1fr)); gap: 10px; }
+.bk-campaign-picker label { display: grid; gap: 7px; padding: 9px; border: 1px solid var(--seller-border); border-radius: 9px; cursor: pointer; }
+.bk-campaign-picker label:has(input:checked) { outline: 2px solid #a77c45; background: var(--seller-accent-soft); }
+.bk-campaign-picker img { width: 100%; height: auto; border-radius: 5px; }
+.bk-campaign-picker input[type=radio] { width: 18px; min-height: 18px; padding: 0; }
+.bk-campaign-prize { display: grid; grid-template-columns: 2fr 2fr 1fr 1fr; gap: 10px; border-block-start: 1px solid var(--seller-border); padding-block-end: 10px; }
+.bk-campaign-prize > div { min-width: 0; }
+.bk-campaign-results { margin-block-start: 30px; }
+@media (max-width: 750px) { .bk-campaign-prize { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

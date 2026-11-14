@@ -48,6 +48,10 @@
             </div>
             <div class="bk-hero-photo"><img src="{{ asset('berkay/hero-v2.webp') }}" width="900" height="900" fetchpriority="high" alt="{{ trans('berkay::app.tagline-default') }}"></div>
         </section>
+        <div data-campaign-banner="{{ route('shop.berkay.campaign.banner') }}"></div>
+        @pushOnce('scripts')
+            <script type="module" src="{{ asset('berkay/campaign.js') }}?v={{ filemtime(public_path('berkay/campaign.js')) }}"></script>
+        @endPushOnce
         <section class="bk-collection-intro">
             <h2>{{ trans('berkay::app.categories') }}</h2>
             <a href="{{ route('shop.search.index') }}">{{ trans('berkay::app.view-all') }} ←</a>

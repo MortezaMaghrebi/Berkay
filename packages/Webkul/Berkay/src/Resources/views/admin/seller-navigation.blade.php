@@ -15,6 +15,11 @@
             </a>
         @endif
     @endforeach
+    @if (bouncer()->hasPermission('berkay.campaigns'))
+        <a href="{{ route('admin.berkay.campaigns.index') }}" @class(['bk-nav-active' => request()->routeIs('admin.berkay.campaigns.*')])>
+            <span class="icon-cms" aria-hidden="true"></span>رویدادهای فروشگاه
+        </a>
+    @endif
     @if (bouncer()->hasPermission('sales.orders'))
         <a href="{{ route('admin.berkay.workshop.index') }}" @class(['bk-nav-active' => request()->routeIs('admin.berkay.workshop.index')])>
             <span class="icon-sales" aria-hidden="true"></span>{{ trans('berkay::workflow.manage') }}

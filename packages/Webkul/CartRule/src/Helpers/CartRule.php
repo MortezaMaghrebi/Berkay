@@ -406,6 +406,14 @@ class CartRule
                 $freeShippingApplied = true;
             }
 
+            if (str_starts_with(strtoupper((string) $this->cart->coupon_code), 'BK-WHEEL-')
+                && $rule->cart_rule_coupon?->code === $this->cart->coupon_code
+                && in_array($selectedShipping->carrier, ['berkay_post', 'berkay_freight'], true)) {
+                $selectedShipping->charge_mode = 'free';
+                $selectedShipping->method_description = trans('berkay::delivery.free-help');
+                $selectedShipping->save();
+            }
+
             $appliedRuleIds[$rule->id] = $rule->id;
 
             if ($rule->end_other_rules) {
@@ -571,6 +579,15 @@ class CartRule
                 $coupon
                 && $coupon->code === $this->cart->coupon_code
             ) {
+                if (str_starts_with(strtoupper($coupon->code), 'BK-WHEEL-')
+                    && ! \Illuminate\Support\Facades\DB::table('berkay_campaign_spins')->where([
+                        'coupon' => $coupon->code,
+                        'customer_id' => $this->cart->customer_id,
+                        'channel_id' => core()->getCurrentChannel()->id,
+                    ])->exists()) {
+                    return false;
+                }
+
                 if (
                     $coupon->usage_limit
                     && $coupon->times_used >= $coupon->usage_limit

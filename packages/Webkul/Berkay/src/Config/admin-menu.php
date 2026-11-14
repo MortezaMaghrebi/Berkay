@@ -1,6 +1,7 @@
 <?php
 
 return [
+    ['key' => 'berkay.campaigns', 'name' => 'رویدادهای فروشگاه', 'route' => 'admin.berkay.campaigns.index', 'sort' => 8, 'icon' => 'icon-cms'],
     ['key' => 'berkay', 'name' => 'berkay::app.operations', 'route' => 'admin.berkay.index', 'sort' => 2, 'icon' => 'icon-dashboard'],
     ['key' => 'berkay.users', 'name' => 'berkay::app.users.title', 'route' => 'admin.berkay.users.index', 'sort' => 5, 'icon' => 'icon-customer'],
     ['key' => 'berkay.overview', 'name' => 'berkay::app.operations', 'route' => 'admin.berkay.index', 'sort' => 0, 'icon' => 'icon-dashboard'],

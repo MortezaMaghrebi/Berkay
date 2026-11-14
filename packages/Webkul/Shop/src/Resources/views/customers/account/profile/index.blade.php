@@ -178,4 +178,5 @@
 
         </div>
     </div>
+    <a class="bk-button" href="{{ route('shop.berkay.campaign.rewards') }}">جایزه‌های من</a>
 </x-shop::layouts.account>

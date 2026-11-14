@@ -37,8 +37,18 @@ class Order
      */
     public function manageCartRule($order)
     {
-        if (! $order->discount_amount) {
+        $wheelCoupon = str_starts_with(strtoupper((string) $order->coupon_code), 'BK-WHEEL-');
+
+        if (! $order->discount_amount && ! $wheelCoupon) {
             return;
+        }
+
+        if ($wheelCoupon && ! \Illuminate\Support\Facades\DB::table('berkay_campaign_spins')->where([
+            'coupon' => $order->coupon_code,
+            'customer_id' => $order->customer_id,
+            'channel_id' => $order->channel_id,
+        ])->exists()) {
+            throw new CouponUsageLimitExceededException(trans('shop::app.checkout.coupon.usage-limit-exceeded'));
         }
 
         $this->processCartRuleUsage($order);

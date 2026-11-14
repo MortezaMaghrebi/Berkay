@@ -26,6 +26,14 @@ use Webkul\Berkay\Services\ProductCollections;
 use Webkul\Core\Http\Middleware\NoCacheMiddleware;
 
 Route::middleware(['web', 'shop'])->group(function () {
+    Route::get('berkay/campaign-banner', [\Webkul\Berkay\Http\Controllers\Shop\CampaignController::class, 'banner'])
+        ->middleware(NoCacheMiddleware::class)->name('shop.berkay.campaign.banner');
+    Route::get('store-campaign', [\Webkul\Berkay\Http\Controllers\Shop\CampaignController::class, 'index'])
+        ->middleware(NoCacheMiddleware::class)->name('shop.berkay.campaign.index');
+    Route::get('store-campaign/rewards', [\Webkul\Berkay\Http\Controllers\Shop\CampaignController::class, 'rewards'])
+        ->middleware(NoCacheMiddleware::class)->name('shop.berkay.campaign.rewards');
+    Route::post('store-campaign/spin', [\Webkul\Berkay\Http\Controllers\Shop\CampaignController::class, 'spin'])
+        ->middleware([NoCacheMiddleware::class, 'throttle:8,1'])->name('shop.berkay.campaign.spin');
     Route::get('order-tracking/{id}', GuestTrackingController::class)->whereNumber('id')
         ->middleware(['signed', NoCacheMiddleware::class, 'throttle:30,1'])->name('shop.berkay.guest_tracking');
     Route::get('berkay/home-collections', [ProductCollectionController::class, 'rows'])
@@ -59,6 +67,10 @@ Route::middleware(['web', 'admin', NoCacheMiddleware::class])
         Route::patch('catalog-table', [CatalogTableController::class, 'update'])->middleware('throttle:60,1')->name('admin.berkay.catalog_table.update');
         Route::post('catalog-table/prices', [CatalogTableController::class, 'adjust'])->middleware('throttle:5,1')->name('admin.berkay.catalog_table.adjust');
         Route::delete('catalog-table/{parent}/{item}', [CatalogTableController::class, 'destroy'])->whereNumber(['parent', 'item'])->name('admin.berkay.catalog_table.destroy');
+        Route::get('campaigns', [\Webkul\Berkay\Http\Controllers\Admin\CampaignController::class, 'index'])->name('admin.berkay.campaigns.index');
+        Route::put('campaigns', [\Webkul\Berkay\Http\Controllers\Admin\CampaignController::class, 'update'])->name('admin.berkay.campaigns.update');
+        Route::post('campaigns/results/{id}/fulfill', [\Webkul\Berkay\Http\Controllers\Admin\CampaignController::class, 'fulfill'])
+            ->whereNumber('id')->name('admin.berkay.campaigns.fulfill');
         Route::get('integrations', [IntegrationController::class, 'index'])->name('admin.berkay.integrations.index');
         Route::put('integrations', [IntegrationController::class, 'update'])->name('admin.berkay.integrations.update');
         Route::get('kavenegar', [KavenegarController::class, 'index'])->name('admin.berkay.kavenegar.index');
