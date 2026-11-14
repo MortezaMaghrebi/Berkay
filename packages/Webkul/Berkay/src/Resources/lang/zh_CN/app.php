@@ -208,6 +208,7 @@ return [
     'view-all' => 'View all',
     'support' => 'Contact and support',
     'contact' => 'Contact us',
+    'show-enamad' => 'Show eNAMAD in the footer',
     'footer-text' => 'Handcrafted leather bags and accessories',
     'categories' => 'Explore the collection',
     'article-time' => 'Scheduled dates use the store timezone.',

@@ -57,6 +57,7 @@ return [
             ['name' => 'tagline', 'title' => 'berkay::app.tagline', 'type' => 'text', 'validation' => 'nullable|max:180'],
             ['name' => 'hero_title', 'title' => 'berkay::app.hero-title', 'type' => 'text', 'validation' => 'nullable|max:100'],
             ['name' => 'hero_description', 'title' => 'berkay::app.hero-description', 'type' => 'textarea', 'validation' => 'nullable|max:500'],
+            ['name' => 'show_enamad', 'title' => 'berkay::app.show-enamad', 'type' => 'boolean', 'default' => 1, 'channel_based' => true],
             ['name' => 'support_phone', 'title' => 'berkay::app.support-phone', 'type' => 'text', 'validation' => 'nullable|max:30'],
             ['name' => 'custom_orders', 'title' => 'berkay::app.custom-orders-enabled', 'type' => 'boolean'],
         ],

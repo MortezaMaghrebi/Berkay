@@ -11,4 +11,12 @@
         @endif
         <a href="{{ route('shop.customer.session.create') }}">{{ trans('berkay::app.account') }}</a>
     </div>
+    @if (core()->getConfigData('berkay.store.identity.show_enamad'))
+        <div>
+            <a href="https://trustseal.enamad.ir/?id=8704950&amp;Code=3NOq7Gml8oKPeSHYbInf84L74Uu4Tvru" target="_blank" rel="noopener" referrerpolicy="origin" class="inline-flex rounded-lg bg-white p-2">
+                <img src="https://trustseal.enamad.ir/logo.aspx?id=8704950&amp;Code=3NOq7Gml8oKPeSHYbInf84L74Uu4Tvru"
+                    alt="eNAMAD" width="100" height="100" loading="lazy" referrerpolicy="origin" code="3NOq7Gml8oKPeSHYbInf84L74Uu4Tvru">
+            </a>
+        </div>
+    @endif
 </footer>
