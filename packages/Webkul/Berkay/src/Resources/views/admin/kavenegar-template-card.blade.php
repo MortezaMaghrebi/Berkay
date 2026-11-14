@@ -21,6 +21,15 @@
     };
     $suggestedName = match ($event) {
         'login' => 'otp',
+        'register' => 'register',
+        'change' => 'change-phone',
+        'delete' => 'delete-account',
+        'confirmed' => 'order-confirmed',
+        'completed' => 'order-completed',
+        'canceled' => 'order-canceled',
+        'refunded' => 'order-refunded',
+        'coupon' => 'coupon',
+        'test' => 'test-sms',
         'order' => 'new-order-user',
         'stage_review' => 'order-awaiting-review',
         'stage_approved' => 'order-approved',
