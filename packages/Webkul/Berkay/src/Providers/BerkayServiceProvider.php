@@ -7,6 +7,7 @@ use Illuminate\Support\ServiceProvider;
 use Webkul\Berkay\Console\Commands\PublishStarterContent;
 use Webkul\Berkay\Console\Commands\SetupStore;
 use Webkul\Berkay\Listeners\OrderSmsListener;
+use Webkul\Berkay\Services\OrderWorkflow;
 use Webkul\Berkay\Shipping\Freight;
 use Webkul\Berkay\Shipping\Post;
 
@@ -51,6 +52,7 @@ class BerkayServiceProvider extends ServiceProvider
                 return ! str_starts_with($key, 'sales.payment_methods.') || in_array(substr($key, strlen('sales.payment_methods.')), $allowed, true);
             }))]);
         });
+        Event::listen('checkout.order.persisted', [OrderWorkflow::class, 'holdWhenRequested']);
         Event::listen('checkout.order.save.after', [OrderSmsListener::class, 'created']);
         Event::listen('sales.order.update-status.after', [OrderSmsListener::class, 'statusChanged']);
         Event::listen('sales.order.cancel.after', [OrderSmsListener::class, 'canceled']);

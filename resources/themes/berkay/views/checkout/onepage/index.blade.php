@@ -110,7 +110,7 @@
                                 {!! view_render_event('bagisto.shop.checkout.onepage.payment_methods.after') !!}
                                 <div class="mt-4" v-if="selectedPaymentMethod !== 'paypal_smart_button'">
                                     <button type="button" class="bk-checkout-primary" :disabled="!canPlaceOrder || stageBusy || isPlacingOrder" @click="placeOrder">
-                                        @{{ isPlacingOrder ? 'در حال ثبت سفارش…' : 'ثبت سفارش و ادامه به پرداخت' }}
+                                        @{{ isPlacingOrder ? 'در حال ثبت سفارش…' : (cart.requires_review ? 'ثبت سفارش برای بررسی مدیریت' : 'ثبت سفارش و ادامه به پرداخت') }}
                                     </button>
                                     <p v-if="!canPlaceOrder && Object.keys(paymentMethods ?? {}).length" class="bk-checkout-muted" role="status">
                                         @{{ stageBusy ? 'در حال تأیید روش پرداخت…' : 'روش پرداخت را انتخاب کنید.' }}
@@ -127,7 +127,7 @@
                     <!-- Included Checkout Summary Blade File For Desktop view -->
                     <aside class="bk-checkout-panel bk-checkout-summary" id="bk-checkout-review" aria-label="خلاصهٔ سفارش">
                         @include('shop::checkout.onepage.summary')
-                        <p class="bk-checkout-note">{{ trans('berkay::workflow.checkout') }}</p>
+                        <p v-if="cart.requires_review" class="bk-checkout-note">این سفارش قبل از پرداخت باید به تأیید مدیریت برسد. وضعیت آن در بخش سفارش‌های من نمایش داده می‌شود.</p>
 
                         <div
                             class="flex justify-end"

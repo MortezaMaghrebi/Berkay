@@ -15,6 +15,12 @@
             </form>
         @elseif (! $progress['paid'])
             <p>{{ trans('berkay::workflow.offline') }}</p>
+            @if ($order->payment?->method === 'moneytransfer')
+                @php $details = \Webkul\Payment\Facades\Payment::getAdditionalDetails('moneytransfer'); @endphp
+                @if ($details)
+                    <p class="whitespace-pre-line">{{ $details['value'] }}</p>
+                @endif
+            @endif
         @endif
     @else
         <p>{{ trans('berkay::workflow.autoApproved') }}</p>

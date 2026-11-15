@@ -1,5 +1,6 @@
 <?php
 
+use Webkul\Berkay\Services\OrderWorkflow;
 use Webkul\Berkay\Services\ProductCollections;
 
 return [
@@ -43,7 +44,7 @@ return [
         'fields' => [
             ['name' => 'auto_approve', 'title' => 'berkay::workflow.auto', 'type' => 'boolean', 'default' => 1, 'channel_based' => true],
             ['name' => 'quantity_limit', 'title' => 'berkay::workflow.quantity', 'type' => 'number', 'validation' => 'nullable|integer|min:0|max:100000', 'default' => 0, 'channel_based' => true],
-            ['name' => 'amount_limit', 'title' => 'berkay::workflow.amount', 'type' => 'number', 'validation' => 'nullable|numeric|min:0|max:99999999999', 'default' => 0, 'channel_based' => true],
+            ['name' => 'amount_limit', 'title' => 'berkay::workflow.amount', 'type' => 'number', 'validation' => 'required|integer|min:1|max:99999999999', 'default' => OrderWorkflow::DEFAULT_AMOUNT_LIMIT, 'channel_based' => true],
         ],
     ],
     ['key' => 'berkay.store', 'name' => 'berkay::app.store-settings', 'info' => 'berkay::app.settings-info', 'sort' => 1],

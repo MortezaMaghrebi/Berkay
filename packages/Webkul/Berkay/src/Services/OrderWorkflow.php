@@ -2,10 +2,12 @@
 
 namespace Webkul\Berkay\Services;
 
+use Closure;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Webkul\Berkay\Listeners\OrderSmsListener;
+use Webkul\Checkout\Contracts\Cart as CartContract;
 use Webkul\Checkout\Facades\Cart;
 use Webkul\Sales\Models\Invoice;
 use Webkul\Sales\Models\Order;
@@ -14,64 +16,83 @@ use Webkul\Sales\Transformers\OrderResource;
 
 class OrderWorkflow
 {
+    /** Default merchandise subtotal limit in tomans. */
+    public const DEFAULT_AMOUNT_LIMIT = 100_000_000;
+
     public const STEPS = ['review', 'approval', 'paid', 'building', 'shipped', 'delivered'];
 
     /** Inject order storage and customer notifications. */
     public function __construct(protected OrderRepository $orders, protected OrderSmsListener $notifications) {}
 
-    public function requiresReview($cart): bool
+    /** Check the merchandise subtotal before discounts, shipping and tax. */
+    public function requiresReview(CartContract $cart): bool
     {
         $auto = core()->getConfigData('berkay.workshop.review.auto_approve') ?? true;
         $quantity = (int) core()->getConfigData('berkay.workshop.review.quantity_limit');
-        $amount = (float) core()->getConfigData('berkay.workshop.review.amount_limit');
+        $amount = (int) core()->getConfigData('berkay.workshop.review.amount_limit');
+        $amount = $amount > 0 ? $amount : self::DEFAULT_AMOUNT_LIMIT;
+        $baseLimit = $cart->base_currency_code === 'IRR' ? $amount * 10 : $amount;
 
         return ! $auto
             || ($quantity > 0 && $cart->items->sum('quantity') > $quantity)
-            || ($amount > 0 && (float) $cart->base_grand_total > $amount);
+            || (float) $cart->base_sub_total > $baseLimit;
+    }
+
+    /** Serialize order creation and payment initiation for the same cart. */
+    public function lockCheckout(int $cartId, Closure $submit): mixed
+    {
+        return Cache::lock('berkay.payment.cart.'.$cartId, 60)->block(5, $submit);
     }
 
     /** Persist the reviewed cart as an order before allowing a payment attempt. */
-    public function deferCheckout($cart): ?RedirectResponse
+    public function deferCheckout(CartContract $cart): ?RedirectResponse
     {
+        $customer = auth()->guard('customer')->user();
+        $existing = $this->orders->findOneWhere(['cart_id' => $cart->id]);
+
+        if ($existing) {
+            Cart::deActivateCart();
+
+            if ($customer && (int) $existing->customer_id === $customer->id) {
+                return redirect()->route('shop.customers.account.orders.view', $existing->id);
+            }
+
+            return redirect()->route('shop.checkout.cart.index');
+        }
+
         if (! $this->requiresReview($cart)) {
             return null;
         }
 
-        $customer = auth()->guard('customer')->user();
-
         if (! $customer) {
             session()->put('shop.url.intended', route('shop.checkout.onepage.index'));
 
-            return redirect()->route('shop.customer.session.index')->with('info', trans('berkay::workflow.sign-in'));
+            return redirect()->route('shop.customer.session.index')->with('info', trans('berkay::workflow.signIn'));
         }
 
-        $order = Cache::lock('berkay.payment.cart.'.$cart->id, 60)->block(5, function () use ($cart, $customer) {
-            $existing = $this->orders->findOneWhere(['cart_id' => $cart->id]);
-            if ($existing) {
-                abort_unless((int) $existing->customer_id === $customer->id, 403);
-
-                return $existing;
-            }
-
-            return DB::transaction(function () use ($cart) {
-                $order = $this->orders->create((new OrderResource($cart))->jsonSerialize());
-                $this->query()->insert([
-                    'order_id' => $order->id,
-                    'review' => 'waiting',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-
-                $this->notifications->sendAfterCommit($order->id, 'stage_review');
-
-                return $order;
-            });
-        });
+        $order = $this->orders->create((new OrderResource($cart))->jsonSerialize() + ['berkay_requires_review' => true]);
 
         Cart::deActivateCart();
 
         return redirect()->route('shop.customers.account.orders.view', $order->id)
             ->with('info', trans('berkay::workflow.waiting'));
+    }
+
+    /** Record the review state before order-created listeners can act on the order. */
+    public function holdWhenRequested(Order $order, array $data): void
+    {
+        if (! ($data['berkay_requires_review'] ?? false)) {
+            return;
+        }
+
+        $this->query()->insert([
+            'order_id' => $order->id,
+            'review' => 'waiting',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->notifications->sendAfterCommit($order->id, 'stage_review');
     }
 
     public function query()
@@ -154,7 +175,7 @@ class OrderWorkflow
         $shipped = $hasShipment && ! $order->canShip();
         $done = [
             'review' => ! $waiting,
-            'approval' => ! $waiting && $paid,
+            'approval' => ! $waiting,
             'paid' => $paid,
             'building' => filled($record?->building_at) || $shipped,
             'shipped' => $shipped,

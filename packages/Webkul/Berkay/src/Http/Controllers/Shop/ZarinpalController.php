@@ -13,6 +13,7 @@ use Webkul\Berkay\Repositories\PaymentAttemptRepository;
 use Webkul\Berkay\Services\IranianMoney;
 use Webkul\Berkay\Services\OrderWorkflow;
 use Webkul\Berkay\Services\ZarinpalGateway;
+use Webkul\Berkay\Shipping\ShippingQuote;
 use Webkul\Checkout\Facades\Cart;
 use Webkul\Sales\Repositories\InvoiceRepository;
 use Webkul\Sales\Repositories\OrderRepository;
@@ -33,7 +34,7 @@ class ZarinpalController extends Controller
     ) {}
 
     /** Freeze an agreed order and reserve its inventory before bank redirection. */
-    public function start(): RedirectResponse
+    public function start(OrderWorkflow $workflow): RedirectResponse
     {
         $cart = Cart::getCart();
 
@@ -56,24 +57,30 @@ class ZarinpalController extends Controller
         }
 
         try {
-            Cart::collectTotals();
-            if (! app(\Webkul\Berkay\Shipping\ShippingQuote::class)->refresh(Cart::getCart())) {
-                return redirect()->route('shop.checkout.onepage.index')
-                    ->with('warning', trans('berkay::delivery.quote-changed'));
-            }
-            $cart = Cart::getCart();
+            return $workflow->lockCheckout($cart->id, function () use ($cart, $workflow) {
+                $current = $cart->fresh();
 
-            if ($review = app(OrderWorkflow::class)->deferCheckout($cart)) {
-                return $review;
-            }
-
-            return Cache::lock('berkay.payment.cart.'.$cart->id, 60)->block(5, function () use ($cart) {
-                if ($this->orders->findOneWhere(['cart_id' => $cart->id])) {
+                if (
+                    ! $current?->is_active
+                    || $current->payment?->method !== 'berkay_zarinpal'
+                ) {
                     return $this->failed();
                 }
 
+                Cart::setCart($current);
                 Cart::collectTotals();
+
+                if (! app(ShippingQuote::class)->refresh(Cart::getCart())) {
+                    return redirect()->route('shop.checkout.onepage.index')
+                        ->with('warning', trans('berkay::delivery.quote-changed'));
+                }
+
                 $cart = Cart::getCart();
+
+                if ($review = $workflow->deferCheckout($cart)) {
+                    return $review;
+                }
+
                 $amount = $this->money->toRial($cart->base_grand_total, $cart->base_currency_code);
 
                 if ($amount < 1000) {
@@ -170,12 +177,15 @@ class ZarinpalController extends Controller
     }
 
     /** Verify bank authority and finalize an invoice idempotently. */
-    public function callback(string $token): RedirectResponse|View
+    public function callback(string $token, OrderWorkflow $workflow): RedirectResponse|View
     {
         $attempt = $this->attempts->findOneWhere(['token' => $token, 'provider' => 'zarinpal']);
         abort_unless($attempt, 404);
 
-        if (! hash_equals($attempt->authority, (string) request('Authority'))) {
+        if (
+            ! hash_equals($attempt->authority, (string) request('Authority'))
+            || $workflow->waiting($this->orders->findOrFail($attempt->order_id))
+        ) {
             return $this->failed();
         }
 

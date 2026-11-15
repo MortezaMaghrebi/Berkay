@@ -3,10 +3,10 @@
 return [
     'manage' => 'Workshop orders',
     'settings' => 'Workshop review rules',
-    'settingsHelp' => 'Seller approval is required when either limit is exceeded. A zero limit disables that threshold.',
+    'settingsHelp' => 'Orders whose merchandise subtotal exceeds the amount limit require approval before payment. Shipping, tax and coupons are excluded. A zero quantity limit disables the quantity rule.',
     'auto' => 'Automatically approve orders within the limits',
     'quantity' => 'Item quantity limit',
-    'amount' => 'Order total limit in the store base currency',
+    'amount' => 'Merchandise subtotal limit (tomans)',
     'review' => 'Workshop review',
     'approval' => 'Approval and payment',
     'paid' => 'Paid',

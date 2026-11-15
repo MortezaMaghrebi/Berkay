@@ -2,9 +2,14 @@
 
 namespace Webkul\Shop\Http\Controllers\API;
 
+use Illuminate\Contracts\Cache\LockTimeoutException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
+use Webkul\Berkay\Services\OrderWorkflow;
+use Webkul\Berkay\Shipping\ShippingQuote;
 use Webkul\CartRule\Exceptions\CouponUsageLimitExceededException;
+use Webkul\Checkout\Contracts\Cart as CartContract;
 use Webkul\Checkout\Facades\Cart;
 use Webkul\Customer\Repositories\CustomerRepository;
 use Webkul\Payment\Facades\Payment;
@@ -150,8 +155,30 @@ class OnepageController extends APIController
     /**
      * Store order
      */
-    public function storeOrder()
+    public function storeOrder(OrderWorkflow $workflow): JsonResource|JsonResponse
     {
+        $cart = Cart::getCart();
+
+        if (! $cart) {
+            return new JsonResource(['redirect' => true, 'redirect_url' => route('shop.checkout.cart.index')]);
+        }
+
+        try {
+            return $workflow->lockCheckout($cart->id, fn () => $this->submitOrder($cart->fresh(), $workflow));
+        } catch (LockTimeoutException) {
+            return response()->json(['message' => trans('berkay::app.payment-not-completed')], 409);
+        }
+    }
+
+    /** Collect fresh totals and submit the cart while holding the checkout lock. */
+    protected function submitOrder(?CartContract $cart, OrderWorkflow $workflow): JsonResource|JsonResponse
+    {
+        if (! $cart?->is_active) {
+            return new JsonResource(['redirect' => true, 'redirect_url' => route('shop.checkout.cart.index')]);
+        }
+
+        Cart::setCart($cart);
+
         if (Cart::hasError()) {
             return new JsonResource([
                 'redirect' => true,
@@ -161,7 +188,7 @@ class OnepageController extends APIController
 
         Cart::collectTotals();
 
-        if (! app(\Webkul\Berkay\Shipping\ShippingQuote::class)->refresh(Cart::getCart())) {
+        if (! app(ShippingQuote::class)->refresh(Cart::getCart())) {
             session()->flash('warning', trans('berkay::delivery.quote-changed'));
 
             return new JsonResource(['redirect' => true, 'redirect_url' => route('shop.checkout.onepage.index')]);
@@ -178,7 +205,7 @@ class OnepageController extends APIController
         $cart = Cart::getCart();
 
         try {
-            if ($review = app(\Webkul\Berkay\Services\OrderWorkflow::class)->deferCheckout($cart)) {
+            if ($review = $workflow->deferCheckout($cart)) {
                 return new JsonResource(['redirect' => true, 'redirect_url' => $review->getTargetUrl()]);
             }
         } catch (CouponUsageLimitExceededException) {

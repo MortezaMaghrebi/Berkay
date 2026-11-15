@@ -2,6 +2,7 @@
 
 namespace Webkul\Payment\Listeners;
 
+use Webkul\Berkay\Services\OrderWorkflow;
 use Webkul\Sales\Repositories\InvoiceRepository;
 use Webkul\Sales\Repositories\OrderRepository;
 
@@ -28,6 +29,10 @@ class GenerateInvoice
      */
     public function handle($order)
     {
+        if (app(OrderWorkflow::class)->waiting($order)) {
+            return;
+        }
+
         if (
             $order->payment->method == 'cashondelivery'
             && core()->getConfigData('sales.payment_methods.cashondelivery.generate_invoice')
