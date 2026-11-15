@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'title' => 'Torob の商品',
+    'description' => 'Torob が取得できる商品を選択します。',
+    'connection' => '接続設定',
+    'export-count' => 'フィードに :count 件の商品',
+    'connection-active' => 'Torob のアクセスが有効です。',
+    'connection-paused' => 'Torob のアクセスは無効です。',
+    'default-policy' => '既定の選択',
+    'automatic' => '既定で含める',
+    'manual' => '選択した商品のみ',
+    'save-policy' => '設定を保存',
+    'search' => '商品名または SKU で検索',
+    'all-categories' => 'すべてのカテゴリー',
+    'filter-status' => 'フィードの状態で絞り込む',
+    'all' => 'すべて',
+    'included' => 'フィードに掲載',
+    'excluded' => '対象外',
+    'results' => ':count 件の結果',
+    'picked-count' => ':count 件を選択',
+    'pick-page' => 'このページを選択',
+    'pick-filtered' => '全 :count 件を選択',
+    'include' => '含める',
+    'exclude' => '除外する',
+    'empty' => '該当する商品がありません。',
+    'clear-filters' => '絞り込みを解除',
+];

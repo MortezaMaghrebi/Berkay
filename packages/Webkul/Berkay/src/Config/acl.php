@@ -15,6 +15,6 @@ return [
     ['key' => 'berkay.custom-orders.edit', 'name' => 'berkay::app.edit', 'route' => 'admin.berkay.custom_orders.update', 'sort' => 1],
     ['key' => 'berkay.workshop', 'name' => 'berkay::workflow.manage', 'route' => 'admin.berkay.workshop.advance', 'sort' => 7],
     ['key' => 'berkay.payments', 'name' => 'berkay::app.payments', 'route' => 'admin.berkay.payments.index', 'sort' => 3],
-    ['key' => 'berkay.integrations', 'name' => 'berkay::app.integrations', 'route' => ['admin.berkay.integrations.index', 'admin.berkay.kavenegar.index'], 'sort' => 4],
-    ['key' => 'berkay.integrations.edit', 'name' => 'berkay::app.edit', 'route' => ['admin.berkay.integrations.update', 'admin.berkay.integrations.payment.update', 'admin.berkay.kavenegar.update', 'admin.berkay.kavenegar.send'], 'sort' => 1],
+    ['key' => 'berkay.integrations', 'name' => 'berkay::app.integrations', 'route' => ['admin.berkay.integrations.index', 'admin.berkay.kavenegar.index', 'admin.berkay.torob_products.index'], 'sort' => 4],
+    ['key' => 'berkay.integrations.edit', 'name' => 'berkay::app.edit', 'route' => ['admin.berkay.integrations.update', 'admin.berkay.integrations.payment.update', 'admin.berkay.kavenegar.update', 'admin.berkay.kavenegar.send', 'admin.berkay.torob_products.update', 'admin.berkay.torob_products.mode'], 'sort' => 1],
 ];

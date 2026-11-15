@@ -26,6 +26,9 @@
         </a>
     @endif
     @if (bouncer()->hasPermission('berkay.integrations'))
+        <a href="{{ route('admin.berkay.torob_products.index') }}" @class(['bk-nav-active' => request()->routeIs('admin.berkay.torob_products.*')])>
+            <span class="icon-store" aria-hidden="true"></span>{{ trans('berkay::torob.title') }}
+        </a>
         <a href="{{ route('admin.berkay.kavenegar.index') }}" @class(['bk-nav-active' => request()->routeIs('admin.berkay.kavenegar.*')])>
             <span class="icon-settings" aria-hidden="true"></span>{{ trans('berkay::sms.panel') }}
         </a>

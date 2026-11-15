@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'title' => 'Produkty Torob',
+    'description' => 'Wybierz produkty, które Torob może pobierać.',
+    'connection' => 'Ustawienia połączenia',
+    'export-count' => 'Produkty w pliku: :count',
+    'connection-active' => 'Dostęp Torob jest włączony.',
+    'connection-paused' => 'Dostęp Torob jest wyłączony.',
+    'default-policy' => 'Wybór domyślny',
+    'automatic' => 'Domyślnie uwzględniaj',
+    'manual' => 'Tylko wybrane produkty',
+    'save-policy' => 'Zapisz regułę',
+    'search' => 'Szukaj według nazwy lub SKU',
+    'all-categories' => 'Wszystkie kategorie',
+    'filter-status' => 'Filtruj według stanu eksportu',
+    'all' => 'Wszystkie',
+    'included' => 'W pliku',
+    'excluded' => 'Wykluczone',
+    'results' => 'Wyniki: :count',
+    'picked-count' => 'Wybrane: :count',
+    'pick-page' => 'Wybierz tę stronę',
+    'pick-filtered' => 'Wybierz wszystkie wyniki (:count)',
+    'include' => 'Uwzględnij',
+    'exclude' => 'Wyklucz',
+    'empty' => 'Nie znaleziono pasujących produktów.',
+    'clear-filters' => 'Wyczyść filtry',
+];

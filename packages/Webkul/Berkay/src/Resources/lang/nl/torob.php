@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'title' => 'Torob-producten',
+    'description' => 'Kies welke producten Torob kan ophalen.',
+    'connection' => 'Verbindingsinstellingen',
+    'export-count' => ':count producten in de feed',
+    'connection-active' => 'Torob-toegang is ingeschakeld.',
+    'connection-paused' => 'Torob-toegang is uitgeschakeld.',
+    'default-policy' => 'Standaardselectie',
+    'automatic' => 'Standaard opnemen',
+    'manual' => 'Alleen geselecteerde producten',
+    'save-policy' => 'Beleid opslaan',
+    'search' => 'Zoek op naam of SKU',
+    'all-categories' => 'Alle categorieën',
+    'filter-status' => 'Filter op feedstatus',
+    'all' => 'Alle',
+    'included' => 'In de feed',
+    'excluded' => 'Uitgesloten',
+    'results' => ':count resultaten',
+    'picked-count' => ':count geselecteerd',
+    'pick-page' => 'Selecteer deze pagina',
+    'pick-filtered' => 'Selecteer alle :count resultaten',
+    'include' => 'Opnemen',
+    'exclude' => 'Uitsluiten',
+    'empty' => 'Geen passende producten.',
+    'clear-filters' => 'Filters wissen',
+];

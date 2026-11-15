@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'title' => 'Torob නිෂ්පාදන',
+    'description' => 'Torob වෙත ලබා දිය හැකි නිෂ්පාදන තෝරන්න.',
+    'connection' => 'සම්බන්ධතා සැකසුම්',
+    'export-count' => 'ලැයිස්තුවේ නිෂ්පාදන :countක්',
+    'connection-active' => 'Torob ප්‍රවේශය සක්‍රීයයි.',
+    'connection-paused' => 'Torob ප්‍රවේශය අක්‍රීයයි.',
+    'default-policy' => 'පෙරනිමි තේරීම',
+    'automatic' => 'පෙරනිමියෙන් ඇතුළත් කරන්න',
+    'manual' => 'තෝරාගත් නිෂ්පාදන පමණයි',
+    'save-policy' => 'රීතිය සුරකින්න',
+    'search' => 'නම හෝ SKU අනුව සොයන්න',
+    'all-categories' => 'සියලු කාණ්ඩ',
+    'filter-status' => 'ලැයිස්තු තත්ත්වය අනුව පෙරන්න',
+    'all' => 'සියල්ල',
+    'included' => 'ලැයිස්තුවේ ඇත',
+    'excluded' => 'ඉවත් කළ',
+    'results' => 'ප්‍රතිඵල :countක්',
+    'picked-count' => ':countක් තෝරා ඇත',
+    'pick-page' => 'මෙම පිටුව තෝරන්න',
+    'pick-filtered' => 'ප්‍රතිඵල :countම තෝරන්න',
+    'include' => 'ඇතුළත් කරන්න',
+    'exclude' => 'ඉවත් කරන්න',
+    'empty' => 'ගැළපෙන නිෂ්පාදන නැත.',
+    'clear-filters' => 'පෙරහන් ඉවත් කරන්න',
+];

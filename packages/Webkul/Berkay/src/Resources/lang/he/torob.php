@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'title' => 'מוצרים ב-Torob',
+    'description' => 'בחרו אילו מוצרים Torob יכול לקרוא.',
+    'connection' => 'הגדרות חיבור',
+    'export-count' => ':count מוצרים בפיד',
+    'connection-active' => 'הגישה של Torob פעילה.',
+    'connection-paused' => 'הגישה של Torob כבויה.',
+    'default-policy' => 'בחירת ברירת מחדל',
+    'automatic' => 'לכלול כברירת מחדל',
+    'manual' => 'מוצרים שנבחרו בלבד',
+    'save-policy' => 'שמירת המדיניות',
+    'search' => 'חיפוש לפי שם או מק״ט',
+    'all-categories' => 'כל הקטגוריות',
+    'filter-status' => 'סינון לפי מצב בפיד',
+    'all' => 'הכול',
+    'included' => 'בפיד',
+    'excluded' => 'מוחרגים',
+    'results' => ':count תוצאות',
+    'picked-count' => ':count נבחרו',
+    'pick-page' => 'בחירת דף זה',
+    'pick-filtered' => 'בחירת כל :count התוצאות',
+    'include' => 'לכלול',
+    'exclude' => 'להחריג',
+    'empty' => 'אין מוצרים תואמים.',
+    'clear-filters' => 'ניקוי מסננים',
+];

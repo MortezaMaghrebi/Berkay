@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'title' => 'Productes de Torob',
+    'description' => 'Trieu quins productes pot consultar Torob.',
+    'connection' => 'Configuració de connexió',
+    'export-count' => ':count productes al canal',
+    'connection-active' => 'L’accés de Torob està activat.',
+    'connection-paused' => 'L’accés de Torob està desactivat.',
+    'default-policy' => 'Selecció predeterminada',
+    'automatic' => 'Inclou per defecte',
+    'manual' => 'Només els productes seleccionats',
+    'save-policy' => 'Desa la política',
+    'search' => 'Cerca per nom o SKU',
+    'all-categories' => 'Totes les categories',
+    'filter-status' => 'Filtra per estat del canal',
+    'all' => 'Tots',
+    'included' => 'Al canal',
+    'excluded' => 'Exclosos',
+    'results' => ':count resultats',
+    'picked-count' => ':count seleccionats',
+    'pick-page' => 'Selecciona aquesta pàgina',
+    'pick-filtered' => 'Selecciona els :count resultats',
+    'include' => 'Inclou',
+    'exclude' => 'Exclou',
+    'empty' => 'No hi ha productes coincidents.',
+    'clear-filters' => 'Esborra els filtres',
+];

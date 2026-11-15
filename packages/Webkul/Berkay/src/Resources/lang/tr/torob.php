@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'title' => 'Torob ürünleri',
+    'description' => 'Torob’un erişebileceği ürünleri seçin.',
+    'connection' => 'Bağlantı ayarları',
+    'export-count' => 'Akışta :count ürün',
+    'connection-active' => 'Torob erişimi açık.',
+    'connection-paused' => 'Torob erişimi kapalı.',
+    'default-policy' => 'Varsayılan seçim',
+    'automatic' => 'Varsayılan olarak dahil et',
+    'manual' => 'Yalnızca seçilen ürünler',
+    'save-policy' => 'Kuralı kaydet',
+    'search' => 'Ad veya SKU ile ara',
+    'all-categories' => 'Tüm kategoriler',
+    'filter-status' => 'Akış durumuna göre filtrele',
+    'all' => 'Tümü',
+    'included' => 'Akışta',
+    'excluded' => 'Hariç tutulanlar',
+    'results' => ':count sonuç',
+    'picked-count' => ':count seçildi',
+    'pick-page' => 'Bu sayfayı seç',
+    'pick-filtered' => ':count sonucun tümünü seç',
+    'include' => 'Dahil et',
+    'exclude' => 'Hariç tut',
+    'empty' => 'Eşleşen ürün yok.',
+    'clear-filters' => 'Filtreleri temizle',
+];

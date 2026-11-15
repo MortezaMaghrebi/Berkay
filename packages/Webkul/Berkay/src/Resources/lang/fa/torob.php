@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'title' => 'محصولات ترب',
+    'description' => 'مشخص کنید ترب اطلاعات کدام محصولات فروشگاه را دریافت کند.',
+    'connection' => 'تنظیمات اتصال',
+    'export-count' => ':count محصول در خروجی ترب',
+    'connection-active' => 'دسترسی ترب فعال است.',
+    'connection-paused' => 'دسترسی ترب غیرفعال است.',
+    'default-policy' => 'روش انتخاب پیش‌فرض',
+    'automatic' => 'ارسال پیش‌فرض محصولات',
+    'manual' => 'فقط محصولات انتخاب‌شده',
+    'save-policy' => 'ذخیره روش',
+    'search' => 'جست‌وجوی نام یا کد کالا',
+    'all-categories' => 'همه دسته‌بندی‌ها',
+    'filter-status' => 'فیلتر وضعیت خروجی',
+    'all' => 'همه',
+    'included' => 'در خروجی ترب',
+    'excluded' => 'خارج از خروجی',
+    'results' => ':count نتیجه',
+    'picked-count' => ':count انتخاب‌شده',
+    'pick-page' => 'انتخاب این صفحه',
+    'pick-filtered' => 'انتخاب هر :count نتیجه',
+    'include' => 'افزودن به خروجی',
+    'exclude' => 'حذف از خروجی',
+    'empty' => 'محصولی مطابق فیلترها پیدا نشد.',
+    'clear-filters' => 'پاک کردن فیلترها',
+];

@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'title' => 'Torob products',
+    'description' => 'Select the store products Torob can read.',
+    'connection' => 'Connection settings',
+    'export-count' => ':count products in the feed',
+    'connection-active' => 'Torob access is enabled.',
+    'connection-paused' => 'Torob access is disabled.',
+    'default-policy' => 'Default selection',
+    'automatic' => 'Include by default',
+    'manual' => 'Only selected products',
+    'save-policy' => 'Save policy',
+    'search' => 'Search by name or SKU',
+    'all-categories' => 'All categories',
+    'filter-status' => 'Filter by feed status',
+    'all' => 'All',
+    'included' => 'In the feed',
+    'excluded' => 'Excluded',
+    'results' => ':count results',
+    'picked-count' => ':count selected',
+    'pick-page' => 'Select this page',
+    'pick-filtered' => 'Select all :count results',
+    'include' => 'Include',
+    'exclude' => 'Exclude',
+    'empty' => 'No matching products.',
+    'clear-filters' => 'Clear filters',
+];

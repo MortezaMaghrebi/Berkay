@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'title' => 'Produse Torob',
+    'description' => 'Alege produsele pe care Torob le poate accesa.',
+    'connection' => 'Setări de conectare',
+    'export-count' => ':count produse în flux',
+    'connection-active' => 'Accesul Torob este activat.',
+    'connection-paused' => 'Accesul Torob este dezactivat.',
+    'default-policy' => 'Selecție implicită',
+    'automatic' => 'Include în mod implicit',
+    'manual' => 'Numai produsele selectate',
+    'save-policy' => 'Salvează regula',
+    'search' => 'Caută după nume sau SKU',
+    'all-categories' => 'Toate categoriile',
+    'filter-status' => 'Filtrează după starea în flux',
+    'all' => 'Toate',
+    'included' => 'În flux',
+    'excluded' => 'Excluse',
+    'results' => ':count rezultate',
+    'picked-count' => ':count selectate',
+    'pick-page' => 'Selectează această pagină',
+    'pick-filtered' => 'Selectează toate cele :count rezultate',
+    'include' => 'Include',
+    'exclude' => 'Exclude',
+    'empty' => 'Nu există produse corespunzătoare.',
+    'clear-filters' => 'Șterge filtrele',
+];

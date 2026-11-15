@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'title' => 'منتجات ترب',
+    'description' => 'اختر المنتجات التي يمكن لترب قراءتها.',
+    'connection' => 'إعدادات الاتصال',
+    'export-count' => ':count منتج في الخلاصة',
+    'connection-active' => 'وصول ترب مفعّل.',
+    'connection-paused' => 'وصول ترب معطّل.',
+    'default-policy' => 'الاختيار الافتراضي',
+    'automatic' => 'تضمين افتراضي',
+    'manual' => 'المنتجات المحددة فقط',
+    'save-policy' => 'حفظ السياسة',
+    'search' => 'البحث بالاسم أو رمز المنتج',
+    'all-categories' => 'كل الفئات',
+    'filter-status' => 'التصفية حسب حالة الخلاصة',
+    'all' => 'الكل',
+    'included' => 'في الخلاصة',
+    'excluded' => 'مستبعد',
+    'results' => ':count نتيجة',
+    'picked-count' => ':count محدد',
+    'pick-page' => 'تحديد هذه الصفحة',
+    'pick-filtered' => 'تحديد كل النتائج وعددها :count',
+    'include' => 'تضمين',
+    'exclude' => 'استبعاد',
+    'empty' => 'لا توجد منتجات مطابقة.',
+    'clear-filters' => 'مسح عوامل التصفية',
+];

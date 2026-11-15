@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'title' => 'Prodotti Torob',
+    'description' => 'Scegli quali prodotti può consultare Torob.',
+    'connection' => 'Impostazioni di connessione',
+    'export-count' => ':count prodotti nel feed',
+    'connection-active' => 'L’accesso di Torob è attivo.',
+    'connection-paused' => 'L’accesso di Torob è disattivato.',
+    'default-policy' => 'Selezione predefinita',
+    'automatic' => 'Includi per impostazione predefinita',
+    'manual' => 'Solo i prodotti selezionati',
+    'save-policy' => 'Salva la regola',
+    'search' => 'Cerca per nome o SKU',
+    'all-categories' => 'Tutte le categorie',
+    'filter-status' => 'Filtra per stato del feed',
+    'all' => 'Tutti',
+    'included' => 'Nel feed',
+    'excluded' => 'Esclusi',
+    'results' => ':count risultati',
+    'picked-count' => ':count selezionati',
+    'pick-page' => 'Seleziona questa pagina',
+    'pick-filtered' => 'Seleziona tutti i :count risultati',
+    'include' => 'Includi',
+    'exclude' => 'Escludi',
+    'empty' => 'Nessun prodotto corrispondente.',
+    'clear-filters' => 'Cancella i filtri',
+];

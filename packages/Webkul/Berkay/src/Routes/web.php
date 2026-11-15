@@ -12,6 +12,7 @@ use Webkul\Berkay\Http\Controllers\Admin\IntegrationController;
 use Webkul\Berkay\Http\Controllers\Admin\KavenegarController;
 use Webkul\Berkay\Http\Controllers\Admin\OperationsController;
 use Webkul\Berkay\Http\Controllers\Admin\SimpleCatalogController;
+use Webkul\Berkay\Http\Controllers\Admin\TorobProductsController;
 use Webkul\Berkay\Http\Controllers\Admin\UserManagementController;
 use Webkul\Berkay\Http\Controllers\Admin\WorkshopController;
 use Webkul\Berkay\Http\Controllers\Shop\CampaignController;
@@ -83,6 +84,9 @@ Route::middleware(['web', 'admin', NoCacheMiddleware::class])
         Route::put('integrations', [IntegrationController::class, 'update'])->name('admin.berkay.integrations.update');
         Route::put('integrations/payment/{provider}', [IntegrationController::class, 'updatePayment'])
             ->whereIn('provider', ['mellat', 'irankish', 'moneytransfer'])->name('admin.berkay.integrations.payment.update');
+        Route::get('torob-products', [TorobProductsController::class, 'index'])->name('admin.berkay.torob_products.index');
+        Route::put('torob-products', [TorobProductsController::class, 'update'])->name('admin.berkay.torob_products.update');
+        Route::put('torob-products/mode', [TorobProductsController::class, 'mode'])->name('admin.berkay.torob_products.mode');
         Route::get('kavenegar', [KavenegarController::class, 'index'])->name('admin.berkay.kavenegar.index');
         Route::put('kavenegar', [KavenegarController::class, 'update'])->name('admin.berkay.kavenegar.update');
         Route::post('kavenegar/send', [KavenegarController::class, 'send'])

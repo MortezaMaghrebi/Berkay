@@ -107,6 +107,9 @@
                     <h2 id="integration-torob-title">همگام‌سازی محصولات با ترب</h2>
                     <p>ترب از این مسیر قیمت، موجودی و تصویر کالاها را دریافت می‌کند.</p>
                 </header>
+                <div class="bk-integration-actions">
+                    <a class="bk-button" href="{{ route('admin.berkay.torob_products.index') }}">{{ trans('berkay::torob.title') }}</a>
+                </div>
 
                 <div>
                     <label for="torob-endpoint">نشانی دریافت محصولات</label>

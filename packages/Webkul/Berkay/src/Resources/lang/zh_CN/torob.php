@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'title' => 'Torob 商品',
+    'description' => '选择 Torob 可以读取的商品。',
+    'connection' => '连接设置',
+    'export-count' => '商品源中有 :count 件商品',
+    'connection-active' => '已启用 Torob 访问。',
+    'connection-paused' => '已禁用 Torob 访问。',
+    'default-policy' => '默认选择',
+    'automatic' => '默认纳入',
+    'manual' => '仅纳入所选商品',
+    'save-policy' => '保存规则',
+    'search' => '按名称或 SKU 搜索',
+    'all-categories' => '所有分类',
+    'filter-status' => '按商品源状态筛选',
+    'all' => '全部',
+    'included' => '已纳入',
+    'excluded' => '已排除',
+    'results' => ':count 条结果',
+    'picked-count' => '已选 :count 项',
+    'pick-page' => '选择本页',
+    'pick-filtered' => '选择全部 :count 条结果',
+    'include' => '纳入',
+    'exclude' => '排除',
+    'empty' => '未找到匹配的商品。',
+    'clear-filters' => '清除筛选',
+];

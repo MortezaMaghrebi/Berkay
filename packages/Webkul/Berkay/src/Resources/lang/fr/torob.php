@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'title' => 'Produits Torob',
+    'description' => 'Choisissez les produits que Torob peut consulter.',
+    'connection' => 'Paramètres de connexion',
+    'export-count' => ':count produits dans le flux',
+    'connection-active' => 'L’accès de Torob est activé.',
+    'connection-paused' => 'L’accès de Torob est désactivé.',
+    'default-policy' => 'Sélection par défaut',
+    'automatic' => 'Inclure par défaut',
+    'manual' => 'Uniquement les produits sélectionnés',
+    'save-policy' => 'Enregistrer la règle',
+    'search' => 'Chercher par nom ou référence',
+    'all-categories' => 'Toutes les catégories',
+    'filter-status' => 'Filtrer par état du flux',
+    'all' => 'Tous',
+    'included' => 'Dans le flux',
+    'excluded' => 'Exclus',
+    'results' => ':count résultats',
+    'picked-count' => ':count sélectionnés',
+    'pick-page' => 'Sélectionner cette page',
+    'pick-filtered' => 'Sélectionner les :count résultats',
+    'include' => 'Inclure',
+    'exclude' => 'Exclure',
+    'empty' => 'Aucun produit ne correspond.',
+    'clear-filters' => 'Effacer les filtres',
+];

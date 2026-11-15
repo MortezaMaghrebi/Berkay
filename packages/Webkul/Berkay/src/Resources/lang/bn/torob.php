@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'title' => 'তরবের পণ্য',
+    'description' => 'তরব কোন পণ্য পড়তে পারবে তা বেছে নিন।',
+    'connection' => 'সংযোগের সেটিংস',
+    'export-count' => 'ফিডে :countটি পণ্য',
+    'connection-active' => 'তরবের অ্যাক্সেস চালু।',
+    'connection-paused' => 'তরবের অ্যাক্সেস বন্ধ।',
+    'default-policy' => 'ডিফল্ট নির্বাচন',
+    'automatic' => 'ডিফল্টভাবে অন্তর্ভুক্ত',
+    'manual' => 'শুধু নির্বাচিত পণ্য',
+    'save-policy' => 'নীতি সংরক্ষণ',
+    'search' => 'নাম বা SKU দিয়ে খুঁজুন',
+    'all-categories' => 'সব বিভাগ',
+    'filter-status' => 'ফিডের অবস্থা অনুযায়ী ফিল্টার',
+    'all' => 'সব',
+    'included' => 'ফিডে আছে',
+    'excluded' => 'বাদ দেওয়া',
+    'results' => ':countটি ফলাফল',
+    'picked-count' => ':countটি নির্বাচিত',
+    'pick-page' => 'এই পৃষ্ঠা নির্বাচন',
+    'pick-filtered' => 'সব :countটি ফলাফল নির্বাচন',
+    'include' => 'অন্তর্ভুক্ত করুন',
+    'exclude' => 'বাদ দিন',
+    'empty' => 'মিলে যাওয়া পণ্য নেই।',
+    'clear-filters' => 'ফিল্টার সরান',
+];

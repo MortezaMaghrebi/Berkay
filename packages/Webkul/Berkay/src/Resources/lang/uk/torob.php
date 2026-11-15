@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'title' => 'Товари для Torob',
+    'description' => 'Виберіть товари, дані про які може отримувати Torob.',
+    'connection' => 'Налаштування підключення',
+    'export-count' => 'Товарів у фіді: :count',
+    'connection-active' => 'Доступ для Torob увімкнено.',
+    'connection-paused' => 'Доступ для Torob вимкнено.',
+    'default-policy' => 'Вибір за замовчуванням',
+    'automatic' => 'Додавати за замовчуванням',
+    'manual' => 'Лише вибрані товари',
+    'save-policy' => 'Зберегти правило',
+    'search' => 'Пошук за назвою або артикулом',
+    'all-categories' => 'Усі категорії',
+    'filter-status' => 'Фільтрувати за станом фіда',
+    'all' => 'Усі',
+    'included' => 'У фіді',
+    'excluded' => 'Виключені',
+    'results' => 'Результатів: :count',
+    'picked-count' => 'Вибрано: :count',
+    'pick-page' => 'Вибрати цю сторінку',
+    'pick-filtered' => 'Вибрати всі результати (:count)',
+    'include' => 'Додати',
+    'exclude' => 'Виключити',
+    'empty' => 'Відповідних товарів немає.',
+    'clear-filters' => 'Очистити фільтри',
+];

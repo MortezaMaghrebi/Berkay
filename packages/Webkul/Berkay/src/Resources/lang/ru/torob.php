@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'title' => 'Товары для Torob',
+    'description' => 'Выберите товары, данные о которых может получать Torob.',
+    'connection' => 'Настройки подключения',
+    'export-count' => 'Товаров в выгрузке: :count',
+    'connection-active' => 'Доступ для Torob включён.',
+    'connection-paused' => 'Доступ для Torob отключён.',
+    'default-policy' => 'Выбор по умолчанию',
+    'automatic' => 'Добавлять по умолчанию',
+    'manual' => 'Только выбранные товары',
+    'save-policy' => 'Сохранить правило',
+    'search' => 'Поиск по названию или артикулу',
+    'all-categories' => 'Все категории',
+    'filter-status' => 'Фильтр по статусу выгрузки',
+    'all' => 'Все',
+    'included' => 'В выгрузке',
+    'excluded' => 'Исключены',
+    'results' => 'Результатов: :count',
+    'picked-count' => 'Выбрано: :count',
+    'pick-page' => 'Выбрать эту страницу',
+    'pick-filtered' => 'Выбрать все результаты (:count)',
+    'include' => 'Добавить',
+    'exclude' => 'Исключить',
+    'empty' => 'Подходящих товаров нет.',
+    'clear-filters' => 'Сбросить фильтры',
+];

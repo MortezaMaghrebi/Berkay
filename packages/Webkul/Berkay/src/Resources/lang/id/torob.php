@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'title' => 'Produk Torob',
+    'description' => 'Pilih produk yang dapat diakses Torob.',
+    'connection' => 'Pengaturan koneksi',
+    'export-count' => ':count produk dalam umpan',
+    'connection-active' => 'Akses Torob aktif.',
+    'connection-paused' => 'Akses Torob nonaktif.',
+    'default-policy' => 'Pilihan bawaan',
+    'automatic' => 'Sertakan secara bawaan',
+    'manual' => 'Hanya produk terpilih',
+    'save-policy' => 'Simpan kebijakan',
+    'search' => 'Cari berdasarkan nama atau SKU',
+    'all-categories' => 'Semua kategori',
+    'filter-status' => 'Filter berdasarkan status umpan',
+    'all' => 'Semua',
+    'included' => 'Dalam umpan',
+    'excluded' => 'Dikecualikan',
+    'results' => ':count hasil',
+    'picked-count' => ':count dipilih',
+    'pick-page' => 'Pilih halaman ini',
+    'pick-filtered' => 'Pilih semua :count hasil',
+    'include' => 'Sertakan',
+    'exclude' => 'Kecualikan',
+    'empty' => 'Tidak ada produk yang cocok.',
+    'clear-filters' => 'Hapus filter',
+];

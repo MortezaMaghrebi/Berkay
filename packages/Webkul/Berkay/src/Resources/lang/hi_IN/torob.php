@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'title' => 'तोरब उत्पाद',
+    'description' => 'चुनें कि तोरब किन उत्पादों को पढ़ सकता है।',
+    'connection' => 'कनेक्शन सेटिंग',
+    'export-count' => 'फ़ीड में :count उत्पाद',
+    'connection-active' => 'तोरब की पहुँच चालू है।',
+    'connection-paused' => 'तोरब की पहुँच बंद है।',
+    'default-policy' => 'डिफ़ॉल्ट चयन',
+    'automatic' => 'डिफ़ॉल्ट रूप से शामिल करें',
+    'manual' => 'केवल चुने गए उत्पाद',
+    'save-policy' => 'नीति सहेजें',
+    'search' => 'नाम या SKU से खोजें',
+    'all-categories' => 'सभी श्रेणियाँ',
+    'filter-status' => 'फ़ीड स्थिति के अनुसार फ़िल्टर करें',
+    'all' => 'सभी',
+    'included' => 'फ़ीड में',
+    'excluded' => 'बाहर रखे गए',
+    'results' => ':count परिणाम',
+    'picked-count' => ':count चुने गए',
+    'pick-page' => 'यह पृष्ठ चुनें',
+    'pick-filtered' => 'सभी :count परिणाम चुनें',
+    'include' => 'शामिल करें',
+    'exclude' => 'बाहर रखें',
+    'empty' => 'कोई मेल खाता उत्पाद नहीं मिला।',
+    'clear-filters' => 'फ़िल्टर हटाएँ',
+];
