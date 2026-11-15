@@ -66,3 +66,20 @@ it('should store the address when the state belongs to the selected country or t
     'state from the country list' => ['US', 'CA'],
     'free-form state for a country without a list' => ['GB', 'Greater London'],
 ]);
+
+it('should retain a full multiline street address when selecting a legacy saved address', function () {
+    $street = "12 Main Street\nUnit 5";
+    postJson(route('shop.checkout.onepage.addresses.store'), [
+        'billing' => $this->storefrontAddress([
+            'country' => 'US',
+            'state' => 'CA',
+            'address' => $street,
+            'use_for_shipping' => true,
+        ]),
+    ])->assertOk();
+
+    $this->assertDatabaseHas('addresses', [
+        'address_type' => 'cart_billing',
+        'address' => implode(PHP_EOL, explode("\n", $street)),
+    ]);
+});

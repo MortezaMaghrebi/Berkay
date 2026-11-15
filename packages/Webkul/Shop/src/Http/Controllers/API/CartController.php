@@ -6,6 +6,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Webkul\CartRule\Repositories\CartRuleCouponRepository;
+use Webkul\CartRule\Repositories\CartRuleCouponUsageRepository;
+use Webkul\CartRule\Repositories\CartRuleCustomerRepository;
 use Webkul\Checkout\Facades\Cart;
 use Webkul\Checkout\Models\CartAddress;
 use Webkul\Product\Exceptions\InsufficientProductInventoryException;
@@ -238,10 +240,10 @@ class CartController extends APIController
     /**
      * Apply coupon to the cart.
      */
-    public function storeCoupon()
+    public function storeCoupon(CartRuleCouponUsageRepository $couponUses, CartRuleCustomerRepository $ruleUses)
     {
         $validatedData = $this->validate(request(), [
-            'code' => 'required',
+            'code' => ['required', 'string', 'max:255'],
         ]);
 
         try {
@@ -260,6 +262,33 @@ class CartController extends APIController
                         return (new JsonResource([
                             'data' => new CartResource(Cart::getCart()),
                             'message' => trans('shop::app.checkout.coupon.already-applied'),
+                        ]))->response()->setStatusCode(Response::HTTP_UNPROCESSABLE_ENTITY);
+                    }
+
+                    $customerId = Cart::getCart()->customer_id;
+                    $rule = $coupon->cart_rule;
+                    $limitReached = $coupon->usage_limit && $coupon->times_used >= $coupon->usage_limit;
+
+                    if ($customerId && $coupon->usage_per_customer) {
+                        $usage = $couponUses->findOneWhere([
+                            'cart_rule_coupon_id' => $coupon->id,
+                            'customer_id' => $customerId,
+                        ]);
+                        $limitReached = $limitReached || ($usage?->times_used ?? 0) >= $coupon->usage_per_customer;
+                    }
+
+                    if ($customerId && $rule->usage_per_customer) {
+                        $usage = $ruleUses->findOneWhere([
+                            'cart_rule_id' => $rule->id,
+                            'customer_id' => $customerId,
+                        ]);
+                        $limitReached = $limitReached || ($usage?->times_used ?? 0) >= $rule->usage_per_customer;
+                    }
+
+                    if ($limitReached) {
+                        return (new JsonResource([
+                            'data' => new CartResource(Cart::getCart()),
+                            'message' => trans('shop::app.checkout.coupon.usage-limit-exceeded'),
                         ]))->response()->setStatusCode(Response::HTTP_UNPROCESSABLE_ENTITY);
                     }
 

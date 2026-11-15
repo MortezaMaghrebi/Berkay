@@ -38,6 +38,7 @@ it('should list an order in the orders datagrid by its increment id', function (
         ->assertOk()
         ->assertJsonPath('meta.total', 1)
         ->assertJsonPath('records.0.id', $order->id)
+        ->assertJsonPath('records.0.actions.0.url', route('admin.sales.orders.view', $order->id))
         ->assertJsonPath('records.0.customer_email', $order->customer_email);
 });
 
@@ -46,12 +47,14 @@ it('should list an order in the orders datagrid by its increment id', function (
 // ============================================================================
 
 it('should return the order view page', function () {
+    $this->setConfig('sales.order_settings.reorder.admin', '1');
     $order = $this->createOrder();
 
     $this->loginAsAdmin();
 
     get(route('admin.sales.orders.view', $order->id))
         ->assertOk()
+        ->assertDontSee(route('admin.sales.orders.reorder', $order->id))
         ->assertSeeText(trans('admin::app.sales.orders.view.title', ['order_id' => $order->increment_id]))
         ->assertSeeText($order->customer_email);
 });

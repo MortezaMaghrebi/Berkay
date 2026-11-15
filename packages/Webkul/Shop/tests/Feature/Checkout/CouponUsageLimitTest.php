@@ -384,3 +384,12 @@ it('should increment existing per-customer coupon usage instead of creating dupl
         ->count()
     )->toBe(1);
 });
+
+it('explains at coupon entry that the usage limit has been reached', function () {
+    [, $coupon] = createCartRuleWithCoupon([], ['times_used' => 1]);
+    $this->addProductToCart($this->createSimpleProduct()->id);
+
+    $this->postJson(route('shop.api.checkout.cart.coupon.apply'), ['code' => $coupon->code])
+        ->assertUnprocessable()
+        ->assertJsonPath('message', couponUsageLimitMessage());
+});

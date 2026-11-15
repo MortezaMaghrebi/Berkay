@@ -32,7 +32,13 @@ class AddressRequest extends FormRequest
             'company_name' => ['nullable'],
             'first_name' => ['required'],
             'last_name' => ['required'],
-            'address' => ['required', 'array', 'min:1'],
+            'address' => ['bail', 'required', 'array', 'min:1', function ($attribute, $value, $fail) {
+                if (mb_strlen(implode(PHP_EOL, array_filter($value, 'is_string'))) > 255) {
+                    $fail('validation.max.string')->translate(['max' => 255]);
+                }
+            }],
+            'address.0' => ['required_with:address', 'string', 'max:255'],
+            'address.*' => ['nullable', 'string', 'max:255'],
             'country' => core()->isCountryRequired() ? ['required'] : ['nullable'],
             'state' => [
                 core()->isStateRequired() ? 'required' : 'nullable',
@@ -46,6 +52,9 @@ class AddressRequest extends FormRequest
         ];
     }
 
+    /**
+     * Normalize numerals in the phone and postal code.
+     */
     protected function prepareForValidation(): void
     {
         foreach (['phone', 'postcode'] as $field) {

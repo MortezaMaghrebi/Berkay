@@ -7,6 +7,8 @@ use Illuminate\Support\ServiceProvider;
 use Webkul\Berkay\Console\Commands\PublishStarterContent;
 use Webkul\Berkay\Console\Commands\SetupStore;
 use Webkul\Berkay\Listeners\OrderSmsListener;
+use Webkul\Berkay\Shipping\Freight;
+use Webkul\Berkay\Shipping\Post;
 
 class BerkayServiceProvider extends ServiceProvider
 {
@@ -33,11 +35,12 @@ class BerkayServiceProvider extends ServiceProvider
             }, config('acl'))]);
             $allowed = ['berkay_zarinpal', 'cashondelivery', 'moneytransfer'];
             $carriers = [
-                'berkay_post' => ['class' => \Webkul\Berkay\Shipping\Post::class],
-                'berkay_freight' => ['class' => \Webkul\Berkay\Shipping\Freight::class],
+                'berkay_post' => ['class' => Post::class],
+                'berkay_freight' => ['class' => Freight::class],
             ];
             config(['carriers' => $carriers]);
             config(['payment_methods' => array_intersect_key(config('payment_methods', []), array_flip($allowed))]);
+            config(['payment_methods.cashondelivery.checkout_enabled' => false]);
             config(['core' => array_values(array_filter(config('core', []), function ($item) use ($allowed, $carriers) {
                 $key = $item['key'] ?? '';
 

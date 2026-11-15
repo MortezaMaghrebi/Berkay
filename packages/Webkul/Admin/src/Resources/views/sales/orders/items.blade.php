@@ -5,7 +5,7 @@
 
     @foreach ($order->items->take(3) as $item)
         <div class="relative">
-            <div class="relative h-15 max-h-15 w-full max-w-15 rounded-sm">
+            <div @class(['relative size-15 rounded-sm', 'max-md:size-8' => $linkedRow ?? false])>
                 @if ($item->product?->images->count() > 0)
                     <img 
                         class="h-full w-full rounded-sm" 
@@ -16,10 +16,10 @@
                         {{ $item->qty_ordered }}
                     </span>
                 @else
-                    <div class="relative h-15 max-h-15 w-full max-w-15 rounded-sm border border-dashed border-gray-300 dark:border-gray-800 dark:mix-blend-exclusion dark:invert">
+                    <div class="relative size-full rounded-sm border border-dashed border-gray-300 dark:border-gray-800 dark:mix-blend-exclusion dark:invert">
                         <img src="{{ bagisto_asset('images/product-placeholders/front.svg') }}">
                         
-                        <p class="absolute bottom-1.5 w-full text-center text-[6px] font-semibold text-gray-400"> 
+                        <p @class(['absolute bottom-1.5 w-full text-center text-[6px] font-semibold text-gray-400', 'max-md:hidden' => $linkedRow ?? false])>
                             @lang('admin::app.sales.invoices.view.product-image') 
                         </p>
                     </div>
@@ -29,12 +29,16 @@
     @endforeach
 
     @if ($restCount >= 1)
-        <a href="{{ route('admin.sales.orders.view', $order->id) }}">
-            <div class="flex h-16.25 w-16.25 items-center rounded-sm bg-gray-50 dark:bg-gray-800">
+        @if (! ($linkedRow ?? false))
+            <a href="{{ route('admin.sales.orders.view', $order->id) }}">
+        @endif
+            <div class="flex max-w-16.25 items-center rounded-sm bg-gray-50 dark:bg-gray-800 md:min-h-15">
                 <p class="px-1.5 py-1.5 text-center text-xs font-bold text-gray-600 dark:text-gray-300">
                     @lang('admin::app.sales.orders.index.datagrid.product-count', ['count' => $restCount])
                 </p>
             </div>
-        </a>
+        @if (! ($linkedRow ?? false))
+            </a>
+        @endif
     @endif
 </div>

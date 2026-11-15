@@ -66,7 +66,11 @@ class KavenegarSms
             ! $response->successful()
             || (int) $response->json('return.status') !== 200
         ) {
-            throw new RuntimeException('Kavenegar did not accept the message.');
+            throw new RuntimeException(sprintf(
+                'Kavenegar rejected the message (HTTP %d, provider status %d).',
+                $response->status(),
+                (int) $response->json('return.status'),
+            ));
         }
     }
 }

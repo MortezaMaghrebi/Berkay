@@ -5,6 +5,7 @@ namespace Webkul\Shop\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Webkul\Berkay\Services\KavenegarSms;
 use Webkul\Checkout\Facades\Cart;
+use Webkul\Core\Repositories\CountryStateRepository;
 use Webkul\Core\Rules\PhoneNumber;
 use Webkul\Core\Rules\PostCode;
 use Webkul\Core\Rules\StateBelongsToCountry;
@@ -45,6 +46,9 @@ class CartAddressRequest extends FormRequest
         return $this->rules;
     }
 
+    /**
+     * Normalize saved and newly entered address values before validation.
+     */
     protected function prepareForValidation(): void
     {
         foreach (['billing', 'shipping'] as $type) {
@@ -58,6 +62,28 @@ class CartAddressRequest extends FormRequest
                 if (is_string($address[$field] ?? null)) {
                     $address[$field] = KavenegarSms::westernDigits(trim($address[$field]));
                 }
+            }
+
+            if (is_string($address['address'] ?? null)) {
+                $address['address'] = preg_split('/\R/u', $address['address']);
+            }
+
+            if (is_array($address['address'] ?? null)) {
+                $address['address'] = array_values(array_filter(
+                    $address['address'],
+                    fn ($line) => ! is_string($line) || trim($line) !== '',
+                ));
+            }
+
+            if (is_string($address['country'] ?? null)) {
+                $address['country'] = strtoupper(trim($address['country']));
+            }
+
+            if (
+                ($address['country'] ?? null) === 'IR'
+                && is_string($address['state'] ?? null)
+            ) {
+                $address['state'] = $this->iranianStateCode($address['state']);
             }
 
             $this->merge([$type => $address]);
@@ -74,7 +100,13 @@ class CartAddressRequest extends FormRequest
             "{$addressType}.first_name" => ['required', 'string', 'max:255'],
             "{$addressType}.last_name" => ['required', 'string', 'max:255'],
             "{$addressType}.email" => ['nullable', 'email', 'max:255'],
-            "{$addressType}.address" => ['required', 'array', 'min:1'],
+            "{$addressType}.address" => ['bail', 'required', 'array', 'min:1', function ($attribute, $value, $fail) {
+                if (mb_strlen(implode(PHP_EOL, array_filter($value, 'is_string'))) > 255) {
+                    $fail('validation.max.string')->translate(['max' => 255]);
+                }
+            }],
+            "{$addressType}.address.0" => ['required_with:'.$addressType.'.address', 'string', 'max:255'],
+            "{$addressType}.address.*" => ['nullable', 'string', 'max:255'],
             "{$addressType}.city" => ['required', 'string', 'max:255'],
             "{$addressType}.country" => core()->isCountryRequired() ? ['required'] : ['nullable'],
             "{$addressType}.state" => [
@@ -90,6 +122,29 @@ class CartAddressRequest extends FormRequest
                 "{$addressType}.vat_id" => [(new VatIdRule)->setCountry($this->input('billing.country'))],
             ]);
         }
+    }
+
+    /**
+     * Resolve the province code for saved addresses that contain a translated name.
+     */
+    private function iranianStateCode(string $value): string
+    {
+        $states = app(CountryStateRepository::class)->findByField('country_code', 'IR');
+        $name = mb_strtolower(trim($value));
+
+        $matchingCode = $states->first(fn ($state) => mb_strtolower($state->code) === $name);
+
+        if ($matchingCode) {
+            return $matchingCode->code;
+        }
+
+        foreach ($states->load('translations') as $state) {
+            if ($state->translations->contains(fn ($translation) => mb_strtolower(trim($translation->default_name)) === $name)) {
+                return $state->code;
+            }
+        }
+
+        return trim($value);
     }
 
     /**

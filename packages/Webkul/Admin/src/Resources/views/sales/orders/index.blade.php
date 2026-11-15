@@ -50,7 +50,7 @@
 
             <template v-else>
                 <!-- Grid Header Columns -->
-                <div class="row datagrid-head datagrid-head-cards grid grid-cols-4">
+                <div class="row datagrid-head datagrid-head-cards hidden grid-cols-4 md:grid">
                     <div
                         class="flex select-none items-center gap-2.5"
                         v-for="(columnGroup, index) in [['increment_id', 'created_at', 'status'], ['base_grand_total', 'method', 'channel_id'], ['full_name', 'customer_email', 'location'], ['items']]"
@@ -105,12 +105,15 @@
 
             <template v-else>
                 <!-- Order Rows -->
-                <div
-                    class="row grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-y-4 border-b px-2 sm:px-4 py-2.5 transition-all hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-950"
+                <component
+                    :is="record.actions[0] ? 'a' : 'div'"
+                    :href="record.actions[0]?.url"
                     v-for="record in available.records"
+                    :key="record.id"
+                    class="grid min-w-0 grid-cols-2 gap-x-3 gap-y-3 border-b px-4 py-3 text-start hover:bg-gray-50 focus-visible:outline-2 focus-visible:-outline-offset-2 dark:border-gray-800 dark:hover:bg-gray-950 md:grid-cols-4"
                 >
                     <!-- Order Id, Created, Status Section -->
-                    <div class="flex flex-col gap-1.5">
+                    <div class="flex min-w-0 flex-col gap-1.5">
                         <p class="text-sm sm:text-base font-semibold text-gray-800 dark:text-white">
                             @{{ "@lang('admin::app.sales.orders.index.datagrid.id')".replace(':id', record.increment_id) }}
                         </p>
@@ -119,12 +122,12 @@
                             @{{ record.created_at }}
                         </p>
                         
-                        <p v-html="record.status"></p>
+                        <div v-html="record.status"></div>
                     </div>
 
                     <!-- Total Amount, Pay Via, Channel -->
-                    <div class="flex flex-col gap-1.5">
-                        <p class="text-sm sm:text-base font-semibold text-gray-800 dark:text-white">
+                    <div class="flex min-w-0 flex-col gap-1.5 max-md:text-end">
+                        <p class="break-words text-sm font-semibold tabular-nums text-gray-800 dark:text-white sm:text-base">
                             @{{ $admin.formatPrice(record.base_grand_total) }}
                         </p>
 
@@ -138,12 +141,12 @@
                     </div>
 
                     <!-- Customer, Email, Location Section -->
-                    <div class="flex flex-col gap-1.5">
+                    <div class="flex min-w-0 flex-col gap-1.5">
                         <p class="text-sm sm:text-base text-gray-800 dark:text-white">
                             @{{ record.full_name }}
                         </p>
 
-                        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300">
+                        <p class="break-words text-xs text-gray-600 dark:text-gray-300 sm:text-sm">
                             @{{ record.customer_email }}
                         </p>
 
@@ -153,18 +156,20 @@
                     </div>
 
                     <!-- Images Section -->
-                    <div class="flex items-center justify-between gap-x-2">
+                    <div class="flex min-w-0 items-center justify-end gap-x-2 md:justify-between">
                         <div
-                            class="flex flex-col gap-1.5 text-xs sm:text-sm"
+                            class="min-w-0"
                             v-html="record.items"
                         >
                         </div>
 
-                        <a :href="'{{ route('admin.sales.orders.view', ':id') }}'.replace(':id', record.id)">
-                            <span class="icon-sort-right rtl:icon-sort-left cursor-pointer p-1.5 text-xl sm:text-2xl hover:rounded-md hover:bg-gray-200 dark:hover:bg-gray-800 ltr:ml-1 rtl:mr-1"></span>
-                        </a>
+                        <span
+                            v-if="record.actions[0]"
+                            class="icon-sort-right rtl:icon-sort-left shrink-0 text-lg text-gray-600 dark:text-gray-300"
+                            aria-hidden="true"
+                        ></span>
                     </div>
-                </div>
+                </component>
             </template>
         </template>
     </x-admin::datagrid>

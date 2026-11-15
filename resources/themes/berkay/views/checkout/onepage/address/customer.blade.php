@@ -129,7 +129,8 @@
                     return [address?.first_name, address?.last_name].filter(Boolean).join(' ');
                 },
                 addressLine(address) {
-                    return [address?.city, ...(address?.address ?? []), address?.postcode].filter(Boolean).join('، ');
+                    const lines = Array.isArray(address?.address) ? address.address : [address?.address];
+                    return [address?.city, ...lines, address?.postcode].filter(Boolean).join('، ');
                 },
                 async loadAddresses() {
                     this.isLoading = true;
@@ -163,7 +164,14 @@
                     this.feedback = '';
                     this.editing = kind;
                     this.rememberAddress = true;
-                    this.draft = address ?? {
+                    this.draft = address ? {
+                        ...address,
+                        address: Array.isArray(address.address)
+                            ? (@js((int) core()->getConfigData('customer.address.information.street_lines') <= 1)
+                                ? [address.address.join('\n')]
+                                : [...address.address])
+                            : [address.address ?? ''],
+                    } : {
                         id: 0,
                         first_name: @js(auth('customer')->user()?->first_name ?? ''),
                         last_name: @js(auth('customer')->user()?->last_name ?? ''),
@@ -214,7 +222,9 @@
                     } catch (error) {
                         const errors = error.response?.data?.errors;
                         if (errors) {
-                            setErrors(Object.fromEntries(Object.entries(errors).map(([key, messages]) => [kind + '.' + key, messages])));
+                            setErrors(Object.fromEntries(Object.entries(errors).map(([key, messages]) => [
+                                kind + '.' + key.replace(/^address\.(\d+)$/, 'address[$1]'), messages,
+                            ])));
                         }
                         this.feedback = error.response?.data?.message || 'ذخیرهٔ آدرس ممکن نشد. دوباره تلاش کنید.';
                     } finally {

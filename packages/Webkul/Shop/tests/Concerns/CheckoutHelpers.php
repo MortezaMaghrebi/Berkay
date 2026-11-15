@@ -26,9 +26,7 @@ trait CheckoutHelpers
     }
 
     /**
-     * Build a cart ready for order placement: product added, addresses saved, shipping and
-     * payment selected. Cash on delivery is chosen for a cart that ships, money transfer
-     * otherwise, unless a payment method is given. Returns the cart ID.
+     * Build a cart ready for order placement and return its ID.
      */
     public function prepareCartForCheckout(
         int|Product $product,
@@ -61,7 +59,7 @@ trait CheckoutHelpers
         }
 
         $this->postJson(route('shop.checkout.onepage.payment_methods.store'), [
-            'payment' => ['method' => $paymentMethod ?? ($stockable ? 'cashondelivery' : 'moneytransfer')],
+            'payment' => ['method' => $paymentMethod ?? 'moneytransfer'],
         ]);
 
         return $cartId;

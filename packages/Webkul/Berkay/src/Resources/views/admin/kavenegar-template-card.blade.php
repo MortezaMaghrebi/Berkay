@@ -1,5 +1,8 @@
 @php
-    $example = trans('berkay::sms.example-'.$event);
+    $label = $event === 'stage_building' ? trans('berkay::workflow.building') : trans('berkay::sms.template-'.$event);
+    $example = $event === 'stage_building'
+        ? str_replace('%token2', $label, trans('berkay::sms.example-status'))
+        : trans('berkay::sms.example-'.$event);
     $pattern = old('templates.'.$event, $templates[$event]);
     $token = match ($group) {
         'orders', 'admin' => 'order-number',
@@ -37,6 +40,7 @@
         'admin_order_paid' => 'order-paid-admin',
         'stage_review' => 'order-awaiting-review',
         'stage_approved' => 'order-approved',
+        'stage_building' => 'order-in-production',
         'shipped' => 'order-shipped-user',
         'status' => 'order-status-user',
         default => null,
@@ -47,7 +51,7 @@
     <header class="bk-sms-card-heading">
         <span class="bk-sms-card-icon {{ in_array($group, ['orders', 'admin'], true) ? 'icon-sales' : 'icon-settings' }}" aria-hidden="true"></span>
         <div>
-            <h3 id="sms-{{ $event }}-title">{{ trans('berkay::sms.template-'.$event) }}</h3>
+            <h3 id="sms-{{ $event }}-title">{{ $label }}</h3>
             @if ($description)
                 <p>{{ trans('berkay::sms.'.$description) }}</p>
             @endif
@@ -60,7 +64,7 @@
                 <input type="checkbox" name="notifications[{{ $event }}]" value="1" role="switch"
                     @checked(old('notifications.'.$event, $notifications[$event]))
                     @disabled(! $editable)
-                    aria-label="{{ trans('berkay::sms.template-'.$event) }}">
+                    aria-label="{{ $label }}">
                 <span class="bk-sms-toggle-on" aria-hidden="true">{{ trans('berkay::sms.event-enabled') }}</span>
                 <span class="bk-sms-toggle-off" aria-hidden="true">{{ trans('berkay::sms.event-disabled') }}</span>
             </label>

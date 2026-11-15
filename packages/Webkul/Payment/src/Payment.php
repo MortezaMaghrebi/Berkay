@@ -29,6 +29,10 @@ class Payment
         $paymentMethods = [];
 
         foreach (Config::get('payment_methods') as $paymentMethodConfig) {
+            if (! ($paymentMethodConfig['checkout_enabled'] ?? true)) {
+                continue;
+            }
+
             $paymentMethod = app($paymentMethodConfig['class']);
 
             if ($paymentMethod->isAvailable()) {

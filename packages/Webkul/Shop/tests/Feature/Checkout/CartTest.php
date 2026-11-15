@@ -441,7 +441,7 @@ it('should hand the guest cart to the customer who signs in without a cart of th
 
     $customer = Customer::factory()->create(['password' => Hash::make('secret-password')]);
 
-    post(route('shop.customer.session.create'), [
+    post(route('shop.customer.session.password'), [
         'email' => $customer->email,
         'password' => 'secret-password',
     ])->assertRedirect();
@@ -482,7 +482,7 @@ it('should merge the guest cart into the cart the customer already has', functio
 
     $guestCartId = $this->addProductToCart($guestProduct->id)->json('data.id');
 
-    post(route('shop.customer.session.create'), [
+    post(route('shop.customer.session.password'), [
         'email' => $customer->email,
         'password' => 'secret-password',
     ])->assertRedirect();
@@ -532,14 +532,14 @@ it('should estimate the shipping methods for a destination and apply the chosen 
         'country' => 'US',
         'state' => 'CA',
         'postcode' => '90001',
-        'shipping_method' => 'free_free',
+        'shipping_method' => 'berkay_post_berkay_post',
     ])
         ->assertOk()
-        ->assertJsonPath('data.cart.shipping_method', 'free_free');
+        ->assertJsonPath('data.cart.shipping_method', 'berkay_post_berkay_post');
 
     $methods = collect($response->json('data.shipping_methods'))->pluck('rates.*.method')->flatten();
 
-    expect($methods)->toContain('free_free');
+    expect($methods)->toContain('berkay_post_berkay_post');
 });
 
 it('should fail validation when the shipping estimate has no destination', function () {

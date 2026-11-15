@@ -5,7 +5,7 @@ namespace Webkul\Berkay\Services;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Webkul\Berkay\Jobs\SendOrderSms;
+use Webkul\Berkay\Listeners\OrderSmsListener;
 use Webkul\Checkout\Facades\Cart;
 use Webkul\Sales\Models\Invoice;
 use Webkul\Sales\Models\Order;
@@ -16,7 +16,8 @@ class OrderWorkflow
 {
     public const STEPS = ['review', 'approval', 'paid', 'building', 'shipped', 'delivered'];
 
-    public function __construct(protected OrderRepository $orders) {}
+    /** Inject order storage and customer notifications. */
+    public function __construct(protected OrderRepository $orders, protected OrderSmsListener $notifications) {}
 
     public function requiresReview($cart): bool
     {
@@ -61,7 +62,7 @@ class OrderWorkflow
                     'updated_at' => now(),
                 ]);
 
-                SendOrderSms::dispatch($order->id, 'stage_review');
+                $this->notifications->sendAfterCommit($order->id, 'stage_review');
 
                 return $order;
             });
@@ -100,6 +101,7 @@ class OrderWorkflow
                 $this->query()->where('order_id', $order->id)->update([
                     'review' => 'approved', 'reviewed_at' => now(), 'updated_at' => now(),
                 ]);
+                $this->notifications->sendAfterCommit($order->id, 'stage_approved');
 
                 return;
             }
@@ -115,13 +117,16 @@ class OrderWorkflow
             $this->query()->insertOrIgnore([
                 'order_id' => $order->id, 'review' => 'automatic', 'created_at' => now(), 'updated_at' => now(),
             ]);
-            $this->query()->where('order_id', $order->id)->whereNull($action.'_at')
+            $updated = $this->query()->where('order_id', $order->id)->whereNull($action.'_at')
                 ->update([$action.'_at' => now(), 'updated_at' => now()]);
-        });
 
-        if ($action === 'approve') {
-            SendOrderSms::dispatch($order->id, 'stage_approved');
-        }
+            if (
+                $updated
+                && $action === 'building'
+            ) {
+                $this->notifications->sendAfterCommit($order->id, 'stage_building');
+            }
+        });
     }
 
     public function paid(Order $order): bool

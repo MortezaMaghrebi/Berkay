@@ -117,10 +117,12 @@
                 </x-shop::form.control-group.label>
 
                 <x-shop::form.control-group.control
-                    type="text"
-                    ::name="controlName + '.address.[0]'"
-                    ::value="address.address[0]"
-                    rules="required|address"
+                    type="textarea"
+                    rows="3"
+                    maxlength="255"
+                    ::name="controlName + '.address[0]'"
+                    ::value="address.address?.[0]"
+                    rules="required"
                     :label="trans('shop::app.checkout.onepage.address.street-address')"
                     :placeholder="trans('shop::app.checkout.onepage.address.street-address')"
                     ::id="controlName + '_address_0'"
@@ -128,15 +130,16 @@
 
                 <x-shop::form.control-group.error
                     class="mb-2"
-                    ::name="controlName + '.address.[0]'"
+                    ::name="controlName + '.address[0]'"
                 />
 
                 @if (core()->getConfigData('customer.address.information.street_lines') > 1)
                     @for ($i = 1; $i < core()->getConfigData('customer.address.information.street_lines'); $i++)
                         <x-shop::form.control-group.control
                             type="text"
-                            ::name="controlName + '.address.[{{ $i }}]'"
-                            rules="address"
+                            ::name="controlName + '.address[{{ $i }}]'"
+                            ::value="address.address?.[{{ $i }}]"
+                            maxlength="255"
                             :label="trans('shop::app.checkout.onepage.address.street-address')"
                             :placeholder="trans('shop::app.checkout.onepage.address.street-address')"
                             ::id="controlName + '_address_{{ $i }}'"
@@ -144,7 +147,7 @@
 
                         <x-shop::form.control-group.error
                             class="mb-2"
-                            ::name="controlName + '.address.[{{ $i }}]'"
+                            ::name="controlName + '.address[{{ $i }}]'"
                         />
                     @endfor
                 @endif

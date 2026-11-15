@@ -6,7 +6,7 @@ class SmsTemplates
 {
     public const EVENTS = [
         'register', 'login', 'change', 'delete', 'order', 'confirmed', 'shipped',
-        'completed', 'canceled', 'refunded', 'stage_review', 'stage_approved', 'status', 'coupon', 'test', 'admin_new_order', 'admin_order_paid',
+        'completed', 'canceled', 'refunded', 'stage_review', 'stage_approved', 'stage_building', 'status', 'coupon', 'test', 'admin_new_order', 'admin_order_paid',
     ];
 
     public const ADMIN_EVENTS = ['admin_new_order', 'admin_order_paid'];
@@ -14,7 +14,7 @@ class SmsTemplates
     public const NOTIFICATION_EVENTS = [...self::ORDER_EVENTS, ...self::ADMIN_EVENTS];
 
     /** Order notifications with independent delivery switches. */
-    public const ORDER_EVENTS = ['order', 'confirmed', 'shipped', 'completed', 'canceled', 'refunded', 'stage_review', 'stage_approved', 'status'];
+    public const ORDER_EVENTS = ['order', 'stage_review', 'stage_approved', 'confirmed', 'stage_building', 'shipped', 'completed', 'canceled', 'refunded', 'status'];
 
     public function __construct(protected IntegrationSettings $settings) {}
 

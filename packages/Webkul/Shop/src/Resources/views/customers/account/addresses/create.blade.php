@@ -151,9 +151,11 @@
                         </x-shop::form.control-group.label>
 
                         <x-shop::form.control-group.control
-                            type="text"
+                            type="textarea"
+                            rows="3"
+                            maxlength="255"
                             name="address[]"
-                            rules="required|address"
+                            rules="required"
                             :value="collect(old('address'))->first()"
                             :label="trans('shop::app.customers.account.addresses.create.street-address')"
                             :placeholder="trans('shop::app.customers.account.addresses.create.street-address')"

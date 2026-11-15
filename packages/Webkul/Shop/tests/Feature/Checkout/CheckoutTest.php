@@ -37,7 +37,6 @@ it('should fail validation when the billing address is empty', function (bool $s
         ->assertUnprocessable()
         ->assertJsonValidationErrorFor('billing.first_name')
         ->assertJsonValidationErrorFor('billing.last_name')
-        ->assertJsonValidationErrorFor('billing.email')
         ->assertJsonValidationErrorFor('billing.address')
         ->assertJsonValidationErrorFor('billing.city')
         ->assertJsonValidationErrorFor('billing.phone');
@@ -219,19 +218,19 @@ it('should store the shipping method and offer the payment methods', function (b
     ]);
 
     postJson(route('shop.checkout.onepage.shipping_methods.store'), [
-        'shipping_method' => 'free_free',
+        'shipping_method' => 'berkay_post_berkay_post',
     ])
         ->assertOk()
         ->assertJsonStructure(['payment_methods']);
 
     $this->assertDatabaseHas('cart', [
         'id' => $cartId,
-        'shipping_method' => 'free_free',
+        'shipping_method' => 'berkay_post_berkay_post',
     ]);
 
     $this->assertDatabaseHas('cart_shipping_rates', [
         'cart_id' => $cartId,
-        'method' => 'free_free',
+        'method' => 'berkay_post_berkay_post',
     ]);
 })->with('shoppers');
 
@@ -281,15 +280,15 @@ it('should store the payment method', function (bool $signedIn) {
 
     $this->getJson(route('shop.api.checkout.cart.index'))
         ->assertOk()
-        ->assertJsonPath('data.payment_method', 'cashondelivery');
+        ->assertJsonPath('data.payment_method', 'moneytransfer');
 
     $this->assertDatabaseHas('cart_payment', [
         'cart_id' => $cartId,
-        'method' => 'cashondelivery',
+        'method' => 'moneytransfer',
     ]);
 })->with('shoppers');
 
-it('should refuse a payment method that is not available for the cart', function () {
+it('should refuse a payment method that is not available for the cart', function (string $method) {
     $product = $this->createSimpleProduct();
 
     $cartId = $this->addProductToCart($product->id)->json('data.id');
@@ -298,16 +297,18 @@ it('should refuse a payment method that is not available for the cart', function
         'billing' => array_merge($this->storefrontAddress(), ['use_for_shipping' => true]),
     ]);
 
-    postJson(route('shop.checkout.onepage.shipping_methods.store'), ['shipping_method' => 'free_free']);
+    postJson(route('shop.checkout.onepage.shipping_methods.store'), ['shipping_method' => 'berkay_post_berkay_post'])
+        ->assertOk()
+        ->assertJsonMissing(['method' => 'cashondelivery']);
 
     postJson(route('shop.checkout.onepage.payment_methods.store'), [
-        'payment' => ['method' => 'unknown_gateway'],
+        'payment' => ['method' => $method],
     ])
         ->assertForbidden()
         ->assertJsonPath('redirect_url', route('shop.checkout.cart.index'));
 
     $this->assertDatabaseMissing('cart_payment', ['cart_id' => $cartId]);
-});
+})->with(['unknown_gateway', 'cashondelivery']);
 
 // ============================================================================
 // Place Order
@@ -429,7 +430,7 @@ it('should refuse to place the order before a payment method is chosen', functio
         'billing' => array_merge($address, ['use_for_shipping' => true]),
     ]);
 
-    postJson(route('shop.checkout.onepage.shipping_methods.store'), ['shipping_method' => 'free_free']);
+    postJson(route('shop.checkout.onepage.shipping_methods.store'), ['shipping_method' => 'berkay_post_berkay_post']);
 
     postJson(route('shop.checkout.onepage.orders.store'))
         ->assertServerError()
@@ -470,7 +471,7 @@ it('should keep a guest on the checkout page when guest checkout is allowed', fu
         ->assertOk();
 });
 
-it('should send a guest to sign in when guest checkout is off and bring them back to checkout after signing in', function () {
+it('should send a guest to sign in when guest checkout is off and open their orders after signing in', function () {
     allowGuestCheckout(false);
 
     $product = $this->createSimpleProduct();
@@ -483,11 +484,11 @@ it('should send a guest to sign in when guest checkout is off and bring them bac
 
     $customer = Customer::factory()->create(['password' => Hash::make('secret-password')]);
 
-    post(route('shop.customer.session.create'), [
+    post(route('shop.customer.session.password'), [
         'email' => $customer->email,
         'password' => 'secret-password',
     ])
-        ->assertRedirect(route('shop.checkout.onepage.index'));
+        ->assertRedirect(route('shop.customers.account.orders.index'));
 
     $this->assertAuthenticatedAs($customer, 'customer');
 });

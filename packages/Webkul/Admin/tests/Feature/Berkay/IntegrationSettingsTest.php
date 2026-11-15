@@ -2,10 +2,14 @@
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Webkul\Berkay\Listeners\OrderSmsListener;
 use Webkul\Berkay\Models\IntegrationSetting;
 use Webkul\Berkay\Services\IntegrationSettings;
 use Webkul\Berkay\Services\KavenegarSms;
 use Webkul\Berkay\Services\SmsTemplates;
+use Webkul\Customer\Models\Customer;
+use Webkul\Sales\Models\Invoice;
+use Webkul\Sales\Models\Order;
 
 beforeEach(function () {
     Http::preventStrayRequests();
@@ -13,17 +17,15 @@ beforeEach(function () {
         'zarinpal_active' => 0,
         'zarinpal_sandbox' => 1,
         'zarinpal_merchant_id' => '00000000-0000-4000-8000-000000000001',
-        'kavenegar_enabled' => 0,
-        'kavenegar_api_key' => 'TESTCREDENTIAL123456789',
-        'kavenegar_order_template' => 'orderCreated',
-        'kavenegar_status_template' => 'orderStatus',
         'torob_enabled' => 0,
     ];
+    $this->smsSettings = ['enabled' => 0, 'api_key' => 'TESTCREDENTIAL123456789'];
 });
 
 it('encrypts administrator credentials and never includes them in the rendered settings', function () {
     $this->loginAsAdmin();
     $this->put(route('admin.berkay.integrations.update'), $this->integrationData)->assertRedirect();
+    $this->put(route('admin.berkay.kavenegar.update'), $this->smsSettings)->assertSessionHasNoErrors()->assertRedirect();
 
     $raw = DB::table('berkay_integration_settings')->where('name', 'kavenegar.api_key')->value('value');
     expect($raw)->not->toContain('TESTCREDENTIAL123456789');
@@ -37,9 +39,9 @@ it('encrypts administrator credentials and never includes them in the rendered s
 it('preserves blank keys and uses the stored provider configuration', function () {
     $this->loginAsAdmin();
     $this->put(route('admin.berkay.integrations.update'), $this->integrationData)->assertRedirect();
-    $this->put(route('admin.berkay.integrations.update'), array_merge($this->integrationData, [
-        'zarinpal_merchant_id' => '', 'kavenegar_api_key' => '',
-    ]))->assertRedirect();
+    $this->put(route('admin.berkay.integrations.update'), array_replace($this->integrationData, ['zarinpal_merchant_id' => '']))->assertRedirect();
+    $this->put(route('admin.berkay.kavenegar.update'), $this->smsSettings)->assertSessionHasNoErrors()->assertRedirect();
+    $this->put(route('admin.berkay.kavenegar.update'), ['enabled' => 0, 'api_key' => ''])->assertSessionHasNoErrors()->assertRedirect();
     expect(app(IntegrationSettings::class)->get('kavenegar.api_key'))->toBe('TESTCREDENTIAL123456789');
 
     Http::fake(['api.kavenegar.com/*' => Http::response(['return' => ['status' => 200]])]);
@@ -52,7 +54,11 @@ it('does not flash credential values when validation fails', function () {
     $this->from(route('admin.berkay.integrations.index'))
         ->put(route('admin.berkay.integrations.update'), array_merge($this->integrationData, ['torob_enabled' => 'invalid']))
         ->assertSessionHasErrors('torob_enabled');
-    expect(session()->getOldInput())->not->toHaveKeys(['kavenegar_api_key', 'zarinpal_merchant_id']);
+    expect(session()->getOldInput())->not->toHaveKey('zarinpal_merchant_id');
+    $this->from(route('admin.berkay.kavenegar.index'))
+        ->put(route('admin.berkay.kavenegar.update'), array_replace($this->smsSettings, ['enabled' => 'invalid']))
+        ->assertSessionHasErrors('enabled');
+    expect(session()->getOldInput())->not->toHaveKey('api_key');
     expect(IntegrationSetting::query()->count())->toBe(0);
     Http::assertNothingSent();
 });
@@ -81,7 +87,6 @@ it('keeps a saved pattern while disabling its order notification', function () {
     $this->put($url, $payload + ['notifications' => ['shipped' => 1]])->assertSessionHasNoErrors();
     expect($templates->template('shipped'))->toBe('order-shipped');
 });
-
 
 it('stores a normalized manager recipient and enables each alert independently', function () {
     $this->loginAsAdmin();
@@ -114,4 +119,86 @@ it('requires a manager number and pattern before enabling an alert', function ()
     $this->put($url, array_replace($payload, ['admin_recipient' => '09123456789']))
         ->assertSessionHasErrors('admin_recipient');
     expect(app(SmsTemplates::class)->eventEnabled('admin_new_order'))->toBeFalse();
+});
+
+it('saves order SMS settings with an empty key and preserves omitted patterns', function () {
+    $this->loginAsAdmin();
+    $settings = app(IntegrationSettings::class);
+    $settings->put('kavenegar.api_key', 'TESTCREDENTIAL123456789');
+    $settings->put('kavenegar.login_template', 'login-pattern');
+
+    $this->put(route('admin.berkay.kavenegar.update'), [
+        'enabled' => 1,
+        'api_key' => '',
+        'templates' => ['order' => 'new-order-user'],
+        'notifications' => ['order' => 1],
+    ])->assertSessionHasNoErrors()->assertRedirect();
+
+    expect($settings->get('kavenegar.api_key'))->toBe('TESTCREDENTIAL123456789')
+        ->and($settings->get('kavenegar.login_template'))->toBe('login-pattern')
+        ->and(app(SmsTemplates::class)->template('order'))->toBe('new-order-user');
+});
+
+it('sends a customer order confirmation after the transaction commits', function () {
+    $this->withoutDefer();
+    config(['berkay.kavenegar.paused' => false, 'queue.default' => 'sync']);
+    Http::fake(['api.kavenegar.com/*' => Http::response(['return' => ['status' => 200]])]);
+
+    $settings = app(IntegrationSettings::class);
+    $settings->put('kavenegar.enabled', true);
+    $settings->put('kavenegar.api_key', 'TESTCREDENTIAL123456789');
+    $settings->put('kavenegar.order_template', 'orderCreated');
+
+    $customer = Customer::factory()->create(['phone' => '09123456789']);
+    $order = DB::transaction(function () use ($customer) {
+        $order = Order::factory()->create(['customer_id' => $customer->id]);
+
+        app(OrderSmsListener::class)->created($order);
+        Http::assertNothingSent();
+
+        return $order;
+    });
+
+    Http::assertSentCount(1);
+    Http::assertSent(fn ($request) => $request['receptor'] === '09123456789'
+        && $request['template'] === 'orderCreated'
+        && $request['token'] === (string) $order->increment_id);
+});
+
+it('notifies the customer of approval, invoicing, production and shipment without a queue worker', function () {
+    $this->loginAsAdmin();
+    $this->withoutDefer();
+    config(['berkay.kavenegar.paused' => false, 'queue.default' => 'database']);
+    Http::fake(['api.kavenegar.com/*' => Http::response(['return' => ['status' => 200]])]);
+
+    $settings = app(IntegrationSettings::class);
+    foreach ([
+        'enabled' => true,
+        'api_key' => 'TESTCREDENTIAL123456789',
+        'stage_approved_template' => 'order-approved',
+        'confirmed_template' => 'invoice-issued',
+        'shipped_template' => 'shipped-with-tracking',
+        'status_template' => 'order-status',
+        'completed_enabled' => false,
+    ] as $key => $value) {
+        $settings->put('kavenegar.'.$key, $value);
+    }
+
+    $customer = Customer::factory()->create(['phone' => '09123456789']);
+    $order = $this->createOrder(items: [['product' => $this->createSimpleProduct()]], customer: $customer);
+    DB::table('berkay_order_workflows')->insert(['order_id' => $order->id, 'review' => 'waiting']);
+
+    $this->post(route('admin.berkay.workshop.advance', [$order->id, 'approve']))->assertSessionHas('success');
+    $this->invoiceOrder($order, state: Invoice::STATUS_PAID);
+    $this->post(route('admin.berkay.workshop.advance', [$order->id, 'building']))->assertSessionHas('success');
+    $this->post(route('admin.berkay.workshop.advance', [$order->id, 'building']))->assertSessionHas('success');
+    $shipment = $this->shipOrder($order);
+
+    $requests = Http::recorded()->map(fn ($pair) => $pair[0]);
+
+    expect($requests->map(fn ($request) => $request['template'])->all())
+        ->toBe(['order-approved', 'invoice-issued', 'order-status', 'shipped-with-tracking'])
+        ->and($requests->map(fn ($request) => $request['receptor'])->unique()->values()->all())->toBe(['09123456789'])
+        ->and($requests[2]['token2'])->toBe('ساخت')
+        ->and($requests[3]['token2'])->toBe($shipment->track_number);
 });

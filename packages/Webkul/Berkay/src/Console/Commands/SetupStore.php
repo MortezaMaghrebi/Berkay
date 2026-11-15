@@ -77,10 +77,9 @@ class SetupStore extends Command
             $settings->create(['sales' => ['checkout' => ['mini_cart' => ['offer_info' => '']]]]);
         }
 
-        foreach (['cashondelivery' => ['Cash On Delivery', 'پرداخت هنگام تحویل'], 'moneytransfer' => ['Money Transfer', 'واریز بانکی با تأیید فروشگاه']] as $code => [$original, $label]) {
-            if (core()->getConfigData('sales.payment_methods.'.$code.'.title') === $original) {
-                $settings->create(['channel' => $channel->code, 'locale' => 'fa', 'sales' => ['payment_methods' => [$code => ['title' => $label, 'description' => $label]]]]);
-            }
+        if (core()->getConfigData('sales.payment_methods.moneytransfer.title') === 'Money Transfer') {
+            $label = 'واریز بانکی با تأیید فروشگاه';
+            $settings->create(['channel' => $channel->code, 'locale' => 'fa', 'sales' => ['payment_methods' => ['moneytransfer' => ['title' => $label, 'description' => $label]]]]);
         }
 
         if (! core()->getConfigData('general.design.admin_logo.logo_image')) {

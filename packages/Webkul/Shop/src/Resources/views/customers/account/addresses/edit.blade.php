@@ -167,10 +167,12 @@
                     </x-shop::form.control-group.label>
 
                     <x-shop::form.control-group.control
-                        type="text"
+                        type="textarea"
+                        rows="3"
+                        maxlength="255"
                         name="address[]"
-                        :value="collect(old('address'))->first() ?? $addresses[0]"
-                        rules="required|address"
+                        :value="old('address.0', (int) core()->getConfigData('customer.address.information.street_lines') <= 1 ? implode(PHP_EOL, $addresses) : ($addresses[0] ?? ''))"
+                        rules="required"
                         :label="trans('shop::app.customers.account.addresses.edit.street-address')"
                         :placeholder="trans('shop::app.customers.account.addresses.edit.street-address')"
                     />

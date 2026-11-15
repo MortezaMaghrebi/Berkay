@@ -33,6 +33,7 @@ class KavenegarController
         return view('berkay::admin.kavenegar', [
             'configured' => filled($this->settings->get('kavenegar.api_key')),
             'enabled' => (bool) $this->settings->get('kavenegar.enabled'),
+            'orderReady' => filled($this->templates->template('order')),
             'orderEvents' => SmsTemplates::ORDER_EVENTS,
             'adminEvents' => SmsTemplates::ADMIN_EVENTS,
             'adminRecipient' => $this->templates->adminRecipient(),
@@ -48,11 +49,6 @@ class KavenegarController
     public function update(KavenegarSettingsRequest $request): RedirectResponse
     {
         $data = $request->validated();
-
-        if ($data['enabled'] && (! ($data['api_key'] ?? $this->settings->get('kavenegar.api_key')) || empty($data['templates']['login']))) {
-            return back()->withErrors(['enabled' => trans('berkay::sms.enable-requirements')])
-                ->withInput($request->except('api_key'));
-        }
 
         $recipient = array_key_exists('admin_recipient', $data)
             ? (filled($data['admin_recipient']) ? $this->sms->normalizePhone($data['admin_recipient']) : null)
@@ -83,12 +79,8 @@ class KavenegarController
             foreach ($data['notifications'] ?? [] as $event => $enabled) {
                 $this->settings->put('kavenegar.'.$event.'_enabled', (bool) $enabled);
             }
-            foreach (SmsTemplates::EVENTS as $event) {
-                if (in_array($event, SmsTemplates::ADMIN_EVENTS, true) && ! array_key_exists($event, $data['templates'] ?? [])) {
-                    continue;
-                }
-
-                $this->settings->put('kavenegar.'.$event.'_template', $data['templates'][$event] ?? null);
+            foreach ($data['templates'] ?? [] as $event => $template) {
+                $this->settings->put('kavenegar.'.$event.'_template', filled($template) ? $template : null);
             }
         });
 

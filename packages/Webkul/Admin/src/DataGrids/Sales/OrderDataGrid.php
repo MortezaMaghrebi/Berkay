@@ -213,7 +213,7 @@ class OrderDataGrid extends DataGrid
             'closure' => function ($value) {
                 $order = app(OrderRepository::class)->with('items')->find($value->id);
 
-                return view('admin::sales.orders.items', compact('order'))->render();
+                return view('admin::sales.orders.items', ['order' => $order, 'linkedRow' => true])->render();
             },
         ]);
 

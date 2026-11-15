@@ -7,6 +7,12 @@
         </div>
         @include('berkay::admin.seller-feedback')
         <p class="bk-notice">{{ trans('berkay::sms.panel-help') }}</p>
+        @if ($enabled && $notifications['order'] && ! $orderReady)
+            <p class="bk-notice" role="status">
+                <strong>{{ trans('berkay::sms.order-pattern') }}</strong>
+                {{ trans('berkay::sms.unavailable') }}
+            </p>
+        @endif
         <form method="post" action="{{ route('admin.berkay.kavenegar.update') }}" class="bk-form" autocomplete="off">
             @csrf
             @method('PUT')
