@@ -21,7 +21,7 @@
             <p class="text-base font-medium max-sm:text-sm">
                 <!-- Apply Coupon Form -->
                 <x-shop::form
-                    v-slot="{ meta, errors, handleSubmit }"
+                    v-slot="{ handleSubmit }"
                     as="div"
                 >
                     <!-- Apply coupon form -->
@@ -55,6 +55,7 @@
                                         type="text"
                                         class="px-6 py-4 max-md:mb-0! max-md:p-3! max-sm:p-2!"
                                         name="code"
+                                        @input="couponError = ''"
                                         rules="required"
                                         :placeholder="trans('shop::app.checkout.coupon.enter-your-code')"
                                     />
@@ -63,6 +64,10 @@
                                         class="flex"
                                         control-name="code"
                                     />
+
+                                    <p v-if="couponError" role="alert" class="bk-error mt-2">
+                                        @{{ couponError }}
+                                    </p>
                                 </x-shop::form.control-group>
                             </x-slot>
 
@@ -130,12 +135,14 @@
             data() {
                 return {
                     isStoring: false,
+                    couponError: '',
                 }
             },
 
             methods: {
                 applyCoupon(params, { resetForm }) {
                     this.isStoring = true;
+                    this.couponError = '';
 
                     this.$axios.post("{{ route('shop.api.checkout.cart.coupon.apply') }}", params)
                         .then((response) => {
@@ -152,17 +159,9 @@
                         .catch((error) => {
                             this.isStoring = false;
 
-                            this.$refs.couponModel.toggle();
-
-                            if ([400, 422].includes(error.response.request.status)) {
-                                this.$emitter.emit('add-flash', { type: 'warning', message: error.response.data.message });
-
-                                resetForm();
-
-                                return;
-                            }
-
-                            this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message });
+                            this.couponError = error.response?.data?.errors?.code?.[0]
+                                || error.response?.data?.message
+                                || @js(trans('shop::app.checkout.coupon.error'));
                         });
                 },
 

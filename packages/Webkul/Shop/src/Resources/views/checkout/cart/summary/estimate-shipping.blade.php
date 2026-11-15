@@ -53,7 +53,7 @@
                         <option
                             v-for="country in countries"
                             :value="country.code"
-                            v-text="country.name"
+                            v-text="countryLabel(country)"
                         >
                         </option>
                     </x-shop::form.control-group.control>
@@ -205,6 +205,11 @@
             },
 
             methods: {
+                countryLabel(country) {
+                    return new Intl.DisplayNames([@js(str_replace('_', '-', app()->getLocale()))], { type: 'region' })
+                        .of(country.code) || country.name;
+                },
+
                 getCountries() {
                     this.$axios.get("{{ route('shop.api.core.countries') }}")
                         .then(response => {

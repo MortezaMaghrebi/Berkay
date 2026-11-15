@@ -425,8 +425,10 @@ html{-webkit-text-size-adjust:100%}
 }
 
 .bk-collection-card-name {
-    font-weight: 600;
+    min-width: 0;
+    max-width: 100%;
     overflow-wrap: anywhere;
+    font-weight: 600;
 }
 
 .bk-collection-card-price {
@@ -948,3 +950,6 @@ html{-webkit-text-size-adjust:100%}
     .bk-campaign-visual { order: -1; }
     .bk-campaign-wheel { width: min(72vw, 280px); }
 }
+
+.product-card-copy, .product-card-name { min-width: 0; max-width: 100%; }
+.product-card-name { overflow-wrap: anywhere; white-space: normal; }

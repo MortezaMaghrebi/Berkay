@@ -12,6 +12,7 @@
                 <div
                     {{ $header->attributes->merge(['class' => 'flex cursor-pointer select-none items-center justify-between p-4']) }}
                     role="button"
+                    :aria-expanded="isOpen"
                     tabindex="0"
                     @click="toggle"
                     @keydown.enter="toggle"
@@ -21,9 +22,7 @@
 
                     <span
                         v-bind:class="isOpen ? 'icon-arrow-up text-2xl' : 'icon-arrow-down text-2xl'"
-                        role="button"
-                        aria-label="Toggle accordion"
-                        tabindex="0"
+                        aria-hidden="true"
                     ></span>
                 </div>
             </template>

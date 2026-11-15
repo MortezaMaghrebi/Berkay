@@ -99,7 +99,7 @@
             href="#main"
             class="skip-to-main-content-link"
         >
-            Skip to main content
+            @lang('berkay::app.storefront.skip-to-content')
         </a>
 
         <!-- Built With Bagisto -->

@@ -147,7 +147,19 @@
         <!-- Shipping Rates -->
         {!! view_render_event('bagisto.shop.checkout.onepage.summary.delivery_charges.before') !!}
         
-        <template v-if="displayTax.shipping == 'including_tax'">
+        <div v-if="cart.has_stockable_items && ! cart.shipping_method" class="flex justify-between gap-2">
+            <p class="text-base max-sm:text-sm">@lang('shop::app.checkout.cart.summary.delivery-charges')</p>
+            <p class="text-sm font-medium">@lang('berkay::app.storefront.shipping-pending')</p>
+        </div>
+
+        <template v-else-if="cart.shipping_charge_mode === 'collect'">
+            <div class="flex justify-between gap-2">
+                <p class="text-base max-sm:text-sm">@lang('shop::app.checkout.cart.summary.delivery-charges')</p>
+                <p class="text-sm font-medium">@lang('berkay::delivery.collect-help')</p>
+            </div>
+        </template>
+
+        <template v-else-if="displayTax.shipping == 'including_tax'">
             <div class="flex justify-between text-right">
                 <p class="text-base max-sm:text-sm">
                     @lang('shop::app.checkout.cart.summary.delivery-charges')
@@ -320,7 +332,14 @@
             href="{{ route('shop.checkout.onepage.index') }}"
             class="primary-button mt-4 place-self-end rounded-2xl px-11 py-3 max-md:my-4 max-md:max-w-full max-md:rounded-lg max-md:py-3 max-md:text-sm max-sm:w-full max-sm:py-2"
         >
-            @lang('shop::app.checkout.cart.summary.proceed-to-checkout')
+            @if (! auth()->guard('customer')->check())
+                <span v-if="! cart.allows_guest_checkout || ! @js((bool) core()->getConfigData('sales.checkout.shopping_cart.allow_guest_checkout'))">
+                    @lang('berkay::app.storefront.sign-in-to-checkout')
+                </span>
+                <span v-else>@lang('shop::app.checkout.cart.summary.proceed-to-checkout')</span>
+            @else
+                @lang('shop::app.checkout.cart.summary.proceed-to-checkout')
+            @endif
         </a>
 
         {!! view_render_event('bagisto.shop.checkout.cart.summary.proceed_to_checkout.after') !!}

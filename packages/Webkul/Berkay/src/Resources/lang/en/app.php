@@ -365,6 +365,13 @@ return [
         'before-selling' => 'Before accepting orders',
     ],
     'storefront' => [
+        'skip-to-content' => 'Skip to main content',
+        'gallery-image' => 'Show image :number',
+        'search-empty' => 'No products match your search. Try another search term.',
+        'quantity-update-error' => 'The cart quantity could not be updated. Please try again.',
+        'shipping-pending' => 'Calculated after choosing a destination',
+        'sign-in-to-checkout' => 'Sign in and continue checkout',
+        'retry' => 'Try again',
         'color-required' => 'Please select a color.',
         'loading-cart' => 'Loading your cart…',
         'cart-load-failed' => 'Your cart could not be loaded. Check your connection and try again.',

@@ -67,13 +67,15 @@
                 class="absolute bottom-3 left-0 flex w-full justify-center max-sm:bottom-2.5"
                 v-if="options?.length > 1"
             >
-                <div
+                <button
+                    type="button"
                     v-for="(media, index) in options"
                     class="mx-1 h-1.5 w-1.5 cursor-pointer rounded-full"
                     :class="{ 'bg-navyBlue': index === Math.abs(currentIndex), 'opacity-30 bg-gray-500': index !== Math.abs(currentIndex) }"
-                    role="button"
-                >
-                </div>
+                    :aria-label="@js(trans('berkay::app.storefront.gallery-image')).replace(':number', index + 1)"
+                    :aria-pressed="index === Math.abs(currentIndex)"
+                    @click="currentIndex = index * startFrom; setPositionByIndex()"
+                ></button>
             </div>
         </div>
     </script>

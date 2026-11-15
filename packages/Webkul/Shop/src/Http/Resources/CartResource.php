@@ -42,6 +42,8 @@ class CartResource extends JsonResource
             'customer_id' => $this->customer_id,
             'items_count' => $this->items_count,
             'items_qty' => $this->items_qty,
+            'has_stockable_items' => $this->resource?->haveStockableItems() ?? false,
+            'allows_guest_checkout' => $this->resource?->hasGuestCheckoutItems() && ! $this->resource->hasDownloadableItems(),
             'applied_taxes' => $taxes,
             'applied_taxes_breakdown' => $taxBreakdown,
             'tax_total' => $this->tax_total,

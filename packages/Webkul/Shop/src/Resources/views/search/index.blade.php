@@ -118,7 +118,7 @@
                                         <img
                                             class="max-sm:h-25 max-sm:w-25"
                                             src="{{ bagisto_asset('images/thank-you.png') }}"
-                                            alt="Empty result"
+                                            alt=""
                                             loading="lazy"
                                             decoding="async"
                                         />
@@ -127,7 +127,7 @@
                                             class="text-xl max-sm:text-sm"
                                             role="heading"
                                         >
-                                            @lang('shop::app.categories.view.empty')
+                                            @lang('berkay::app.storefront.search-empty')
                                         </p>
                                     </div>
                                 </template>
@@ -161,7 +161,7 @@
                                         <img
                                             class="max-sm:h-25 max-sm:w-25"
                                             src="{{ bagisto_asset('images/thank-you.png') }}"
-                                            alt="Empty result"
+                                            alt=""
                                             loading="lazy"
                                             decoding="async"
                                         />
@@ -170,7 +170,7 @@
                                             class="text-xl max-sm:text-sm"
                                             role="heading"
                                         >
-                                            @lang('shop::app.categories.view.empty')
+                                            @lang('berkay::app.storefront.search-empty')
                                         </p>
                                     </div>
                                 </template>

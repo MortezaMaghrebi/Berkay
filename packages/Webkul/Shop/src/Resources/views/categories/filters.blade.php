@@ -22,6 +22,7 @@
         position="left"
         width="100%"
         ::is-active="isDrawerActive.filter"
+        @close="isDrawerActive.filter = false"
     >
         <!-- Drawer Toggler -->
         <x-slot:toggle>
@@ -44,7 +45,7 @@
 
                 <p
                     class="cursor-pointer text-sm font-medium ltr:mr-12.5 rtl:ml-12.5"
-                    @click="clearFilters('filter', '')"
+                    @click="$refs.mobileFilters.clear()"
                 >
                     @lang('shop::app.categories.filters.clear-all')
                 </p>
@@ -55,6 +56,7 @@
         <x-slot:content>
             <!-- Filters Vue Component -->
             <v-filters
+                ref="mobileFilters"
                 @filter-applied="setFilters('filter', $event)"
                 @filter-clear="clearFilters('filter', $event)"
             >
@@ -114,6 +116,13 @@
             <x-shop::shimmer.categories.filters />
         </template>
 
+        <div v-else-if="loadFailed" class="py-4" role="alert">
+            <p>@lang('shop::app.search.images.index.something-went-wrong')</p>
+            <button type="button" class="underline" @click="getFilters">
+                @lang('berkay::app.storefront.retry')
+            </button>
+        </div>
+
         <!-- Filters Container -->
         <template v-else>
             <div class="panel-side journal-scroll grid max-h-330 min-w-85.5 grid-cols-[1fr] overflow-y-auto overflow-x-hidden max-xl:min-w-67.5 md:max-w-85.5 md:ltr:pr-7 md:rtl:pl-7">
@@ -150,7 +159,7 @@
         type="text/x-template"
         id="v-filter-item-template"
     >
-        <x-shop::accordion class="last:border-b-0">
+        <x-shop::accordion class="last:border-b-0" v-show="filter.type === 'price' || ! emptyFilter">
             <!-- Filter Item Header -->
             <x-slot:header class="px-0 py-2.5 max-sm:pb-1.5!">
                 <div class="flex items-center justify-between">
@@ -233,7 +242,7 @@
                                         class="w-full cursor-pointer p-2 text-base text-gray-900 max-sm:p-1 max-sm:text-sm ltr:pl-0 rtl:pr-0"
                                         :for="`filter_${filter.id}_option_${option.id}`"
                                     >
-                                        @{{ option.name }}
+                                        @{{ filter.code === 'color' ? option.name.replace(/\s*دختر$/u, ' (دخترانه)') : option.name }}
                                     </label>
                                 </div>
                             </li>
@@ -336,6 +345,7 @@
             data() {
                 return {
                     isLoading: true,
+                    loadFailed: false,
 
                     filters: {
                         available: {},
@@ -353,18 +363,22 @@
 
             methods: {
                 getFilters() {
+                    this.isLoading = true;
+                    this.loadFailed = false;
+
                     this.$axios.get('{{ route("shop.api.categories.attributes") }}', {
                             params: {
                                 category_id: "{{ isset($category) ? $category->id : ''  }}",
                             }
                         })
                         .then((response) => {
-                            this.isLoading = false;
-
                             this.filters.available = response.data.data;
                         })
-                        .catch((error) => {
-                            console.log(error);
+                        .catch(() => {
+                            this.loadFailed = true;
+                        })
+                        .finally(() => {
+                            this.isLoading = false;
                         });
                 },
 
@@ -423,6 +437,7 @@
             data() {
                 return {
                     options: [],
+                    emptyFilter: false,
 
                     meta: null,
 
@@ -516,6 +531,10 @@
                             : [...this.options, ...response.data.data];
 
                         this.meta = response.data.meta;
+
+                        if (! this.searchQuery && this.currentPage === 1) {
+                            this.emptyFilter = ! this.options.length;
+                        }
                     })
                     .catch(error => {
                         this.isLoadingMore = false;

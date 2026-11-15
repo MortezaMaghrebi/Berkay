@@ -30,7 +30,7 @@
                 >
                     <img
                         src="{{ asset('berkay/brand-logo.png') }}"
-                        alt="{{ core()->getCurrentChannel()->logo_alt ?: config('app.name') }}"
+                        alt="{{ core()->getCurrentChannel()->logo_alt ?: 'Berkay' }}"
                         width="131"
                         height="29"
                     >
@@ -421,6 +421,10 @@
                                 {!! view_render_event('bagisto.shop.checkout.cart.update_cart.after') !!}
                             </div>
 
+                            <p v-if="quantityError" role="alert" class="bk-error mt-3">
+                                @{{ quantityError }}
+                            </p>
+
                             {!! view_render_event('bagisto.shop.checkout.cart.controls.after') !!}
                         </div>
 
@@ -463,6 +467,7 @@
                 data() {
                     return  {
                         refreshKey: 0,
+                        quantityError: '',
 
                         cart: [],
 
@@ -498,7 +503,7 @@
 
                 methods: {
                     getCart() {
-                        this.$axios.get('{{ route('shop.api.checkout.cart.index') }}')
+                        return this.$axios.get('{{ route('shop.api.checkout.cart.index') }}')
                             .then(response => {
                                 this.cart = response.data.data;
 
@@ -527,42 +532,27 @@
 
                     update() {
                         this.isStoring = true;
+                        this.quantityError = '';
+
+                        const fallback = @js(trans('berkay::app.storefront.quantity-update-error'));
 
                         this.$axios.put('{{ route('shop.api.checkout.cart.update') }}', { qty: this.applied.quantity })
-                            .then(response => {
-                                if (response.data.data?.items !== undefined) {
-                                    this.cart = response.data.data;
+                            .then(({ data }) => {
+                                if (data.data?.items !== undefined) {
+                                    this.cart = data.data;
+                                    this.$emitter.emit('add-flash', { type: 'success', message: data.message });
 
-                                    this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
-                                } else {
-                                    /**
-                                     * On failure the endpoint returns `{ data: { message } }`
-                                     * — the server-thrown reason is inside `data`, not at
-                                     * the top level. Read from `data.message` first so the
-                                     * flash actually shows (e.g. "inventory-warning").
-                                     */
-                                    this.$emitter.emit('add-flash', {
-                                        type: 'warning',
-                                        message: response.data.data?.message || response.data.message,
-                                    });
+                                    return;
                                 }
 
-                                this.isStoring = false;
-
-                                /**
-                                 * Bump the key to force the quantity-changers to
-                                 * remount from the server's current values. On a
-                                 * rejected update the `value` prop stays the same,
-                                 * so the component's internal watch never fires
-                                 * and the locally-incremented count would stick
-                                 * on screen otherwise.
-                                 */
-                                this.applied.quantity = {};
-                                this.refreshKey++;
+                                this.quantityError = data.data?.message || data.message || fallback;
+                                return this.getCart();
                             })
                             .catch(error => {
+                                this.quantityError = error.response?.data?.message || fallback;
+                            })
+                            .finally(() => {
                                 this.isStoring = false;
-
                                 this.applied.quantity = {};
                                 this.refreshKey++;
                             });
@@ -574,6 +564,10 @@
 
                     removeItem(itemId) {
                         this.$emitter.emit('open-confirm-modal', {
+                            options: {
+                                btnAgree: @js(trans('shop::app.checkout.cart.index.remove')),
+                                btnDisagree: @js(trans('berkay::app.storefront-editor.cancel')),
+                            },
                             agree: () => {
                                 this.$axios.post('{{ route('shop.api.checkout.cart.destroy') }}', {
                                         '_method': 'DELETE',

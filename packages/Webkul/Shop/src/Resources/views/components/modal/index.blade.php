@@ -20,7 +20,7 @@
                 <button
                     type="button"
                     class="icon-cancel cursor-pointer text-3xl max-sm:text-2xl focus-visible:ring-2 focus-visible:ring-navyBlue focus-visible:ring-offset-2 focus-visible:outline-hidden rounded bg-transparent border-0"
-                    aria-label="Close modal"
+                    aria-label="{{ trans('berkay::app.storefront.close-panel') }}"
                     @click="toggle"
                 >
                 </button>
