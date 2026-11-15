@@ -49,10 +49,6 @@ class IntegrationController extends Controller
     public function update(IntegrationSettingsRequest $request): RedirectResponse
     {
         $data = $request->validated();
-        if ($data['zarinpal_active'] && blank(($data['zarinpal_merchant_id'] ?? null) ?: $this->settings->get('zarinpal.merchant_id'))) {
-            return back()->withErrors(['zarinpal_merchant_id' => trans('berkay::integrations.merchant-required')])
-                ->withInput($request->except('zarinpal_merchant_id'));
-        }
 
         DB::transaction(function () use ($data) {
             foreach (['zarinpal_merchant_id' => 'zarinpal.merchant_id'] as $field => $key) {
@@ -86,18 +82,10 @@ class IntegrationController extends Controller
             return back()->with('success', trans('berkay::app.saved'));
         }
 
-        $credentials = collect(BankGateways::CREDENTIALS[$provider])->mapWithKeys(fn ($key) => [
-            $key => filled($data[$key] ?? null) ? $data[$key] : $this->settings->get($provider.'.'.$key),
-        ]);
-
-        if ($data['enabled'] && $credentials->contains(fn ($value) => blank($value))) {
-            return back()->withErrors(['enabled' => trans('berkay::integrations.merchant-required')], $provider);
-        }
-
-        DB::transaction(function () use ($provider, $data, $credentials) {
-            foreach ($credentials as $key => $value) {
+        DB::transaction(function () use ($provider, $data) {
+            foreach (BankGateways::CREDENTIALS[$provider] as $key) {
                 if (filled($data[$key] ?? null)) {
-                    $this->settings->put($provider.'.'.$key, $value);
+                    $this->settings->put($provider.'.'.$key, $data[$key]);
                 }
             }
 

@@ -10,14 +10,17 @@ it('saves the merchandise review limit in tomans from the workshop settings', fu
     $field = 'berkay.workshop.review.amount_limit';
     $channel = core()->getDefaultChannel()->code;
 
+    $integrations = route('admin.berkay.integrations.index');
+    $this->get($integrations)->assertOk()->assertSee('id="payment-review-amount"', false);
+
     $this->get(route('admin.configuration.index', $section))
         ->assertOk()->assertSee('name="berkay[workshop][review][amount_limit]"', false)
         ->assertSee('label="'.trans('berkay::workflow.amount').'"', false);
 
-    $this->postJson(route('admin.configuration.store', $section), [
+    $this->from($integrations)->postJson(route('admin.configuration.store', $section), [
         'channel' => $channel,
         'berkay' => ['workshop' => ['review' => ['amount_limit' => 175_000_000]]],
-    ])->assertSessionHasNoErrors()->assertRedirect();
+    ])->assertSessionHasNoErrors()->assertRedirect($integrations);
 
     $this->assertDatabaseHas('core_config', ['code' => $field, 'channel_code' => $channel, 'value' => '175000000']);
 

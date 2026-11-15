@@ -14,6 +14,9 @@
             @endif
         </header>
         <fieldset @disabled(! $canEdit)>
+            <details class="bk-integration-help" @if ($errors->getBag($bank)->any()) open @endif>
+                <summary>ثبت یا تغییر اطلاعات پذیرنده</summary>
+                <p>برای حفظ اطلاعات ذخیره‌شده، کادرهای مربوط را خالی بگذارید. درگاه بعد از تکمیل اطلاعات پذیرنده در تسویه‌حساب در دسترس خواهد بود.</p>
             @foreach ($state['saved'] as $key => $saved)
                 <label for="{{ $bank }}-{{ $key }}">{{ $labels[$key] }}</label>
                 @if ($key === 'public_key')
@@ -25,6 +28,7 @@
                     <p class="bk-error" role="alert">{{ $message }}</p>
                 @enderror
             @endforeach
+            </details>
             <label for="{{ $bank }}-active">نمایش درگاه در تسویه‌حساب</label>
             <select id="{{ $bank }}-active" name="enabled">
                 <option value="0" @selected(! $state['enabled'])>غیرفعال</option>

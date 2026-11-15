@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Webkul\Berkay\Listeners\OrderSmsListener;
 use Webkul\Berkay\Models\IntegrationSetting;
+use Webkul\Berkay\Payment\IranKish;
+use Webkul\Berkay\Payment\Zarinpal;
 use Webkul\Berkay\Services\IntegrationSettings;
 use Webkul\Berkay\Services\KavenegarSms;
 use Webkul\Berkay\Services\SmsTemplates;
@@ -30,15 +32,29 @@ it('stores bank terminal settings encrypted and keeps blank credentials on later
 
     $this->put($url, ['enabled' => 1, 'terminal_id' => '12345678', 'username' => 'terminal-user', 'password' => $secret])
         ->assertSessionHasNoErrors()->assertRedirect();
-    $this->put($url, ['enabled' => 0, 'terminal_id' => '', 'username' => '', 'password' => ''])
+    $this->put($url, ['enabled' => 1, 'terminal_id' => '', 'username' => '', 'password' => ''])
         ->assertSessionHasNoErrors()->assertRedirect();
 
     expect($settings->get('mellat.password'))->toBe($secret)
-        ->and($settings->get('mellat.enabled'))->toBeFalse();
+        ->and($settings->get('mellat.enabled'))->toBeTrue();
     expect(DB::table('berkay_integration_settings')->where('name', 'mellat.password')->value('value'))->not->toContain($secret);
 
     $this->get(route('admin.berkay.integrations.index'))->assertOk()->assertDontSee($secret)
         ->assertSee('بانک ملت')->assertSee('بانک تجارت');
+});
+
+it('saves payment settings while unconfigured terminals remain unavailable', function () {
+    $this->loginAsAdmin();
+    config(['berkay.zarinpal.merchant_id' => null]);
+
+    $this->put(route('admin.berkay.integrations.update'), [
+        'zarinpal_active' => 1, 'zarinpal_sandbox' => 0, 'torob_enabled' => 0,
+    ])->assertSessionHasNoErrors()->assertRedirect();
+    $this->put(route('admin.berkay.integrations.payment.update', 'irankish'), ['enabled' => 1, 'public_key' => ''])
+        ->assertSessionHasNoErrors()->assertRedirect();
+
+    expect(app(Zarinpal::class)->isAvailable())->toBeFalse()
+        ->and(app(IranKish::class)->isAvailable())->toBeFalse();
 });
 
 it('lets staff configure the same transfer instructions shown in customer orders', function () {

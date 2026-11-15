@@ -17,6 +17,9 @@
 
         <nav class="bk-integrations-overview" aria-label="وضعیت سرویس‌ها">
             <a href="#payment"><span>پرداخت اینترنتی</span><strong>زرین‌پال</strong><small>{{ $gateway }}</small></a>
+            @if (bouncer()->hasPermission('configuration'))
+                <a href="#payment-review-limit"><strong>سقف پرداخت بدون تأیید مدیر</strong></a>
+            @endif
             <a href="#sms"><span>ورود و اطلاع‌رسانی</span><strong>کاوه‌نگار</strong><small>{{ $sms }}</small></a>
             <a href="#torob"><span>معرفی محصولات</span><strong>ترب</strong><small>{{ $torobEnabled ? 'مسیر دریافت فعال' : 'غیرفعال' }}</small></a>
         </nav>
@@ -31,13 +34,16 @@
                 </header>
 
                 <fieldset @disabled(! $canEdit)>
-                    <label for="zarinpal_merchant_id">شناسهٔ پذیرنده</label>
-                    <input id="zarinpal_merchant_id" name="zarinpal_merchant_id" type="password" autocomplete="new-password" dir="ltr" maxlength="36" aria-describedby="merchant-help">
-                    <p id="merchant-help">{{ $merchantConfigured ? 'شناسه ذخیره شده است. برای حفظ آن، این کادر را خالی بگذارید.' : 'شناسهٔ ۳۶ کاراکتری درگاه را از پیشخوان زرین‌پال بردارید.' }}</p>
+                    <details class="bk-integration-help" @if ($errors->has('zarinpal_merchant_id')) open @endif>
+                        <summary>{{ $merchantConfigured ? 'تغییر شناسهٔ پذیرنده' : 'ثبت شناسهٔ پذیرنده' }}</summary>
+                        <label for="zarinpal_merchant_id">شناسهٔ پذیرنده</label>
+                        <input id="zarinpal_merchant_id" name="zarinpal_merchant_id" type="password" autocomplete="new-password" dir="ltr" maxlength="36" aria-describedby="merchant-help">
+                        <p id="merchant-help">{{ $merchantConfigured ? 'با خالی گذاشتن این کادر، شناسهٔ ذخیره‌شده حفظ می‌شود.' : 'درگاه پس از ثبت شناسهٔ ۳۶ کاراکتری پذیرنده در تسویه‌حساب در دسترس خواهد بود.' }}</p>
 
-                    @error('zarinpal_merchant_id')
-                        <p class="bk-error">{{ $message }}</p>
-                    @enderror
+                        @error('zarinpal_merchant_id')
+                            <p class="bk-error">{{ $message }}</p>
+                        @enderror
+                    </details>
 
                     <div class="bk-form-pair">
                         <div>
@@ -71,6 +77,10 @@
             </form>
 
             @include('berkay::admin.bank-payment-settings')
+
+            @if (bouncer()->hasPermission('configuration'))
+                @include('berkay::admin.payment-review-limit')
+            @endif
 
             <section id="sms" class="bk-integration-card" aria-labelledby="integration-sms-title">
                 <header>
