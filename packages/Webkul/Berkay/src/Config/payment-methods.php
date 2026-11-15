@@ -12,7 +12,8 @@ return [
         'description' => 'پرداخت امن با کارت بانکی',
         'active' => false,
         'sort' => 1,
+        'logo' => 'zarinpal',
     ],
-    'berkay_mellat' => ['class' => Mellat::class, 'code' => 'berkay_mellat', 'title' => 'بانک ملت (به‌پرداخت)', 'sort' => 2],
-    'berkay_irankish' => ['class' => IranKish::class, 'code' => 'berkay_irankish', 'title' => 'بانک تجارت (ایران‌کیش)', 'sort' => 3],
+    'berkay_mellat' => ['class' => Mellat::class, 'code' => 'berkay_mellat', 'title' => 'بانک ملت (به‌پرداخت)', 'sort' => 2, 'logo' => 'mellat'],
+    'berkay_irankish' => ['class' => IranKish::class, 'code' => 'berkay_irankish', 'title' => 'بانک تجارت (ایران‌کیش)', 'sort' => 3, 'logo' => 'tejarat'],
 ];

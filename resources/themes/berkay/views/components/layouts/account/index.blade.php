@@ -8,12 +8,12 @@
     <div class="container px-15 max-lg:px-8 max-md:px-0">
         <x-shop::layouts.account.breadcrumb />
 
-        <details class="bk-account-mobile-menu" open>
+        <details class="bk-account-mobile-menu" @if (request()->routeIs('shop.customers.account.index')) open @endif>
             <summary>{{ trans('berkay::app.account') }}</summary>
-            <x-shop::layouts.account.navigation />
+            <x-shop::layouts.account.navigation scroll-to-content />
         </details>
 
-        <div class="mt-8 flex items-start gap-10 max-lg:gap-5 max-md:mt-5 max-md:grid ltr:max-md:gap-0 rtl:max-md:gap-0">
+        <div id="account-content" tabindex="-1" class="mt-8 flex items-start gap-10 max-lg:gap-5 max-md:mt-5 max-md:grid ltr:max-md:gap-0 rtl:max-md:gap-0">
             {{ $slot }}
         </div>
     </div>

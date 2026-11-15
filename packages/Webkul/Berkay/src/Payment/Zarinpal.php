@@ -20,6 +20,12 @@ class Zarinpal extends Payment
             && in_array($currency, ['IRR', 'IRT'], true);
     }
 
+    /** Show a configured logo or the storefront's default Zarinpal logo. */
+    public function getImage(): string
+    {
+        return parent::getImage() ?: asset('berkay/payment-logos/'.config('payment_methods.'.$this->code.'.logo').'.svg');
+    }
+
     /** Start the server-controlled gateway handshake. */
     public function getRedirectUrl()
     {

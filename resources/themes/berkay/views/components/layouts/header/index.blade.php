@@ -36,12 +36,14 @@
                 @endforelse
             </div>
         </details>
-        <a href="{{ route('shop.search.index') }}">{{ trans('berkay::app.all-products') }}</a>
-        <a href="{{ route('shop.berkay.magazine.index') }}">{{ trans('berkay::app.magazine') }}</a>
+        <div class="bk-navigation-track">
+            <a href="{{ route('shop.search.index') }}">{{ trans('berkay::app.all-products') }}</a>
+            <a href="{{ route('shop.berkay.magazine.index') }}">{{ trans('berkay::app.magazine') }}</a>
 
-        @if (core()->getConfigData('berkay.store.identity.custom_orders'))
-            <a href="{{ route('shop.berkay.custom_order.create') }}">{{ trans('berkay::app.custom-orders') }}</a>
-        @endif
-        <a href="{{ route('shop.home.contact_us') }}">{{ trans('berkay::app.contact') }}</a>
+            @if (core()->getConfigData('berkay.store.identity.custom_orders'))
+                <a href="{{ route('shop.berkay.custom_order.create') }}">{{ trans('berkay::app.custom-orders') }}</a>
+            @endif
+            <a href="{{ route('shop.home.contact_us') }}">{{ trans('berkay::app.contact') }}</a>
+        </div>
     </nav>
 </header>

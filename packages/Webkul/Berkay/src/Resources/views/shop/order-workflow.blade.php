@@ -10,10 +10,7 @@
     @elseif ($progress['record']?->review === 'approved')
         <p>{{ trans('berkay::workflow.approved') }}</p>
         @if (! $progress['paid'] && isset(\Webkul\Berkay\Services\BankGateways::METHODS[$provider]))
-            <form method="post" action="{{ route('shop.berkay.zarinpal.approved', $order->id) }}">
-                @csrf
-                <button class="bk-button" type="submit">{{ trans('berkay::workflow.pay') }}</button>
-            </form>
+            @include('berkay::shop.approved-payment-options')
         @endif
     @else
         <p>{{ trans('berkay::workflow.autoApproved') }}</p>

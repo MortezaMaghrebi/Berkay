@@ -27,6 +27,12 @@ abstract class DirectBank extends Payment
         return config('payment_methods.'.$this->code.'.title');
     }
 
+    /** Return the storefront logo for this bank. */
+    public function getImage(): string
+    {
+        return asset('berkay/payment-logos/'.config('payment_methods.'.$this->code.'.logo').'.svg');
+    }
+
     /** Open the bank handshake on the storefront. */
     public function getRedirectUrl(): string
     {

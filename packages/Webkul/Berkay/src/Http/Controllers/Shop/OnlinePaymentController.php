@@ -3,7 +3,9 @@
 namespace Webkul\Berkay\Http\Controllers\Shop;
 
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -16,6 +18,7 @@ use Webkul\Berkay\Services\OrderWorkflow;
 use Webkul\Berkay\Services\ZarinpalGateway;
 use Webkul\Berkay\Shipping\ShippingQuote;
 use Webkul\Checkout\Facades\Cart;
+use Webkul\Payment\Facades\Payment;
 use Webkul\Sales\Repositories\InvoiceRepository;
 use Webkul\Sales\Repositories\OrderRepository;
 use Webkul\Sales\Repositories\OrderTransactionRepository;
@@ -114,16 +117,17 @@ class OnlinePaymentController extends Controller
     }
 
     /** Open payment for an approved order owned by the signed-in customer. */
-    public function payApproved(int $id, OrderWorkflow $workflow): RedirectResponse|View
+    public function payApproved(int $id, OrderWorkflow $workflow, Request $request): RedirectResponse|View
     {
         $order = $this->orders->findOrFail($id);
         $provider = Str::after((string) $order->payment?->method, 'berkay_');
         abort_unless(
             (int) $order->customer_id === auth()->guard('customer')->id()
             && (int) $order->channel_id === core()->getCurrentChannel()->id
-            && isset(BankGateways::METHODS[$provider]),
+            && (isset(BankGateways::METHODS[$provider]) || $order->payment?->method === 'moneytransfer'),
             404
         );
+        $requested = $request->validate(['method' => ['nullable', 'string', 'in:berkay_zarinpal,berkay_mellat,berkay_irankish,moneytransfer']])['method'] ?? null;
         if ($workflow->record($order)?->review !== 'approved') {
             return redirect()->route('shop.customers.account.orders.view', $order->id)
                 ->with('info', trans('berkay::workflow.waiting'));
@@ -134,13 +138,24 @@ class OnlinePaymentController extends Controller
         }
 
         try {
-            return Cache::lock('berkay.payment.order.'.$order->id, 60)->block(5, function () use ($order, $workflow, $provider) {
+            return Cache::lock('berkay.payment.order.'.$order->id, 60)->block(5, function () use ($order, $workflow, $requested) {
                 $order = $order->fresh();
                 if ($workflow->ended($order) || $workflow->paid($order) || ! $order->canInvoice()) {
                     return redirect()->route('shop.customers.account.orders.view', $order->id);
                 }
 
-                $attempt = $this->attempts->findOneWhere(['order_id' => $order->id, 'provider' => $provider]);
+                $attempt = $this->attempts->findOneWhere(['order_id' => $order->id]);
+                $method = $order->payment->method;
+                $provider = $attempt?->provider ?? Str::after($method, 'berkay_');
+
+                if (
+                    filled($requested)
+                    && $requested !== $method
+                    && ($attempt || $method === 'moneytransfer')
+                ) {
+                    return redirect()->route('shop.customers.account.orders.view', $order->id)
+                        ->with('error', 'روش پرداخت این سفارش قبلاً ثبت شده است. از همان روش ادامه دهید.');
+                }
 
                 if ($attempt?->status === 'verified') {
                     $this->finalizePayment($attempt->id);
@@ -154,23 +169,40 @@ class OnlinePaymentController extends Controller
                 }
 
                 if (! $attempt) {
-                    if (! app(BankGateways::METHODS[$provider])->isAvailable()) {
+                    $selected = $requested ?? $method;
+
+                    if ($selected === 'moneytransfer' && $method === 'moneytransfer') {
+                        return redirect(route('shop.customers.account.orders.view', $order->id).'#bank-transfer');
+                    }
+
+                    if (! collect(Payment::getPaymentMethods())->contains('method', $selected)) {
                         return redirect()->route('shop.customers.account.orders.view', $order->id)
                             ->with('error', trans('berkay::workflow.gatewayDisabled'));
                     }
 
+                    if ($selected === 'moneytransfer') {
+                        $order->payment()->update(['method' => $selected]);
+
+                        return redirect(route('shop.customers.account.orders.view', $order->id).'#bank-transfer');
+                    }
+
+                    $provider = Str::after($selected, 'berkay_');
                     $amount = $this->money->toRial($order->base_grand_total, $order->base_currency_code);
                     [$token, $context, $authority] = $this->authorizePayment($provider, $amount);
-                    $attempt = $this->attempts->create([
-                        'token' => $token,
-                        'order_id' => $order->id,
-                        'cart_id' => $order->cart_id,
-                        'provider' => $provider,
-                        'authority' => $authority,
-                        'amount_rial' => $amount,
-                        'gateway_context' => $context,
-                        'status' => 'pending',
-                    ]);
+                    $attempt = DB::transaction(function () use ($order, $selected, $provider, $token, $context, $authority, $amount) {
+                        $order->payment()->update(['method' => $selected]);
+
+                        return $this->attempts->create([
+                            'token' => $token,
+                            'order_id' => $order->id,
+                            'cart_id' => $order->cart_id,
+                            'provider' => $provider,
+                            'authority' => $authority,
+                            'amount_rial' => $amount,
+                            'gateway_context' => $context,
+                            'status' => 'pending',
+                        ]);
+                    });
                 }
 
                 session()->put('berkay.payment.token', $attempt->token);
@@ -178,7 +210,7 @@ class OnlinePaymentController extends Controller
                 return $this->openBank($attempt);
             });
         } catch (Throwable $exception) {
-            $this->logFailure($provider, 'approved-order', $exception);
+            $this->logFailure($requested ? Str::after($requested, 'berkay_') : $provider, 'approved-order', $exception);
 
             return redirect()->route('shop.customers.account.orders.view', $order->id)
                 ->with('error', trans('berkay::workflow.gatewayDisabled'));

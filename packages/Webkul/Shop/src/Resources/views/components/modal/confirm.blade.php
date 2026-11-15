@@ -5,7 +5,8 @@
         type="text/x-template"
         id="v-modal-confirm-template"
     >
-        <div>
+        <teleport to="body">
+        <div class="pointer-events-none fixed inset-0" style="z-index: 11000">
             <transition
                 tag="div"
                 name="modal-overlay"
@@ -17,7 +18,7 @@
                 leave-to-class="opacity-0"
             >
                 <div
-                    class="fixed inset-0 z-20 bg-gray-500/50 transition-opacity"
+                    class="pointer-events-auto fixed inset-0 z-20 bg-gray-500/50 transition-opacity"
                     v-show="isOpen"
                 ></div>
             </transition>
@@ -33,7 +34,8 @@
                 leave-to-class="translate-y-4 opacity-0 md:translate-y-0 md:scale-95"
             >
                 <div
-                    class="fixed inset-0 z-20 transform overflow-y-auto transition" v-show="isOpen"
+                    class="pointer-events-auto fixed inset-0 z-20 transform overflow-y-auto transition" v-show="isOpen"
+                    role="alertdialog" aria-modal="true" :aria-label="title"
                 >
                     <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
                         <div class="absolute left-1/2 top-1/2 z-999 w-full max-w-118.75 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-xl bg-white p-5 max-md:w-[90%] max-sm:p-4">
@@ -77,6 +79,7 @@
                 </div>
             </transition>
         </div>
+        </teleport>
     </script>
 
     <script type="module">
@@ -86,6 +89,8 @@
             data() {
                 return {
                     isOpen: false,
+
+                    previousBodyStyle: {},
 
                     title: '',
 
@@ -117,6 +122,12 @@
                     agree = () => {},
                     disagree = () => {},
                 }) {
+                    if (!this.isOpen) {
+                        this.previousBodyStyle = {
+                            overflow: document.body.style.overflow,
+                            paddingRight: document.body.style.paddingRight,
+                        };
+                    }
                     this.isOpen = true;
 
                     const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
@@ -137,23 +148,18 @@
                 },
 
                 disagree() {
-                    this.isOpen = false;
-
-                    document.body.style.overflow = 'auto';
-
-                    document.body.style.paddingRight = '';
-
+                    this.close();
                     this.disagreeCallback();
                 },
 
                 agree() {
-                    this.isOpen = false;
-
-                    document.body.style.overflow = 'auto';
-
-                    document.body.style.paddingRight = '';
-
+                    this.close();
                     this.agreeCallback();
+                },
+
+                close() {
+                    this.isOpen = false;
+                    Object.assign(document.body.style, this.previousBodyStyle);
                 },
 
                 registerGlobalEvents() {
