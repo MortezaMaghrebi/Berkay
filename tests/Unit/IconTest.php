@@ -54,7 +54,7 @@ function safelistedIcons(string $path): array
 function isIconSourceFile(SplFileInfo $file): bool
 {
     return in_array($file->getExtension(), ['php', 'js'])
-        && ! str_contains($file->getPathname(), '/Database/Seeders/');
+        && ! str_contains(str_replace('\\', '/', $file->getPathname()), '/Database/Seeders/');
 }
 
 /**

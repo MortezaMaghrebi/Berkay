@@ -6,6 +6,10 @@
 
     RewriteEngine On
 
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP_HOST} ^charmberkay\.ir(?::80)?$ [NC]
+    RewriteRule ^ https://charmberkay.ir%{REQUEST_URI} [R=308,L,NE]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
