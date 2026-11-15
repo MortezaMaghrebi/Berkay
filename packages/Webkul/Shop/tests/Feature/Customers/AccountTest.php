@@ -1,14 +1,12 @@
 <?php
 
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Webkul\Core\Models\Channel;
 use Webkul\Customer\Models\Customer;
 use Webkul\Customer\Models\CustomerAddress;
 use Webkul\Product\Models\ProductReview;
 use Webkul\Shop\Mail\Customer\ResetPasswordNotification;
-use Webkul\Shop\Mail\Customer\UpdatePasswordNotification;
 
 use function Pest\Laravel\deleteJson;
 use function Pest\Laravel\get;
@@ -68,30 +66,59 @@ it('should update the customer profile', function () {
     ]);
 });
 
-it('should update the customer password and send email', function () {
-    Mail::fake();
-
+it('should verify the current password before replacing it', function () {
     $customer = Customer::factory()->create([
-        'password' => Hash::make($currentPassword = fake()->password(8, 10)),
+        'password' => Hash::make('previous-password'),
+        'remember_token' => 'previous-token',
     ]);
 
     $this->loginAsCustomer($customer);
 
-    postJson(route('shop.customers.account.profile.update'), [
-        'first_name' => $customer->first_name,
-        'last_name' => $customer->last_name,
-        'gender' => 'Male',
-        'email' => $customer->email,
-        'phone' => fake()->e164PhoneNumber(),
-        'current_password' => $currentPassword,
-        'new_password' => $newPassword = fake()->password(8, 10),
-        'new_password_confirmation' => $newPassword,
-    ])
+    $form = route('shop.customers.account.profile.password.edit');
+    $action = route('shop.customers.account.profile.password.update');
+    $password = ['password' => 'replacement-password', 'password_confirmation' => 'replacement-password'];
+
+    $this->get($form)->assertOk()->assertSee('name="current_password"', false);
+    postJson($action, $password)->assertUnprocessable()->assertJsonValidationErrorFor('current_password');
+    $this->from($form)->post($action, $password + ['current_password' => 'wrong-password'])
+        ->assertRedirect($form)->assertSessionHasErrors('current_password');
+
+    expect(session()->getOldInput())->not->toHaveKeys(['current_password', 'password', 'password_confirmation']);
+    expect(Hash::check('previous-password', $customer->refresh()->password))->toBeTrue();
+
+    postJson($action, $password + ['current_password' => 'previous-password'])
         ->assertRedirect(route('shop.customers.account.profile.index'));
 
-    expect(Hash::check($newPassword, $customer->refresh()->password))->toBeTrue();
+    expect(Hash::check('replacement-password', $customer->refresh()->password))->toBeTrue()
+        ->and($customer->remember_token)->toBeNull();
+    $this->assertAuthenticatedAs($customer, 'customer');
+});
 
-    Mail::assertQueued(UpdatePasswordNotification::class, fn (UpdatePasswordNotification $mail) => $mail->hasTo($customer->email));
+it('should let a mobile customer set their first password and sign in with it', function () {
+    $customer = Customer::factory()->create(['email' => null, 'phone' => '09123456789', 'password' => null]);
+    $this->loginAsCustomer($customer);
+
+    get(route('shop.customers.account.profile.index'))
+        ->assertSee(route('shop.customers.account.profile.password.edit'));
+    get(route('shop.customers.account.profile.password.edit'))->assertOk()->assertDontSee('name="current_password"', false);
+
+    $action = route('shop.customers.account.profile.password.update');
+    postJson($action, ['password' => 'first-password', 'password_confirmation' => 'does-not-match'])
+        ->assertUnprocessable()->assertJsonValidationErrorFor('password');
+    expect($customer->refresh()->password)->toBeNull();
+
+    postJson($action, ['password' => 'first-password', 'password_confirmation' => 'first-password'])
+        ->assertRedirect(route('shop.customers.account.profile.index'));
+
+    auth()->guard('customer')->logout();
+    $this->post(route('shop.customer.session.password'), ['email' => $customer->phone, 'password' => 'first-password'])
+        ->assertRedirect(route('shop.customers.account.orders.index'));
+    $this->assertAuthenticatedAs($customer, 'customer');
+});
+
+it('should require a customer login to manage a password', function () {
+    get(route('shop.customers.account.profile.password.edit'))->assertRedirect(route('shop.customer.session.index'));
+    postJson(route('shop.customers.account.profile.password.update'))->assertUnauthorized();
 });
 
 it('should fail validation when required fields are missing on profile update', function () {

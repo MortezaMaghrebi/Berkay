@@ -36,6 +36,7 @@
             </details>
             <button type="submit" class="bk-button">{{ trans('berkay::app.save') }}</button>
         </form>
+        <a class="mt-5 inline-flex min-h-11 items-center" href="{{ route('shop.customers.account.profile.password.edit') }}">@lang('shop::app.customers.account.profile.edit.new-password')</a>
         <a class="mt-5 inline-flex min-h-11 items-center" href="{{ route('shop.customers.account.profile.index') }}">{{ trans('berkay::app.back') }}</a>
     </section>
 </x-shop::layouts.account>

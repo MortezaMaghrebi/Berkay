@@ -2,6 +2,7 @@
 
 namespace Webkul\Customer\Repositories;
 
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Webkul\Core\Eloquent\Repository;
 use Webkul\Customer\Contracts\Customer as CustomerContract;
@@ -17,6 +18,26 @@ class CustomerRepository extends Repository
     public function model(): string
     {
         return CustomerContract::class;
+    }
+
+    /** Store the password only if the current credential still matches. */
+    public function changePassword(int $id, string $password, ?string $currentPassword): bool
+    {
+        return $this->model->getConnection()->transaction(function () use ($id, $password, $currentPassword) {
+            $customer = $this->model->newQuery()->lockForUpdate()->findOrFail($id);
+
+            if (
+                filled($customer->password)
+                && ! Hash::check($currentPassword ?? '', $customer->password)
+            ) {
+                return false;
+            }
+
+            $customer->password = Hash::make($password);
+            $customer->setRememberToken(null);
+
+            return $customer->save();
+        });
     }
 
     /**

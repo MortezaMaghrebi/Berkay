@@ -81,6 +81,9 @@ Route::prefix('customer')->group(function () {
 
                     Route::post('edit', 'update')->name('shop.customers.account.profile.update');
 
+                    Route::get('password', 'editPassword')->name('shop.customers.account.profile.password.edit');
+
+                    Route::post('password', 'updatePassword')->middleware('throttle:10,1')->name('shop.customers.account.profile.password.update');
                 });
 
                 Route::get('reviews', 'reviews')->name('shop.customers.account.reviews.index');

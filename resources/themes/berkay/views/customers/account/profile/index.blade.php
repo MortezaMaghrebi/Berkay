@@ -25,6 +25,7 @@
         </dl>
         <div class="mt-6 flex flex-wrap gap-3">
             <a class="secondary-button" href="{{ route('shop.customers.account.profile.edit') }}">@lang('shop::app.customers.account.profile.index.edit')</a>
+            <a class="secondary-button" href="{{ route('shop.customers.account.profile.password.edit') }}">@lang('shop::app.customers.account.profile.edit.new-password')</a>
             <a class="secondary-button" href="{{ route('shop.berkay.phone.settings', 'change') }}">{{ trans('berkay::sms.change') }}</a>
             @if ($customer->phone)
                 <a class="secondary-button" href="{{ route('shop.berkay.phone.settings', 'delete') }}">{{ trans('berkay::sms.delete') }}</a>

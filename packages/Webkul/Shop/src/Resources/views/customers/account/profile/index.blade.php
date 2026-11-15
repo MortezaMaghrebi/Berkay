@@ -43,6 +43,10 @@
             {!! view_render_event('bagisto.shop.customers.account.profile.edit_button.after') !!}
         </div>
 
+        <a class="secondary-button mt-4 inline-flex min-h-11 items-center" href="{{ route('shop.customers.account.profile.password.edit') }}">
+            @lang('shop::app.customers.account.profile.edit.new-password')
+        </a>
+
         <!-- Profile Information -->
         <div class="grid grid-cols-1 mt-8 gap-y-6 max-md:mt-5 max-sm:gap-y-4">
             {!! view_render_event('bagisto.shop.customers.account.profile.first_name.before') !!}

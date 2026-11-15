@@ -188,61 +188,13 @@
 
             {!! view_render_event('bagisto.shop.customers.account.profile.edit_form_controls.date_of_birth.after') !!}
 
-            <!-- Current Password -->
-            <x-shop::form.control-group>
-                <x-shop::form.control-group.label>
-                    @lang('shop::app.customers.account.profile.edit.current-password')
-                </x-shop::form.control-group.label>
-
-                <x-shop::form.control-group.control
-                    type="password"
-                    name="current_password"
-                    value=""
-                    :label="trans('shop::app.customers.account.profile.edit.current-password')"
-                    :placeholder="trans('shop::app.customers.account.profile.edit.current-password')"
-                />
-
-                <x-shop::form.control-group.error control-name="current_password" />
-            </x-shop::form.control-group>
+            <a class="inline-flex min-h-11 items-center underline" href="{{ route('shop.customers.account.profile.password.edit') }}">
+                @lang('shop::app.customers.account.profile.edit.new-password')
+            </a>
 
             {!! view_render_event('bagisto.shop.customers.account.profile.edit_form_controls.old_password.after') !!}
 
-            <!-- New Password -->
-            <x-shop::form.control-group>
-                <x-shop::form.control-group.label>
-                    @lang('shop::app.customers.account.profile.edit.new-password')
-                </x-shop::form.control-group.label>
-
-                <x-shop::form.control-group.control
-                    type="password"
-                    name="new_password"
-                    value=""
-                    :label="trans('shop::app.customers.account.profile.edit.new-password')"
-                    :placeholder="trans('shop::app.customers.account.profile.edit.new-password')"
-                />
-
-                <x-shop::form.control-group.error control-name="new_password" />
-            </x-shop::form.control-group>
-
             {!! view_render_event('bagisto.shop.customers.account.profile.edit_form_controls.new_password.after') !!}
-
-            <!-- New Password Confirmation -->
-            <x-shop::form.control-group>
-                <x-shop::form.control-group.label>
-                    @lang('shop::app.customers.account.profile.edit.confirm-password')
-                </x-shop::form.control-group.label>
-
-                <x-shop::form.control-group.control
-                    type="password"
-                    name="new_password_confirmation"
-                    rules="confirmed:@new_password"
-                    value=""
-                    :label="trans('shop::app.customers.account.profile.edit.confirm-password')"
-                    :placeholder="trans('shop::app.customers.account.profile.edit.confirm-password')"
-                />
-
-                <x-shop::form.control-group.error control-name="new_password_confirmation" />
-            </x-shop::form.control-group>
 
             {!! view_render_event('bagisto.shop.customers.account.profile.edit_form_controls.new_password_confirmation.after') !!}
 
