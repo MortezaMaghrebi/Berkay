@@ -34,8 +34,8 @@ class AddressResource extends JsonResource
             'email' => $this->email,
             'phone' => $this->phone,
             'vat_id' => $this->vat_id,
-            'default_address' => $this->default_address,
-            'use_for_shipping' => $this->use_for_shipping,
+            'default_address' => (bool) $this->default_address,
+            'use_for_shipping' => (bool) $this->use_for_shipping,
             'additional' => $this->additional,
         ];
     }

@@ -3,6 +3,7 @@
 namespace Webkul\Checkout\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -40,21 +41,6 @@ class CartAddress extends Address implements CartAddressContract
     ];
 
     /**
-     * The "booted" method of the model.
-     */
-    protected static function boot(): void
-    {
-        static::addGlobalScope('address_type', static function (Builder $builder) {
-            $builder->whereIn('address_type', [
-                self::ADDRESS_TYPE_BILLING,
-                self::ADDRESS_TYPE_SHIPPING,
-            ]);
-        });
-
-        parent::boot();
-    }
-
-    /**
      * Get the shipping rates for the cart address.
      */
     public function shipping_rates(): HasMany
@@ -68,6 +54,25 @@ class CartAddress extends Address implements CartAddressContract
     public function cart(): BelongsTo
     {
         return $this->belongsTo(CartProxy::modelClass());
+    }
+
+    /** Register the scope for billing and shipping addresses. */
+    protected static function boot(): void
+    {
+        static::addGlobalScope('address_type', static function (Builder $builder) {
+            $builder->whereIn('address_type', [
+                self::ADDRESS_TYPE_BILLING,
+                self::ADDRESS_TYPE_SHIPPING,
+            ]);
+        });
+
+        parent::boot();
+    }
+
+    /** Preserve the database default when older address payloads send null. */
+    protected function defaultAddress(): Attribute
+    {
+        return Attribute::make(set: fn ($value) => $value ?? false);
     }
 
     /**

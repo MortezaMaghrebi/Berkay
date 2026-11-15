@@ -1,5 +1,7 @@
 <?php
 
+use Webkul\Checkout\Facades\Cart;
+
 use function Pest\Laravel\postJson;
 
 beforeEach(function () {
@@ -83,3 +85,34 @@ it('should retain a full multiline street address when selecting a legacy saved 
         'address' => implode(PHP_EOL, explode("\n", $street)),
     ]);
 });
+
+it('should accept a freshly saved address and return the shipping methods', function (bool $legacyPayload) {
+    $customer = $this->loginAsCustomer();
+    Cart::initCart($customer);
+    $cartId = $this->addProductToCart($this->createSimpleProduct()->id)->json('data.id');
+    $address = postJson(route('shop.api.customers.account.addresses.store'), $this->storefrontAddress())
+        ->assertOk()
+        ->assertJsonPath('data.default_address', false)
+        ->json('data');
+
+    if ($legacyPayload) {
+        $address['default_address'] = null;
+    }
+
+    postJson(route('shop.checkout.onepage.addresses.store'), [
+        'billing' => array_replace($address, ['use_for_shipping' => true]),
+    ])
+        ->assertOk()
+        ->assertJsonPath('redirect', false)
+        ->assertJsonPath('data.shippingMethods.berkay_post.rates.0.method', 'berkay_post_berkay_post');
+
+    foreach (['cart_billing', 'cart_shipping'] as $type) {
+        $this->assertDatabaseHas('addresses', [
+            'address_type' => $type,
+            'cart_id' => $cartId,
+            'customer_id' => $customer->id,
+            'parent_address_id' => $address['id'],
+            'default_address' => 0,
+        ]);
+    }
+})->with(['new response' => [false], 'legacy null flag' => [true]]);
