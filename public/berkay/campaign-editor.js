@@ -19,6 +19,7 @@ function initializeCampaignEditor() {
     const saveButton = editor.querySelector('[data-campaign-save]');
     const image = preview.querySelector('img');
     const whole = new Intl.NumberFormat('fa-IR');
+    const toman = new Intl.NumberFormat('en-US');
     const percent = new Intl.NumberFormat('fa-IR', {style: 'percent', maximumFractionDigits: 2});
 
     function updatePreview() {
@@ -48,7 +49,17 @@ function initializeCampaignEditor() {
             const kind = row.querySelector('select').value;
             const cap = row.querySelector('[data-prize-cap]');
             cap.hidden = !['percent', 'credit', 'shipping'].includes(kind);
-            cap.querySelector('input').disabled = cap.hidden;
+            const capInput = cap.querySelector('input');
+            const capPreview = cap.querySelector('[data-prize-cap-preview]');
+            capInput.disabled = cap.hidden;
+            const normalizedCap = capInput.value.replace(/[۰-۹٠-٩]/g, digit => String(digit.charCodeAt(0) & 15));
+            const capDigits = /^[0-9]{1,3}(?:[,٬][0-9]{3})+$/.test(normalizedCap)
+                ? normalizedCap.replace(/[,٬]/g, '') : normalizedCap;
+            if (capInput.value !== capDigits) {
+                capInput.value = capDigits;
+            }
+            capPreview.hidden = !/^0*[1-9][0-9]*$/.test(capDigits);
+            cap.querySelector('[data-prize-cap-number]').textContent = capPreview.hidden ? '' : toman.format(BigInt(capDigits));
             const amount = row.querySelector('[data-prize-value]');
             amount.hidden = !['percent', 'credit'].includes(kind);
             amount.querySelector('span').textContent = kind === 'percent' ? 'درصد تخفیف' : 'مبلغ به تومان';

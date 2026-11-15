@@ -7,6 +7,7 @@ use Webkul\Customer\Models\Customer;
 it('issues only one persisted coupon per customer and rejects a stale run', function () {
     $campaign = app(StoreCampaign::class);
     $channel = core()->getCurrentChannel();
+    $channel->base_currency->code = 'IRR';
     $group = core()->getGuestCustomerGroup();
     $customer = Customer::factory()->create([
         'channel_id' => $channel->id,
@@ -15,8 +16,8 @@ it('issues only one persisted coupon per customer and rejects a stale run', func
     $settings = [
         'event' => 'yalda', 'wheel' => true, 'days' => 7,
         'prizes' => [
-            ['label' => '۱۰ درصد', 'type' => 'percent', 'value' => 10, 'weight' => 1],
-            ['label' => '۲۰ درصد', 'type' => 'percent', 'value' => 20, 'weight' => 1],
+            ['label' => '۱۰ درصد', 'type' => 'percent', 'value' => 10, 'weight' => 1, 'max_purchase' => '9000000000000000001'],
+            ['label' => '۲۰ درصد', 'type' => 'percent', 'value' => 20, 'weight' => 1, 'max_purchase' => '9000000000000000001'],
         ],
     ];
     $campaign->save($settings);
@@ -27,7 +28,9 @@ it('issues only one persisted coupon per customer and rejects a stale run', func
 
     $result = $campaign->result($run, $customer->id);
     $coupon = CartRuleCoupon::query()->where('code', $result->coupon)->sole();
-    expect((int) $coupon->usage_limit)->toBe(1);
+    expect((int) $coupon->usage_limit)->toBe(1)
+        ->and(json_decode($result->prize, true)['max_purchase_base'])->toBe('90000000000000000010')
+        ->and(StoreCampaign::formatTomanAmount('9000000000000000001'))->toBe('9,000,000,000,000,000,001');
 
     $campaign->save(array_replace($settings, ['event' => 'nowruz']));
     expect($campaign->spin($run, $customer))->toBeFalse();

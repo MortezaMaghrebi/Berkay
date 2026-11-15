@@ -20,10 +20,19 @@
     <label>وزن شانس
         <input name="prizes[{{ $i }}][weight]" data-prize-field="weight" type="number" min="1" max="10000" value="{{ $prize['weight'] ?? 1 }}" required>
     </label>
+    @php
+        $cap = is_scalar($prize['max_purchase'] ?? null) ? (string) $prize['max_purchase'] : '';
+        $hasCap = preg_match('/\A0*[1-9][0-9]*\z/', $cap) === 1;
+    @endphp
     <label data-prize-cap @if (! in_array($prize['type'] ?? null, ['percent', 'credit', 'shipping'], true)) hidden @endif>
         سقف مبلغ مشمول تخفیف (تومان)
-        <input name="prizes[{{ $i }}][max_purchase]" data-prize-field="max_purchase" type="number" min="1" max="9999999"
-            value="{{ $prize['max_purchase'] ?? '' }}" placeholder="بدون سقف">
+        <span class="bk-prize-cap-entry">
+            <input name="prizes[{{ $i }}][max_purchase]" data-prize-field="max_purchase" type="text"
+                inputmode="numeric" pattern="0*[1-9][0-9]*" dir="ltr" value="{{ $cap }}" placeholder="بدون سقف">
+            <span class="bk-prize-cap-amount" data-prize-cap-preview aria-hidden="true" @if (! $hasCap) hidden @endif>
+                <bdi dir="ltr" data-prize-cap-number>{{ $hasCap ? \Webkul\Berkay\Services\StoreCampaign::formatTomanAmount($cap) : '' }}</bdi> تومان
+            </span>
+        </span>
         <small>مجموع قیمت کالاها پیش از تخفیف و بدون ارسال</small>
     </label>
 </article>

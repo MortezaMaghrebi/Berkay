@@ -3,7 +3,7 @@
         ['berkay', 'admin.berkay.index', 'home', 'icon-dashboard'],
         ['catalog.products', 'admin.berkay.simple_product.index', 'products', 'icon-product'],
         ['sales.orders', 'admin.sales.orders.index', 'orders', 'icon-sales'],
-        ['catalog.categories', 'admin.berkay.simple_category.index', 'categories', 'icon-category'],
+        ['catalog.categories', 'admin.berkay.simple_category.index', 'categories', 'icon-folder'],
         ['berkay.articles', 'admin.berkay.articles.index', 'magazine', 'icon-cms'],
         ['berkay.custom-orders', 'admin.berkay.custom_orders.index', 'custom-orders', 'icon-sales'],
         ['customers.customers', 'admin.customers.customers.index', 'customers', 'icon-customer'],
@@ -34,7 +34,9 @@
         <a href="{{ route('admin.berkay.users.index') }}" @class(['bk-nav-active' => request()->routeIs('admin.berkay.users.*')])><span class="icon-customer" aria-hidden="true"></span>{{ trans('berkay::app.users.title') }}</a>
     @endif
     @if(bouncer()->hasPermission('catalog.attributes') && bouncer()->hasPermission('berkay.attributes'))
-        <a href="{{ route('admin.berkay.attributes.index') }}">{{ trans('berkay::app.variant-settings.title') }}</a>
+        <a href="{{ route('admin.berkay.attributes.index') }}" @class(['bk-nav-active' => request()->routeIs('admin.berkay.attributes.*')])>
+            <span class="icon-attribute" aria-hidden="true"></span>{{ trans('berkay::app.variant-settings.title') }}
+        </a>
     @endif
     @if (bouncer()->hasPermission('configuration'))
         <a href="{{ route('admin.configuration.index', ['slug' => 'berkay', 'slug2' => 'workshop']) }}" @class(['bk-nav-active' => request()->routeIs('admin.configuration.index') && request()->route('slug') === 'berkay' && request()->route('slug2') === 'workshop'])>

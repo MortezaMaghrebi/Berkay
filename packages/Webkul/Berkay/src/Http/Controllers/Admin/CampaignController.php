@@ -8,13 +8,16 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
-use Webkul\FPC\Concerns\ForgetsPages;
 use Webkul\Berkay\Services\StoreCampaign;
+use Webkul\FPC\Concerns\ForgetsPages;
 
 class CampaignController
 {
     use ForgetsPages;
 
+    /**
+     * Show campaign settings and recent wheel results.
+     */
     public function index(Request $request, StoreCampaign $campaign): View
     {
         abort_unless(bouncer()->hasPermission('berkay.campaigns'), 403);
@@ -40,6 +43,9 @@ class CampaignController
         ]);
     }
 
+    /**
+     * Validate and save the channel's campaign settings.
+     */
     public function update(Request $request, StoreCampaign $campaign): RedirectResponse
     {
         abort_unless(bouncer()->hasPermission('berkay.campaigns.edit'), 403);
@@ -56,7 +62,7 @@ class CampaignController
             'prizes.*.type' => ['nullable', Rule::in(array_keys(StoreCampaign::TYPES))],
             'prizes.*.weight' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'prizes.*.value' => ['nullable', 'integer', 'min:0', 'max:9000000'],
-            'prizes.*.max_purchase' => ['nullable', 'integer', 'min:1', 'max:9999999'],
+            'prizes.*.max_purchase' => ['nullable', 'regex:/\A0*[1-9][0-9]*\z/'],
         ]);
 
         $data['prizes'] = array_values(array_filter($data['prizes'] ?? [], fn ($prize) => filled($prize['label'] ?? null)));
@@ -73,16 +79,19 @@ class CampaignController
             $type = $prize['type'] ?? null;
             $value = $prize['value'] ?? 0;
             if (
-                ! $type || empty($prize['weight'])
+                ! $type
+                || empty($prize['weight'])
                 || ($type === 'percent' && ($value < 1 || $value > 100))
                 || ($type === 'credit' && ($value < 1 || ! in_array(core()->getCurrentChannel()->base_currency->code, ['IRR', 'IRT'], true)))
             ) {
                 throw ValidationException::withMessages(['prizes' => 'نوع، وزن و مقدار هر جایزه را بررسی کنید. درصد باید بین ۱ تا ۱۰۰ باشد و اعتبار خرید به تومان یا ریال نیاز دارد.']);
             }
 
-            if (! empty($prize['max_purchase'])
+            if (
+                ! empty($prize['max_purchase'])
                 && in_array($type, ['percent', 'credit', 'shipping'], true)
-                && ! in_array(core()->getCurrentChannel()->base_currency->code, ['IRR', 'IRT'], true)) {
+                && ! in_array(core()->getCurrentChannel()->base_currency->code, ['IRR', 'IRT'], true)
+            ) {
                 throw ValidationException::withMessages(['prizes' => 'برای تعیین سقف خرید به تومان، واحد پول فروشگاه باید تومان یا ریال باشد.']);
             }
         }
@@ -98,6 +107,9 @@ class CampaignController
                 : 'تنظیمات ذخیره شد. بنر رویداد از صفحهٔ اول فروشگاه برداشته شد.');
     }
 
+    /**
+     * Mark a wheel product prize as delivered.
+     */
     public function fulfill(int $id): RedirectResponse
     {
         abort_unless(bouncer()->hasPermission('berkay.campaigns.edit'), 403);
@@ -111,6 +123,9 @@ class CampaignController
         return back()->with('success', 'تحویل هدیه ثبت شد.');
     }
 
+    /**
+     * Reopen a customer's chance to spin the active wheel.
+     */
     public function reset(int $id, StoreCampaign $campaign): RedirectResponse
     {
         abort_unless(bouncer()->hasPermission('berkay.campaigns.edit'), 403);

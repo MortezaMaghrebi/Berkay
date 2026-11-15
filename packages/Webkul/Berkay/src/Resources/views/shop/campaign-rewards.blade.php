@@ -44,7 +44,7 @@
                     @if ($expiresAt && $tone === 'active')
                         <span>مهلت استفاده <time dir="ltr" datetime="{{ $expiresAt->toAtomString() }}">{{ $expiresAt->format('Y/m/d H:i') }}</time></span>
                         @if (! empty($prize['max_purchase']))
-                            <span>سقف مبلغ مشمول تخفیف <strong>{{ number_format($prize['max_purchase']) }} تومان</strong></span>
+                            <span>سقف مبلغ مشمول تخفیف <strong><bdi dir="ltr">{{ \Webkul\Berkay\Services\StoreCampaign::formatTomanAmount($prize['max_purchase']) }}</bdi> تومان</strong></span>
                         @endif
                     @endif
                 </div>

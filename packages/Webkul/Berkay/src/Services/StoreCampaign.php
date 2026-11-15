@@ -8,6 +8,9 @@ use Webkul\CartRule\Repositories\CartRuleRepository;
 
 class StoreCampaign
 {
+    /**
+     * List the available campaign occasions.
+     */
     public const EVENTS = [
         'black-friday' => 'جمعهٔ سیاه', 'valentine' => 'ولنتاین', 'women' => 'روز زن و مادر',
         'men' => 'روز مرد و پدر', 'girls' => 'روز دختر', 'boys' => 'روز پسر',
@@ -15,18 +18,40 @@ class StoreCampaign
         'nowruz' => 'نوروز', 'festival' => 'جشنوارهٔ چرم برکای', 'autumn' => 'کالکشن پاییز',
     ];
 
+    /**
+     * List the available wheel prize types.
+     */
     public const TYPES = [
         'none' => 'بدون جایزه', 'percent' => 'تخفیف درصدی', 'credit' => 'اعتبار خرید (تومان)',
         'shipping' => 'ارسال رایگان', 'product' => 'هدیهٔ محصولی (تحویل با مدیر)',
     ];
 
+    /**
+     * Format a whole toman amount without converting it to a float.
+     */
+    public static function formatTomanAmount(int|string $amount): string
+    {
+        $digits = ltrim((string) $amount, '0') ?: '0';
+
+        return strrev(implode(',', str_split(strrev($digits), 3)));
+    }
+
+    /**
+     * Initialize the service with the campaign settings store.
+     */
     public function __construct(private IntegrationSettings $settings) {}
 
+    /**
+     * Retrieve the current channel's campaign settings.
+     */
     public function settings(): array
     {
         return $this->settings->get('campaign.'.core()->getCurrentChannel()->id) ?? [];
     }
 
+    /**
+     * Retrieve the current campaign and its playable wheel.
+     */
     public function active(): ?array
     {
         $settings = $this->settings();
@@ -44,6 +69,9 @@ class StoreCampaign
         return $settings;
     }
 
+    /**
+     * Run a campaign operation under the current channel's lock.
+     */
     public function locked(callable $callback): mixed
     {
         return DB::transaction(function () use ($callback) {
@@ -54,6 +82,9 @@ class StoreCampaign
         }, 3);
     }
 
+    /**
+     * Save settings and preserve the run for the same occasion.
+     */
     public function save(array $settings): void
     {
         $this->locked(function ($channel) use ($settings) {
@@ -65,6 +96,9 @@ class StoreCampaign
         });
     }
 
+    /**
+     * Find the customer's active result for a campaign run.
+     */
     public function result(string $run, int $customerId): ?object
     {
         return DB::table('berkay_campaign_spins')
@@ -72,6 +106,9 @@ class StoreCampaign
             ->first();
     }
 
+    /**
+     * Reopen an attempt and expire its unused coupon.
+     */
     public function resetSpin(int $id): bool
     {
         return $this->locked(function ($channel) use ($id) {
@@ -114,11 +151,17 @@ class StoreCampaign
         });
     }
 
+    /**
+     * Identify the wheel's current prize configuration.
+     */
     public function wheelVersion(array $event): string
     {
         return hash('sha256', json_encode($event['prizes'], JSON_THROW_ON_ERROR));
     }
 
+    /**
+     * Determine whether the code belongs to a wheel prize.
+     */
     public static function isWheelCoupon(?string $code): bool
     {
         return preg_match('/\A(?:BK-WHEEL-.*|BW-[A-Z0-9]{7})\z/i', (string) $code) === 1;
@@ -147,22 +190,32 @@ class StoreCampaign
         return json_decode($spin->prize, true);
     }
 
+    /**
+     * Record a weighted draw and issue its prize to the customer.
+     */
     public function spin(string $run, $customer, ?string $version = null): bool
     {
         return $this->locked(function ($channel) use ($run, $customer, $version) {
             $event = $this->active();
 
-            if (! $event || ! $event['wheel'] || $event['run'] !== $run || $this->result($run, $customer->id)) {
+            if (
+                ! $event
+                || ! $event['wheel']
+                || $event['run'] !== $run
+                || $this->result($run, $customer->id)
+            ) {
                 return false;
             }
 
             $wheelVersion = $this->wheelVersion($event);
 
-            if ($version !== null && $version !== $wheelVersion) {
+            if (
+                $version !== null
+                && $version !== $wheelVersion
+            ) {
                 return false;
             }
 
-            // Each prize occupies exactly its configured weight in the draw; the visual wedges stay equal.
             $weights = array_map('intval', array_column($event['prizes'], 'weight'));
             $draw = random_int(1, array_sum($weights));
             foreach ($event['prizes'] as $index => $prize) {
@@ -176,7 +229,8 @@ class StoreCampaign
             $prize['wheel_version'] = $wheelVersion;
             $prize['days'] = (int) ($event['days'] ?? 7);
             if (! empty($prize['max_purchase'])) {
-                $prize['max_purchase_base'] = (int) $prize['max_purchase'] * ($channel->base_currency->code === 'IRR' ? 10 : 1);
+                $cap = ltrim((string) $prize['max_purchase'], '0');
+                $prize['max_purchase_base'] = $channel->base_currency->code === 'IRR' ? $cap.'0' : $cap;
             }
             $coupon = match ($prize['type']) {
                 'percent', 'credit', 'shipping' => $this->coupon($prize, $channel, $customer, $prize['days']),
@@ -198,14 +252,22 @@ class StoreCampaign
         });
     }
 
+    /**
+     * Create a single-use coupon for a wheel prize.
+     */
     private function coupon(array $prize, $channel, $customer, int $days): string
     {
         do {
             $code = 'BW-'.strtoupper(Str::random(7));
-        } while (DB::table('cart_rule_coupons')->where('code', $code)->exists()
-            || DB::table('berkay_campaign_spins')->where('coupon', $code)->exists());
+        } while (
+            DB::table('cart_rule_coupons')->where('code', $code)->exists()
+            || DB::table('berkay_campaign_spins')->where('coupon', $code)->exists()
+        );
         $amount = $prize['value'] ?? 0;
-        if ($prize['type'] === 'credit' && $channel->base_currency->code === 'IRR') {
+        if (
+            $prize['type'] === 'credit'
+            && $channel->base_currency->code === 'IRR'
+        ) {
             $amount *= 10;
         }
 
