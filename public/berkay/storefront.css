@@ -971,6 +971,8 @@ html{-webkit-text-size-adjust:100%}
 
 .product-card-copy, .product-card-name { min-width: 0; max-width: 100%; }
 .product-card-name { overflow-wrap: anywhere; white-space: normal; }
+.bk-product-card-details-link { display: grid; gap: inherit; min-width: 0; }
+.bk-product-card-details-link:hover .product-card-name { text-decoration: underline; text-underline-offset: .2em; }
 
 .bk-auth-dialog { position: static; color: inherit; max-width: min(100% - 32px, 480px); }
 .bk-phone-account .bk-auth-tabs { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; border: 0; padding: 4px; margin-block: 0 20px; border-radius: 8px; background: var(--bk-paper); }

@@ -85,6 +85,7 @@
                         <div
                             class="flex gap-x-5 max-md:gap-x-4"
                             v-for="item in cart?.items"
+                            :key="item.id"
                         >
                             <!-- Cart Item Image -->
                             {!! view_render_event('bagisto.shop.checkout.mini-cart.drawer.content.image.before') !!}
@@ -205,7 +206,7 @@
                                     {!! view_render_event('bagisto.shop.checkout.mini-cart.drawer.content.product_details.after') !!}
                                 </div>
 
-                                <div class="flex flex-wrap items-center gap-5 max-md:gap-2.5">
+                                <fieldset class="flex flex-wrap items-center gap-5 max-md:gap-2.5" :disabled="isLoading">
                                     {!! view_render_event('bagisto.shop.checkout.mini-cart.drawer.content.quantity_changer.before') !!}
 
                                     <!-- Cart Item Quantity Changer -->
@@ -234,7 +235,7 @@
                                     </button>
 
                                     {!! view_render_event('bagisto.shop.checkout.mini-cart.drawer.content.remove_button.after') !!}
-                                </div>
+                                </fieldset>
                             </div>
                         </div>
                     </div>
@@ -485,28 +486,26 @@
                 },
 
                 removeItem(itemId) {
-                    this.$emitter.emit('open-confirm-modal', {
-                        agree: () => {
-                            this.isLoading = true;
+                    if (this.isLoading) {
+                        return;
+                    }
 
-                            this.$axios.post('{{ route('shop.api.checkout.cart.destroy') }}', {
-                                '_method': 'DELETE',
-                                'cart_item_id': itemId,
-                            })
-                            .then(response => {
-                                this.cart = response.data.data;
-
-                                this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
-
-                                this.isLoading = false;
-                            })
-                            .catch(error => {
-                                this.$emitter.emit('add-flash', { type: 'error', message: response.data.message });
-
-                                this.isLoading = false;
+                    this.isLoading = true;
+                    this.$axios.post('{{ route('shop.api.checkout.cart.destroy') }}', {
+                        '_method': 'DELETE',
+                        'cart_item_id': itemId,
+                    })
+                        .then(response => {
+                            this.cart = response.data.data;
+                            this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+                        })
+                        .catch(error => {
+                            this.$emitter.emit('add-flash', {
+                                type: 'error',
+                                message: error.response?.data?.message || error.message,
                             });
-                        }
-                    });
+                        })
+                        .finally(() => { this.isLoading = false; });
                 },
             },
         });
