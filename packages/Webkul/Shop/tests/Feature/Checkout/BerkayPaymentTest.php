@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Http;
 use Webkul\Berkay\Repositories\PaymentAttemptRepository;
+use Webkul\Berkay\Services\IntegrationSettings;
+use Webkul\Berkay\Services\MellatGateway;
 use Webkul\Berkay\Services\OrderWorkflow;
 use Webkul\Checkout\Models\Cart;
 use Webkul\Core\Repositories\CoreConfigRepository;
@@ -197,6 +199,131 @@ it('defers automatic invoicing for a high-value bank transfer order', function (
 
     app(OrderWorkflow::class)->advance($order, 'approve');
     expect($order->fresh()->canInvoice())->toBeTrue();
-    $this->get(route('shop.customers.account.orders.view', $order->id))->assertSee('Test transfer instructions');
+    $this->get(route('shop.customers.account.orders.view', $order->id))
+        ->assertSeeText('نمایش نحوهٔ واریز')->assertSeeText('Test transfer instructions');
     Http::assertNothingSent();
+});
+
+it('starts real-mode Zarinpal payments at the documented API and handoff hosts', function () {
+    config(['berkay.zarinpal.sandbox' => false]);
+    $authority = str_repeat('Z', 36);
+    Http::fake(['api.zarinpal.com/pg/v4/payment/request.json' => Http::response(['data' => ['code' => 100, 'authority' => $authority]])]);
+
+    $product = $this->createSimpleProduct(['price' => ['float_value' => 250000], 'special_price' => ['float_value' => null]]);
+    $this->prepareCartForCheckout($product, paymentMethod: 'berkay_zarinpal');
+    $this->get(route('shop.berkay.zarinpal.start'))
+        ->assertRedirect('https://www.zarinpal.com/pg/StartPay/'.$authority);
+
+    Http::assertSentCount(1);
+});
+
+it('confirms an Iran Kish payment only for the stored order reference and amount', function () {
+    $publicKey = <<<'PEM'
+        -----BEGIN PUBLIC KEY-----
+        MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsttX0+RiBv2zrvFBgOXc
+        3fUBGuH4UrwCPu/9quJQzKHn+1XXy8tJ+jKgegCcxDzJv3tM45bIlHAOvZ8OcpyX
+        Y3Q98dK8ME7W/p2T4ZSjDFCO5Zb2d46iBdkkh0Ngafy4zotEDLt64BrrPJBLqTIr
+        +uTkuvTXT7gLIzeWO4fqbrgwmIEm71jB5C08gOhdaBdkPlY39WWWTFbbGJ1dXPdi
+        iWa1MO6Vb42VSwIbYc/DNd9G/qXacGWxYcWAdYsx5YGOskNtzuFh0txgr00dFoF0
+        EvAHKKJDHXXRByDl8llGUz0Mec5NzhWuTDIpKDQvj6j5pHXJGluqMSrJl/9efasU
+        iwIDAQAB
+        -----END PUBLIC KEY-----
+        PEM;
+    $settings = app(IntegrationSettings::class);
+    foreach (['enabled' => true, 'terminal_id' => '01000001', 'acceptor_id' => '123450000000001', 'password' => 'A123456789ABCDEF', 'public_key' => $publicKey] as $name => $value) {
+        $settings->put('irankish.'.$name, $value);
+    }
+
+    $authority = str_repeat('A', 36);
+    $receipt = '123456789012';
+    Http::fake([
+        'ikc.shaparak.ir/api/v3/tokenization/make' => Http::response(['status' => true, 'responseCode' => '00', 'result' => ['token' => $authority]]),
+        'ikc.shaparak.ir/api/v3/confirmation/purchase' => fn ($request) => Http::response([
+            'status' => true, 'responseCode' => '00',
+            'result' => ['responseCode' => '00', 'amount' => $request['amount'], 'retrievalReferenceNumber' => $receipt],
+        ]),
+    ]);
+
+    $product = $this->createSimpleProduct(['price' => ['float_value' => 250000], 'special_price' => ['float_value' => null]]);
+    $this->prepareCartForCheckout($product, paymentMethod: 'berkay_irankish');
+    $this->get(route('shop.berkay.bank.start', 'irankish'))->assertOk()->assertViewIs('berkay::shop.bank-handoff')
+        ->assertViewHas('field', 'tokenIdentity');
+
+    $attempt = app(PaymentAttemptRepository::class)->findOneByField('authority', $authority);
+    $callback = route('shop.berkay.bank.callback', [$attempt->token, 'irankish']);
+    $response = [
+        'token' => $authority, 'responseCode' => '00', 'requestId' => $attempt->gateway_context['reference'],
+        'acceptorId' => '123450000000001', 'retrievalReferenceNumber' => $receipt, 'systemTraceAuditNumber' => '012345',
+        'amount' => (string) $attempt->amount_rial,
+    ];
+
+    $this->post($callback, array_replace($response, ['amount' => '1000']))->assertViewIs('berkay::shop.payment-result');
+    Http::assertSentCount(1);
+    $this->post($callback, $response)->assertRedirect(route('shop.checkout.onepage.success'));
+    $this->post($callback, $response)->assertRedirect(route('shop.checkout.onepage.success'));
+
+    Http::assertSentCount(2);
+    expect($attempt->fresh()->status)->toBe('paid')->and($attempt->fresh()->receipt)->toBe('irankish:'.$receipt);
+    expect(Invoice::query()->where('order_id', $attempt->order_id)->count())->toBe(1);
+});
+
+it('settles a BehPardakht payment after matching the callback with the authorized order', function () {
+    $settings = app(IntegrationSettings::class);
+    $settings->put('mellat.enabled', true);
+    $gateway = Mockery::mock(MellatGateway::class, [$settings])->makePartial()->shouldAllowMockingProtectedMethods();
+    $authority = 'M123456789000011';
+    $gateway->shouldReceive('ready')->andReturn(true);
+    $gateway->shouldReceive('call')->once()->with('bpPayRequest', Mockery::on(fn ($params) => $params['amount'] > 0))->andReturn('0,'.$authority);
+    $gateway->shouldReceive('call')->once()->with('bpVerifyRequest', Mockery::on(fn ($params) => $params['saleReferenceId'] === 123456789))->andReturn('0');
+    $gateway->shouldReceive('call')->once()->with('bpSettleRequest', Mockery::on(fn ($params) => $params['saleReferenceId'] === 123456789))->andReturn('0');
+    $this->app->instance(MellatGateway::class, $gateway);
+
+    $this->setConfig('berkay.workshop.review.amount_limit', 100_000);
+    $this->loginAsCustomer();
+    $product = $this->createSimpleProduct(['price' => ['float_value' => 250000], 'special_price' => ['float_value' => null]]);
+    $cartId = $this->prepareCartForCheckout($product, paymentMethod: 'berkay_mellat');
+    $this->postJson(route('shop.checkout.onepage.orders.store'))->assertOk();
+    $order = Order::query()->where('cart_id', $cartId)->firstOrFail();
+    $pay = route('shop.berkay.zarinpal.approved', $order->id);
+    $this->post($pay)->assertRedirect(route('shop.customers.account.orders.view', $order->id));
+    app(OrderWorkflow::class)->advance($order, 'approve');
+    $this->post($pay)->assertOk()->assertViewIs('berkay::shop.bank-handoff')
+        ->assertViewHas('field', 'RefId');
+
+    $attempt = app(PaymentAttemptRepository::class)->findOneByField('authority', $authority);
+    $callback = route('shop.berkay.bank.callback', [$attempt->token, 'mellat']);
+    $response = [
+        'RefId' => $authority, 'ResCode' => '0',
+        'SaleOrderId' => (string) $attempt->gateway_context['reference'], 'SaleReferenceId' => '123456789',
+    ];
+
+    $this->post($callback, array_replace($response, ['SaleOrderId' => '123']))->assertViewIs('berkay::shop.payment-result');
+    $this->post($callback, $response)->assertRedirect(route('shop.checkout.onepage.success'));
+    $this->post($callback, $response)->assertRedirect(route('shop.checkout.onepage.success'));
+
+    expect($attempt->fresh()->status)->toBe('paid')->and($attempt->fresh()->receipt)->toBe('mellat:123456789');
+    expect(OrderTransaction::query()->where('order_id', $attempt->order_id)->count())->toBe(1);
+});
+
+it('recovers an approved order whose bank payment was verified before invoicing', function () {
+    $authority = str_repeat('Q', 36);
+    Http::fake(['sandbox.zarinpal.com/pg/v4/payment/request.json' => Http::response(['data' => ['code' => 100, 'authority' => $authority]])]);
+    $this->setConfig('berkay.workshop.review.amount_limit', 100_000);
+    $this->loginAsCustomer();
+    $product = $this->createSimpleProduct(['price' => ['float_value' => 250000], 'special_price' => ['float_value' => null]]);
+    $cartId = $this->prepareCartForCheckout($product, paymentMethod: 'berkay_zarinpal');
+    $this->postJson(route('shop.checkout.onepage.orders.store'))->assertOk();
+    $order = Order::query()->where('cart_id', $cartId)->firstOrFail();
+    app(OrderWorkflow::class)->advance($order, 'approve');
+
+    $pay = route('shop.berkay.zarinpal.approved', $order->id);
+    $this->post($pay)->assertRedirect('https://sandbox.zarinpal.com/pg/StartPay/'.$authority);
+    $attempts = app(PaymentAttemptRepository::class);
+    $attempt = $attempts->findOneByField('authority', $authority);
+    $attempts->recordVerification($attempt->id, '91235678');
+
+    $this->post($pay)->assertRedirect(route('shop.customers.account.orders.view', $order->id))
+        ->assertSessionHas('success', trans('berkay::app.payment-completed'));
+    Http::assertSentCount(1);
+    expect($attempt->fresh()->status)->toBe('paid')->and($order->invoices()->count())->toBe(1);
 });

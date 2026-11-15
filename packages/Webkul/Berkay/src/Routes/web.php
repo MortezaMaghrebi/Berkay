@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
 use Webkul\Attribute\Repositories\AttributeRepository;
@@ -13,27 +14,29 @@ use Webkul\Berkay\Http\Controllers\Admin\OperationsController;
 use Webkul\Berkay\Http\Controllers\Admin\SimpleCatalogController;
 use Webkul\Berkay\Http\Controllers\Admin\UserManagementController;
 use Webkul\Berkay\Http\Controllers\Admin\WorkshopController;
+use Webkul\Berkay\Http\Controllers\Shop\CampaignController;
 use Webkul\Berkay\Http\Controllers\Shop\ContentSitemapController;
 use Webkul\Berkay\Http\Controllers\Shop\CustomRequestController;
 use Webkul\Berkay\Http\Controllers\Shop\GuestTrackingController;
 use Webkul\Berkay\Http\Controllers\Shop\MagazineController;
+use Webkul\Berkay\Http\Controllers\Shop\OnlinePaymentController;
 use Webkul\Berkay\Http\Controllers\Shop\ProductCollectionController;
 use Webkul\Berkay\Http\Controllers\Shop\StorefrontEditorController;
 use Webkul\Berkay\Http\Controllers\Shop\TorobController;
-use Webkul\Berkay\Http\Controllers\Shop\ZarinpalController;
 use Webkul\Berkay\Http\Middleware\ProductEditorAccess;
 use Webkul\Berkay\Services\ProductCollections;
+use Webkul\Berkay\Services\StoreCampaign;
 use Webkul\Core\Http\Middleware\NoCacheMiddleware;
 
 Route::middleware(['web', 'shop'])->group(function () {
-    Route::get('berkay/campaign-art/{event}.jpg', [\Webkul\Berkay\Http\Controllers\Shop\CampaignController::class, 'artwork'])
-        ->whereIn('event', array_keys(\Webkul\Berkay\Services\StoreCampaign::EVENTS))
+    Route::get('berkay/campaign-art/{event}.jpg', [CampaignController::class, 'artwork'])
+        ->whereIn('event', array_keys(StoreCampaign::EVENTS))
         ->name('shop.berkay.campaign.artwork');
-    Route::get('store-campaign', [\Webkul\Berkay\Http\Controllers\Shop\CampaignController::class, 'index'])
+    Route::get('store-campaign', [CampaignController::class, 'index'])
         ->middleware(NoCacheMiddleware::class)->name('shop.berkay.campaign.index');
-    Route::get('store-campaign/rewards', [\Webkul\Berkay\Http\Controllers\Shop\CampaignController::class, 'rewards'])
+    Route::get('store-campaign/rewards', [CampaignController::class, 'rewards'])
         ->middleware(NoCacheMiddleware::class)->name('shop.berkay.campaign.rewards');
-    Route::post('store-campaign/spin', [\Webkul\Berkay\Http\Controllers\Shop\CampaignController::class, 'spin'])
+    Route::post('store-campaign/spin', [CampaignController::class, 'spin'])
         ->middleware([NoCacheMiddleware::class, 'throttle:8,1'])->name('shop.berkay.campaign.spin');
     Route::get('order-tracking/{id}', GuestTrackingController::class)->whereNumber('id')
         ->middleware(['signed', NoCacheMiddleware::class, 'throttle:30,1'])->name('shop.berkay.guest_tracking');
@@ -70,14 +73,16 @@ Route::middleware(['web', 'admin', NoCacheMiddleware::class])
         Route::patch('catalog-table', [CatalogTableController::class, 'update'])->middleware('throttle:60,1')->name('admin.berkay.catalog_table.update');
         Route::post('catalog-table/prices', [CatalogTableController::class, 'adjust'])->middleware('throttle:5,1')->name('admin.berkay.catalog_table.adjust');
         Route::delete('catalog-table/{parent}/{item}', [CatalogTableController::class, 'destroy'])->whereNumber(['parent', 'item'])->name('admin.berkay.catalog_table.destroy');
-        Route::get('campaigns', [\Webkul\Berkay\Http\Controllers\Admin\CampaignController::class, 'index'])->name('admin.berkay.campaigns.index');
-        Route::put('campaigns', [\Webkul\Berkay\Http\Controllers\Admin\CampaignController::class, 'update'])->name('admin.berkay.campaigns.update');
-        Route::post('campaigns/results/{id}/fulfill', [\Webkul\Berkay\Http\Controllers\Admin\CampaignController::class, 'fulfill'])
+        Route::get('campaigns', [Webkul\Berkay\Http\Controllers\Admin\CampaignController::class, 'index'])->name('admin.berkay.campaigns.index');
+        Route::put('campaigns', [Webkul\Berkay\Http\Controllers\Admin\CampaignController::class, 'update'])->name('admin.berkay.campaigns.update');
+        Route::post('campaigns/results/{id}/fulfill', [Webkul\Berkay\Http\Controllers\Admin\CampaignController::class, 'fulfill'])
             ->whereNumber('id')->name('admin.berkay.campaigns.fulfill');
-        Route::post('campaigns/results/{id}/reset', [\Webkul\Berkay\Http\Controllers\Admin\CampaignController::class, 'reset'])
+        Route::post('campaigns/results/{id}/reset', [Webkul\Berkay\Http\Controllers\Admin\CampaignController::class, 'reset'])
             ->whereNumber('id')->name('admin.berkay.campaigns.reset');
         Route::get('integrations', [IntegrationController::class, 'index'])->name('admin.berkay.integrations.index');
         Route::put('integrations', [IntegrationController::class, 'update'])->name('admin.berkay.integrations.update');
+        Route::put('integrations/payment/{provider}', [IntegrationController::class, 'updatePayment'])
+            ->whereIn('provider', ['mellat', 'irankish', 'moneytransfer'])->name('admin.berkay.integrations.payment.update');
         Route::get('kavenegar', [KavenegarController::class, 'index'])->name('admin.berkay.kavenegar.index');
         Route::put('kavenegar', [KavenegarController::class, 'update'])->name('admin.berkay.kavenegar.update');
         Route::post('kavenegar/send', [KavenegarController::class, 'send'])
@@ -98,13 +103,18 @@ Route::middleware(['api', StartSession::class, 'shop', 'throttle:60,1'])
     ->name('shop.berkay.torob.products');
 
 Route::middleware(['web', 'shop', 'customer', NoCacheMiddleware::class, 'throttle:8,1'])
-    ->post('customer/account/orders/{id}/approved-payment', [ZarinpalController::class, 'payApproved'])
+    ->post('customer/account/orders/{id}/approved-payment', [OnlinePaymentController::class, 'payApproved'])
     ->whereNumber('id')->name('shop.berkay.zarinpal.approved');
 
-Route::middleware(['web', 'shop', 'throttle:20,1'])->group(function () {
-    Route::get('payments/zarinpal/resume/{token}', [ZarinpalController::class, 'resume'])->where('token', '[A-Za-z0-9]{64}')->name('shop.berkay.zarinpal.resume');
-    Route::get('payments/zarinpal/start', [ZarinpalController::class, 'start'])->name('shop.berkay.zarinpal.start');
-    Route::get('payments/zarinpal/callback/{token}', [ZarinpalController::class, 'callback'])->where('token', '[A-Za-z0-9]{64}')->name('shop.berkay.zarinpal.callback');
+Route::middleware(['web', 'shop', NoCacheMiddleware::class, 'throttle:20,1'])->group(function () {
+    Route::get('payments/zarinpal/resume/{token}', [OnlinePaymentController::class, 'resume'])->where('token', '[A-Za-z0-9]{64}')->name('shop.berkay.zarinpal.resume');
+    Route::get('payments/zarinpal/start', [OnlinePaymentController::class, 'start'])->name('shop.berkay.zarinpal.start');
+    Route::get('payments/zarinpal/callback/{token}', [OnlinePaymentController::class, 'callback'])->where('token', '[A-Za-z0-9]{64}')->name('shop.berkay.zarinpal.callback');
+    Route::get('payments/bank/{provider}/start', [OnlinePaymentController::class, 'start'])
+        ->whereIn('provider', ['mellat', 'irankish'])->name('shop.berkay.bank.start');
+    Route::post('payments/bank/callback/{token}/{provider}', [OnlinePaymentController::class, 'callback'])
+        ->withoutMiddleware(PreventRequestForgery::class)
+        ->where('token', '[A-Za-z0-9]{64}')->whereIn('provider', ['mellat', 'irankish'])->name('shop.berkay.bank.callback');
 });
 
 Route::middleware(['web', 'admin', NoCacheMiddleware::class])->prefix(config('app.admin_url').'/berkay')

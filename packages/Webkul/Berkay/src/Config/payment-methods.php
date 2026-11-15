@@ -1,5 +1,7 @@
 <?php
 
+use Webkul\Berkay\Payment\IranKish;
+use Webkul\Berkay\Payment\Mellat;
 use Webkul\Berkay\Payment\Zarinpal;
 
 return [
@@ -11,4 +13,6 @@ return [
         'active' => false,
         'sort' => 1,
     ],
+    'berkay_mellat' => ['class' => Mellat::class, 'code' => 'berkay_mellat', 'title' => 'بانک ملت (به‌پرداخت)', 'sort' => 2],
+    'berkay_irankish' => ['class' => IranKish::class, 'code' => 'berkay_irankish', 'title' => 'بانک تجارت (ایران‌کیش)', 'sort' => 3],
 ];

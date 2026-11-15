@@ -6,7 +6,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Webkul\Admin\Http\Controllers\Controller;
+use Webkul\Berkay\Http\Requests\BankPaymentSettingsRequest;
 use Webkul\Berkay\Http\Requests\IntegrationSettingsRequest;
+use Webkul\Berkay\Services\BankGateways;
 use Webkul\Berkay\Services\IntegrationSettings;
 use Webkul\Core\Repositories\CoreConfigRepository;
 
@@ -16,7 +18,7 @@ class IntegrationController extends Controller
     public function __construct(protected IntegrationSettings $settings, protected CoreConfigRepository $configuration) {}
 
     /** Render provider status without sending any stored credential to the browser. */
-    public function index(): View
+    public function index(BankGateways $banks): View
     {
         abort_unless(bouncer()->hasPermission('berkay.integrations'), 403);
 
@@ -34,6 +36,12 @@ class IntegrationController extends Controller
             'merchantConfigured' => filled($this->settings->get('zarinpal.merchant_id')),
             'sandbox' => $this->settings->get('zarinpal.sandbox') ?? true,
             'torobEnabled' => $this->settings->get('torob.enabled') ?? false,
+            'bankStates' => collect(array_keys(BankGateways::CREDENTIALS))->mapWithKeys(fn ($bank) => [$bank => [
+                'enabled' => (bool) $this->settings->get($bank.'.enabled'),
+                'ready' => $banks->gateway($bank)->ready(),
+                'saved' => collect(BankGateways::CREDENTIALS[$bank])->mapWithKeys(fn ($key) => [$key => filled($this->settings->get($bank.'.'.$key))]),
+            ]]),
+            'transferInstructions' => core()->getConfigData('sales.payment_methods.moneytransfer.mailing_address'),
         ]);
     }
 
@@ -41,7 +49,7 @@ class IntegrationController extends Controller
     public function update(IntegrationSettingsRequest $request): RedirectResponse
     {
         $data = $request->validated();
-        if ($data['zarinpal_active'] && blank($data['zarinpal_merchant_id'] ?? $this->settings->get('zarinpal.merchant_id'))) {
+        if ($data['zarinpal_active'] && blank(($data['zarinpal_merchant_id'] ?? null) ?: $this->settings->get('zarinpal.merchant_id'))) {
             return back()->withErrors(['zarinpal_merchant_id' => trans('berkay::integrations.merchant-required')])
                 ->withInput($request->except('zarinpal_merchant_id'));
         }
@@ -62,5 +70,40 @@ class IntegrationController extends Controller
         });
 
         return redirect()->route('admin.berkay.integrations.index')->with('success', trans('berkay::app.saved'));
+    }
+
+    /** Save one provider without replacing omitted credentials or unrelated settings. */
+    public function updatePayment(BankPaymentSettingsRequest $request, string $provider): RedirectResponse
+    {
+        $data = $request->validated();
+
+        if ($provider === 'moneytransfer') {
+            $this->configuration->create([
+                'channel' => core()->getCurrentChannelCode(),
+                'sales' => ['payment_methods' => ['moneytransfer' => ['mailing_address' => $data['instructions'] ?? '']]],
+            ]);
+
+            return back()->with('success', trans('berkay::app.saved'));
+        }
+
+        $credentials = collect(BankGateways::CREDENTIALS[$provider])->mapWithKeys(fn ($key) => [
+            $key => filled($data[$key] ?? null) ? $data[$key] : $this->settings->get($provider.'.'.$key),
+        ]);
+
+        if ($data['enabled'] && $credentials->contains(fn ($value) => blank($value))) {
+            return back()->withErrors(['enabled' => trans('berkay::integrations.merchant-required')], $provider);
+        }
+
+        DB::transaction(function () use ($provider, $data, $credentials) {
+            foreach ($credentials as $key => $value) {
+                if (filled($data[$key] ?? null)) {
+                    $this->settings->put($provider.'.'.$key, $value);
+                }
+            }
+
+            $this->settings->put($provider.'.enabled', (bool) $data['enabled']);
+        });
+
+        return back()->with('success', trans('berkay::app.saved'));
     }
 }

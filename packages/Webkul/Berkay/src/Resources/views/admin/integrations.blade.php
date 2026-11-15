@@ -70,6 +70,8 @@
                 </details>
             </form>
 
+            @include('berkay::admin.bank-payment-settings')
+
             <section id="sms" class="bk-integration-card" aria-labelledby="integration-sms-title">
                 <header>
                     <h2 id="integration-sms-title">پیامک‌های کاوه‌نگار</h2>

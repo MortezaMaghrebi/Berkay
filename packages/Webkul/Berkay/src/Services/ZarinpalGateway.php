@@ -3,6 +3,7 @@
 namespace Webkul\Berkay\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 use Throwable;
 
@@ -33,7 +34,7 @@ class ZarinpalGateway
     }
 
     /** Confirm payment with the bank rather than trusting browser callback parameters. */
-    public function verify(string $authority, int $amountRial, ?array $context = null): string
+    public function verify(string $authority, int $amountRial, ?array $context = null, array $callback = []): string
     {
         $context ??= $this->context();
         $response = $this->call('verify', [
@@ -60,7 +61,7 @@ class ZarinpalGateway
     {
         $context ??= $this->context();
 
-        return 'https://'.($context['sandbox'] ? 'sandbox.zarinpal.com' : 'payment.zarinpal.com').'/pg/StartPay/'.$authority;
+        return 'https://'.($context['sandbox'] ? 'sandbox.zarinpal.com' : 'www.zarinpal.com').'/pg/StartPay/'.$authority;
     }
 
     /** Freeze provider identity and mode for an in-flight payment. */
@@ -75,20 +76,24 @@ class ZarinpalGateway
     /** Use verified TLS and bounded timeouts without exposing merchant credentials. */
     protected function call(string $action, array $data, array $context): array
     {
-        $host = $context['sandbox'] ? 'sandbox.zarinpal.com' : 'payment.zarinpal.com';
+        $host = $context['sandbox'] ? 'sandbox.zarinpal.com' : 'api.zarinpal.com';
 
         try {
             $response = Http::connectTimeout(5)->timeout(20)->acceptJson()
                 ->post('https://'.$host.'/pg/v4/payment/'.$action.'.json', $data);
 
-            if (! $response->successful()) {
+            $body = $response->json();
+
+            if (! $response->successful() || ! is_array($body)) {
+                Log::warning('Zarinpal returned an unsuccessful HTTP response.', ['operation' => $action, 'http_status' => $response->status()]);
+
                 throw new RuntimeException;
             }
 
-            $body = $response->json();
+            $code = $body['errors']['code'] ?? null;
 
-            if (! is_array($body)) {
-                throw new RuntimeException;
+            if (is_numeric($code)) {
+                Log::warning('Zarinpal rejected a payment operation.', ['operation' => $action, 'provider_code' => (int) $code]);
             }
 
             return $body;

@@ -22,6 +22,33 @@ beforeEach(function () {
     $this->smsSettings = ['enabled' => 0, 'api_key' => 'TESTCREDENTIAL123456789'];
 });
 
+it('stores bank terminal settings encrypted and keeps blank credentials on later saves', function () {
+    $this->loginAsAdmin();
+    $settings = app(IntegrationSettings::class);
+    $url = route('admin.berkay.integrations.payment.update', 'mellat');
+    $secret = 'temporary-mellat-password';
+
+    $this->put($url, ['enabled' => 1, 'terminal_id' => '12345678', 'username' => 'terminal-user', 'password' => $secret])
+        ->assertSessionHasNoErrors()->assertRedirect();
+    $this->put($url, ['enabled' => 0, 'terminal_id' => '', 'username' => '', 'password' => ''])
+        ->assertSessionHasNoErrors()->assertRedirect();
+
+    expect($settings->get('mellat.password'))->toBe($secret)
+        ->and($settings->get('mellat.enabled'))->toBeFalse();
+    expect(DB::table('berkay_integration_settings')->where('name', 'mellat.password')->value('value'))->not->toContain($secret);
+
+    $this->get(route('admin.berkay.integrations.index'))->assertOk()->assertDontSee($secret)
+        ->assertSee('بانک ملت')->assertSee('بانک تجارت');
+});
+
+it('lets staff configure the same transfer instructions shown in customer orders', function () {
+    $this->loginAsAdmin();
+    $this->put(route('admin.berkay.integrations.payment.update', 'moneytransfer'), ['instructions' => 'Example branch transfer instructions'])
+        ->assertSessionHasNoErrors()->assertRedirect();
+
+    expect(core()->getConfigData('sales.payment_methods.moneytransfer.mailing_address'))->toBe('Example branch transfer instructions');
+});
+
 it('encrypts administrator credentials and never includes them in the rendered settings', function () {
     $this->loginAsAdmin();
     $this->put(route('admin.berkay.integrations.update'), $this->integrationData)->assertRedirect();

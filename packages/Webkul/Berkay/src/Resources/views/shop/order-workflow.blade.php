@@ -1,4 +1,5 @@
 @php $progress = app(\Webkul\Berkay\Services\OrderWorkflow::class)->timeline($order); @endphp
+@php $provider = \Illuminate\Support\Str::after((string) $order->payment?->method, 'berkay_'); @endphp
 <section class="bk-order-workflow">
     <h2>{{ trans('berkay::workflow.manage') }}</h2>
     @include('berkay::shop.order-steps')
@@ -8,22 +9,18 @@
         <p>{{ trans('berkay::workflow.waiting') }}</p>
     @elseif ($progress['record']?->review === 'approved')
         <p>{{ trans('berkay::workflow.approved') }}</p>
-        @if (! $progress['paid'] && $order->payment?->method === 'berkay_zarinpal')
+        @if (! $progress['paid'] && isset(\Webkul\Berkay\Services\BankGateways::METHODS[$provider]))
             <form method="post" action="{{ route('shop.berkay.zarinpal.approved', $order->id) }}">
                 @csrf
                 <button class="bk-button" type="submit">{{ trans('berkay::workflow.pay') }}</button>
             </form>
-        @elseif (! $progress['paid'])
-            <p>{{ trans('berkay::workflow.offline') }}</p>
-            @if ($order->payment?->method === 'moneytransfer')
-                @php $details = \Webkul\Payment\Facades\Payment::getAdditionalDetails('moneytransfer'); @endphp
-                @if ($details)
-                    <p class="whitespace-pre-line">{{ $details['value'] }}</p>
-                @endif
-            @endif
         @endif
     @else
         <p>{{ trans('berkay::workflow.autoApproved') }}</p>
+    @endif
+
+    @if (! $progress['ended'] && ! $progress['waiting'] && ! $progress['paid'] && $order->payment?->method === 'moneytransfer')
+        @include('berkay::shop.transfer-instructions')
     @endif
 
     @foreach ($order->shipments as $shipment)
