@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 use Webkul\Admin\DataGrids\Customers\CustomerDataGrid;
 use Webkul\Admin\DataGrids\Customers\View\InvoiceDataGrid;
@@ -125,16 +126,20 @@ class CustomerController extends Controller
     public function update(int $id)
     {
         $customer = $this->customerRepository->findOrFail($id);
-        $phone = request()->validate(['phone' => ['required', 'string', 'max:32']])['phone'];
-        request()->merge(['phone' => app(PhoneVerification::class)->normalize($phone)]);
+        $phone = request()->validate(['phone' => ['nullable', 'string', 'max:32']])['phone'] ?? null;
+
+        if ($phone !== null && $phone !== '') {
+            request()->merge(['phone' => app(PhoneVerification::class)->normalize($phone)]);
+        }
 
         $this->validate(request(), [
             'first_name' => 'string|required',
             'last_name' => 'string|required',
-            'gender' => 'required',
-            'email' => 'nullable|email|unique:customers,email,'.$id.',id,channel_id,'.$customer->channel_id,
-            'date_of_birth' => 'date|before:today',
-            'phone' => ['required', 'unique:customers,phone,'.$id],
+            'gender' => 'nullable|string|max:50',
+            'email' => 'nullable|required_without:phone|email|unique:customers,email,'.$id.',id,channel_id,'.$customer->channel_id,
+            'date_of_birth' => 'nullable|date|before:today',
+            'phone' => ['nullable', 'required_without:email', 'unique:customers,phone,'.$id],
+            'password' => ['nullable', 'string', 'min:8', 'max:72', 'confirmed'],
         ]);
 
         $data = request()->only([
@@ -148,6 +153,10 @@ class CustomerController extends Controller
             'status',
             'is_suspended',
         ]);
+
+        if (request()->filled('password')) {
+            $data['password'] = Hash::make(request()->input('password'));
+        }
 
         Event::dispatch('customer.update.before', $id);
 

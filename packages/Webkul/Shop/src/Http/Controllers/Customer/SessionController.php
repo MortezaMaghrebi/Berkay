@@ -5,11 +5,13 @@ namespace Webkul\Shop\Http\Controllers\Customer;
 use Illuminate\Foundation\Auth\ThrottlesLogins;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Webkul\Admin\Http\Controllers\User\SessionController as AdminSessionController;
+use Webkul\Berkay\Services\PhoneVerification;
 use Webkul\Shop\Http\Controllers\Controller;
-use Webkul\Shop\Http\Requests\Customer\LoginRequest;
+use Webkul\Shop\Http\Requests\Customer\StorefrontLoginRequest;
 
 class SessionController extends Controller
 {
@@ -52,76 +54,59 @@ class SessionController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     *
-     * @return Response
+     * Authenticate a storefront password sign-in and redirect by account role.
      */
-    public function store(LoginRequest $loginRequest)
+    public function store(StorefrontLoginRequest $request, PhoneVerification $verification): RedirectResponse
     {
-        $credentials = $loginRequest->only(['email', 'password']);
-
-        $credentials['channel_id'] = core()->getCurrentChannel()->id;
-
-        if ($this->hasTooManyLoginAttempts($loginRequest)) {
-            $this->fireLockoutEvent($loginRequest);
-
-            return $this->sendLockoutResponse($loginRequest);
+        if (auth()->guard('admin')->check()) {
+            return redirect()->route('admin.dashboard.index');
         }
 
-        if (auth()->guard('admin')->validate($loginRequest->only(['email', 'password']))) {
-            $response = app(\Webkul\Admin\Http\Controllers\User\SessionController::class)->store();
-            if (auth()->guard('admin')->check()) {
-                $this->clearLoginAttempts($loginRequest);
-                session()->regenerate();
-            }
+        $identifier = $request->validated('email');
+        $isEmail = filter_var($identifier, FILTER_VALIDATE_EMAIL) !== false;
+        $identity = $isEmail ? $identifier : $verification->normalize($identifier);
+        $request->merge(['email' => $identity]);
 
-            return $response;
+        if ($this->hasTooManyLoginAttempts($request)) {
+            $this->fireLockoutEvent($request);
+
+            return $this->sendLockoutResponse($request);
         }
 
-        if (! auth()->guard('customer')->attempt($credentials)) {
-            $this->incrementLoginAttempts($loginRequest);
+        $password = $request->validated('password');
+        $adminCredentials = ['email' => $identity, 'password' => $password];
 
-            session()->flash('error', trans('shop::app.customers.login-form.invalid-credentials'));
-
-            return redirect()->back();
+        if ($isEmail && auth()->guard('admin')->validate($adminCredentials)) {
+            return app(AdminSessionController::class)->store();
         }
 
-        $this->clearLoginAttempts($loginRequest);
+        $guard = auth()->guard('customer');
 
-        if (! auth()->guard('customer')->user()->status) {
-            auth()->guard('customer')->logout();
+        if (
+            ! core()->getConfigData('berkay.store.authentication.customer_password')
+            || ! $guard->attempt([
+                $isEmail ? 'email' : 'phone' => $identity,
+                'password' => $password,
+                'channel_id' => core()->getCurrentChannel()->id,
+                'status' => true,
+                'is_verified' => true,
+                'is_suspended' => false,
+            ])
+        ) {
+            $this->incrementLoginAttempts($request);
 
-            session()->flash('warning', trans('shop::app.customers.login-form.not-activated'));
-
-            return redirect()->back();
+            throw ValidationException::withMessages([
+                'email' => trans('shop::app.customers.login-form.invalid-credentials'),
+            ])->redirectTo(route('shop.customer.session.index', ['tab' => 'password']));
         }
 
-        if (! auth()->guard('customer')->user()->is_verified) {
-            session()->flash('info', trans('shop::app.customers.login-form.verify-first'));
+        $this->clearLoginAttempts($request);
+        $request->session()->regenerate();
+        $request->session()->forget(['shop.url.intended', 'berkay.phone.verified']);
 
-            Cookie::queue(Cookie::make('enable-resend', 'true', 1));
+        Event::dispatch('customer.after.login', $guard->user());
 
-            Cookie::queue(Cookie::make('email-for-resend', $loginRequest->input('email'), 1));
-
-            auth()->guard('customer')->logout();
-
-            return redirect()->back();
-        }
-
-        /**
-         * Event passed to prepare cart after login.
-         */
-        Event::dispatch('customer.after.login', auth()->guard()->user());
-
-        if ($intended = session()->pull('shop.url.intended')) {
-            return redirect()->to($intended);
-        }
-
-        if (core()->getConfigData('customer.settings.login_options.redirected_to_page') == 'account') {
-            return redirect()->route('shop.customers.account.profile.index');
-        }
-
-        return redirect()->route('shop.home.index');
+        return redirect()->route('shop.customers.account.orders.index');
     }
 
     /**

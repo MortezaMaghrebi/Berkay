@@ -85,7 +85,7 @@
             
                         <!-- Email -->
                         <x-admin::form.control-group>
-                            <x-admin::form.control-group.label class="required">
+                            <x-admin::form.control-group.label>
                                 @lang('admin::app.customers.customers.view.edit.email')
                             </x-admin::form.control-group.label>
             
@@ -102,6 +102,34 @@
                             <x-admin::form.control-group.error control-name="email" />
                         </x-admin::form.control-group>
             
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label for="customer-password">
+                                @lang('berkay::app.authentication.new-password')
+                            </x-admin::form.control-group.label>
+                            <x-admin::form.control-group.control
+                                type="password"
+                                name="password"
+                                id="customer-password"
+                                autocomplete="new-password"
+                                maxlength="72"
+                            />
+                            <x-admin::form.control-group.error control-name="password" />
+                        </x-admin::form.control-group>
+
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label for="customer-password-confirmation">
+                                @lang('berkay::app.authentication.confirm-password')
+                            </x-admin::form.control-group.label>
+                            <x-admin::form.control-group.control
+                                type="password"
+                                name="password_confirmation"
+                                id="customer-password-confirmation"
+                                autocomplete="new-password"
+                                maxlength="72"
+                            />
+                            <x-admin::form.control-group.error control-name="password_confirmation" />
+                        </x-admin::form.control-group>
+
                         <div class="flex gap-4 max-sm:flex-wrap">
                             <!-- Phone -->
                             <x-admin::form.control-group class="mb-2.5 w-full">
@@ -144,7 +172,7 @@
                         <div class="flex gap-4 max-sm:flex-wrap">
                             <!-- Gender -->
                             <x-admin::form.control-group class="w-full">
-                                <x-admin::form.control-group.label class="required">
+                                <x-admin::form.control-group.label>
                                     @lang('admin::app.customers.customers.view.edit.gender')
                                 </x-admin::form.control-group.label>
             
@@ -153,9 +181,10 @@
                                     name="gender"
                                     ::value="customer.gender"
                                     id="gender"
-                                    rules="required"
                                     :label="trans('admin::app.customers.customers.view.edit.gender')"
                                 >
+                                    <option value="">—</option>
+
                                     <option value="Male">
                                         @lang('admin::app.customers.customers.view.edit.male')
                                     </option>

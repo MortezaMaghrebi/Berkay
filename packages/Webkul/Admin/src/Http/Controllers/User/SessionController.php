@@ -7,7 +7,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
-use Illuminate\View\View;
 use Webkul\Admin\Http\Controllers\Controller;
 
 class SessionController extends Controller
@@ -25,17 +24,15 @@ class SessionController extends Controller
     protected $decayMinutes = 1;
 
     /**
-     * Show the form for creating a new resource.
-     *
-     * @return View
+     * Redirect to the shared sign-in page.
      */
-    public function create()
+    public function create(): RedirectResponse
     {
         if (auth()->guard('admin')->check()) {
             return redirect()->route('admin.dashboard.index');
         }
 
-        return view('admin::users.sessions.create');
+        return redirect()->route('shop.customer.session.index', ['tab' => 'password']);
     }
 
     /**

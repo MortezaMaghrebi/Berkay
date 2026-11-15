@@ -1,5 +1,11 @@
 @php
     $settings = in_array($purpose, ['change', 'delete'], true);
+    $mobileLogin = (bool) core()->getConfigData('berkay.store.authentication.mobile_login');
+    $registrationEnabled = (bool) core()->getConfigData('berkay.store.authentication.registration');
+    $passwordTab = $purpose === 'login' && (! $mobileLogin || request('tab') === 'password');
+    $heading = $passwordTab
+        ? trans('berkay::app.authentication.password')
+        : trans('berkay::sms.'.($registration ? 'complete-profile' : ($challenge ? 'confirm-phone' : $purpose)));
     $pageRoute = match ($purpose) {
         'login' => 'shop.customer.session.index',
         'register' => 'shop.customers.register.index',
@@ -14,13 +20,24 @@
     $verifyRoute = $settings ? 'shop.berkay.phone.settings.verify' : 'shop.berkay.phone.'.$purpose.'.verify';
 @endphp
 <x-shop::layouts :has-feature="false">
-    <x-slot:title>{{ trans('berkay::sms.'.$purpose) }}</x-slot>
-    <section class="bk-section bk-phone-account">
+    <x-slot:title>{{ $heading }}</x-slot>
+    <dialog open class="bk-section bk-phone-account bk-auth-dialog" aria-labelledby="bk-auth-title">
         <header class="bk-phone-heading">
             <img src="{{ asset('berkay/brand-logo.png') }}" alt="" width="64" height="64">
-            <h1>{{ trans('berkay::sms.'.($registration ? 'complete-profile' : ($challenge ? 'confirm-phone' : $purpose))) }}</h1>
+            <h1 id="bk-auth-title">{{ $heading }}</h1>
         </header>
-        @foreach (['success', 'info', 'error'] as $type)
+        @if ($purpose === 'login' && $mobileLogin)
+            <nav class="bk-auth-tabs" aria-label="{{ trans('berkay::app.authentication.settings') }}">
+                <a href="{{ route('shop.customer.session.index', ['tab' => 'mobile']) }}" @if (! $passwordTab) aria-current="page" @endif>
+                    {{ trans('berkay::app.authentication.mobile') }}
+                </a>
+                <a href="{{ route('shop.customer.session.index', ['tab' => 'password']) }}" @if ($passwordTab) aria-current="page" @endif>
+                    {{ trans('berkay::app.authentication.password') }}
+                </a>
+            </nav>
+        @endif
+
+        @foreach (['success', 'info', 'warning', 'error'] as $type)
             @if (session($type))
                 <p class="bk-notice" role="status">{{ session($type) }}</p>
             @endif
@@ -33,7 +50,19 @@
             </ul>
         @endif
 
-        @if ($registration)
+        @if ($passwordTab)
+            <form method="post" class="bk-form" action="{{ route('shop.customer.session.password') }}">
+                @csrf
+                <label for="login-identity">{{ trans('berkay::app.authentication.identity') }}</label>
+                <input id="login-identity" name="email" dir="ltr" autocomplete="username" value="{{ old('email') }}" maxlength="255" required>
+                <label for="login-password">{{ trans('berkay::app.authentication.password-field') }}</label>
+                <input id="login-password" type="password" name="password" dir="ltr" autocomplete="current-password" maxlength="255" required>
+                @if (core()->getConfigData('customer.captcha.credentials.status'))
+                    {!! \Webkul\Customer\Facades\Captcha::render() !!}
+                @endif
+                <button type="submit" class="bk-button">{{ trans('shop::app.customers.login-form.button-title') }}</button>
+            </form>
+        @elseif ($registration)
             <p>{{ trans('berkay::sms.verified-profile') }} <bdi>{{ $registration['phone'] }}</bdi></p>
             <form method="post" class="bk-form" action="{{ route($verifyRoute, $params) }}">
                 @csrf
@@ -81,15 +110,17 @@
             @if ($settings)
                 <a href="{{ route('shop.customers.account.profile.index') }}">{{ trans('berkay::app.back') }}</a>
             @else
-                @if ($purpose === 'login')
+                @if ($purpose === 'login' && $registrationEnabled)
                     <a href="{{ route('shop.customers.register.index') }}">{{ trans('berkay::sms.register') }}</a>
-                @else
+                @elseif ($purpose === 'register')
                     <a href="{{ route('shop.customer.session.index') }}">{{ trans('berkay::sms.login') }}</a>
                 @endif
-                <a href="{{ route('admin.session.create') }}">{{ trans('berkay::sms.staff-login') }}</a>
+                @if ($passwordTab)
+                    <a href="{{ route('admin.forget_password.create') }}">{{ trans('berkay::app.authentication.staff-recovery') }}</a>
+                @endif
             @endif
         </nav>
-    </section>
+    </dialog>
     @if ($challenge)
         @pushOnce('scripts')
             <script type="module" src="{{ asset('berkay/phone-code.js') }}?v={{ filemtime(public_path('berkay/phone-code.js')) }}"></script>

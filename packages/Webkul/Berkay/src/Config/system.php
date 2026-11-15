@@ -48,6 +48,17 @@ return [
     ],
     ['key' => 'berkay.store', 'name' => 'berkay::app.store-settings', 'info' => 'berkay::app.settings-info', 'sort' => 1],
     [
+        'key' => 'berkay.store.authentication',
+        'name' => 'berkay::app.authentication.settings',
+        'info' => 'berkay::app.authentication.settings-help',
+        'sort' => 2,
+        'fields' => [
+            ['name' => 'mobile_login', 'title' => 'berkay::app.authentication.mobile', 'type' => 'boolean', 'default' => 1, 'channel_based' => true],
+            ['name' => 'customer_password', 'title' => 'berkay::app.authentication.customer-password', 'type' => 'boolean', 'default' => 1, 'channel_based' => true],
+            ['name' => 'registration', 'title' => 'berkay::app.authentication.registration', 'type' => 'boolean', 'default' => 1, 'channel_based' => true],
+        ],
+    ],
+    [
         'key' => 'berkay.store.identity',
         'name' => 'berkay::app.identity',
         'info' => 'berkay::app.identity-info',

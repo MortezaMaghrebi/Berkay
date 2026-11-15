@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Webkul\Berkay\Http\Controllers\Shop\PhoneAccountController;
 use Webkul\Core\Http\Middleware\NoCacheMiddleware;
 use Webkul\Shop\Http\Controllers\Customer\Account\AddressController;
 use Webkul\Shop\Http\Controllers\Customer\Account\DownloadableProductController;
@@ -9,13 +10,16 @@ use Webkul\Shop\Http\Controllers\Customer\Account\OrderController;
 use Webkul\Shop\Http\Controllers\Customer\Account\RMAController;
 use Webkul\Shop\Http\Controllers\Customer\Account\WishlistController;
 use Webkul\Shop\Http\Controllers\Customer\CustomerController;
-use Webkul\Berkay\Http\Controllers\Shop\PhoneAccountController;
 use Webkul\Shop\Http\Controllers\Customer\GDPRController;
 use Webkul\Shop\Http\Controllers\Customer\SessionController;
 use Webkul\Shop\Http\Controllers\DataGridController;
 use Webkul\Shop\Http\Middleware\EnsureGDPRIsEnabled;
 
 Route::prefix('customer')->group(function () {
+    Route::post('login/password', [SessionController::class, 'store'])
+        ->middleware([NoCacheMiddleware::class, 'throttle:30,1'])
+        ->name('shop.customer.session.password');
+
     Route::controller(PhoneAccountController::class)->middleware(NoCacheMiddleware::class)->group(function () {
         Route::get('login', 'index')->name('shop.customer.session.index');
         Route::post('login', 'send')->middleware('throttle:10,1')->name('shop.customer.session.create');
@@ -76,7 +80,6 @@ Route::prefix('customer')->group(function () {
                     Route::get('edit', 'edit')->name('shop.customers.account.profile.edit');
 
                     Route::post('edit', 'update')->name('shop.customers.account.profile.update');
-
 
                 });
 

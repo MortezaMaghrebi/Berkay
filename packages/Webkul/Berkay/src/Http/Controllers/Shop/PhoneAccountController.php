@@ -25,14 +25,18 @@ class PhoneAccountController
 
     public function index(Request $request): View|RedirectResponse
     {
-        if (auth()->guard('customer')->check()) {
-            return redirect()->route('shop.customers.account.profile.index');
+        if (auth()->guard('admin')->check()) {
+            return redirect()->route('admin.dashboard.index');
+        }
+
+        if (auth()->guard('customer')->check() && $request->query('tab') !== 'password') {
+            return redirect()->route('shop.customers.account.orders.index');
         }
 
         $purpose = $request->routeIs('shop.customers.register.index') ? 'register' : 'login';
 
-        if ($purpose === 'login' && $request->boolean('checkout')) {
-            $request->session()->put('shop.url.intended', route('shop.checkout.onepage.index'));
+        if ($purpose === 'register' && ! core()->getConfigData('berkay.store.authentication.registration')) {
+            return redirect()->route('shop.customer.session.index');
         }
 
         if ($request->boolean('start')) {
@@ -46,6 +50,7 @@ class PhoneAccountController
     {
         abort_if(auth()->guard('customer')->check(), 403);
         $purpose = $request->routeIs('shop.customers.register.store') ? 'register' : 'login';
+        $this->ensurePhoneFlowEnabled($purpose);
 
         return $this->sendCode($request, $purpose);
     }
@@ -55,6 +60,7 @@ class PhoneAccountController
         $guard = auth()->guard('customer');
         abort_if($guard->check(), 403);
         $purpose = $request->routeIs('shop.berkay.phone.register.verify') ? 'register' : 'login';
+        $this->ensurePhoneFlowEnabled($purpose);
         $registration = $purpose === 'register' ? $this->pendingRegistration($request) : null;
         $channelId = core()->getCurrentChannel()->id;
 
@@ -76,6 +82,8 @@ class PhoneAccountController
         }
 
         if (! $customer) {
+            $this->ensurePhoneFlowEnabled('register');
+
             if (! $registration) {
                 $request->session()->regenerate();
                 $request->session()->put(self::REGISTRATION_KEY, [
@@ -115,13 +123,9 @@ class PhoneAccountController
         $request->session()->put('berkay.phone.verified', ['phone' => $phone, 'at' => now()->timestamp]);
         Event::dispatch('customer.after.login', $customer);
 
-        if ($intended = $request->session()->pull('shop.url.intended')) {
-            return redirect()->to($intended);
-        }
+        $request->session()->forget('shop.url.intended');
 
-        return redirect()->route(core()->getConfigData('customer.settings.login_options.redirected_to_page') === 'account'
-            ? 'shop.customers.account.profile.index'
-            : 'shop.home.index');
+        return redirect()->route('shop.customers.account.orders.index');
     }
 
     public function settings(Request $request, string $purpose): View
@@ -178,6 +182,16 @@ class PhoneAccountController
         Event::dispatch('customer.update.after', $customer);
 
         return redirect()->route('shop.customers.account.profile.index')->with('success', trans('berkay::sms.phone-updated'));
+    }
+
+    /**
+     * Enforce the configured switch at both steps of each phone flow.
+     */
+    private function ensurePhoneFlowEnabled(string $purpose): void
+    {
+        $setting = $purpose === 'register' ? 'registration' : 'mobile_login';
+
+        abort_unless(core()->getConfigData('berkay.store.authentication.'.$setting), 403);
     }
 
     private function form(Request $request, string $purpose, ?int $customerId = null): View

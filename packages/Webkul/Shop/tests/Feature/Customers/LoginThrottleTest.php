@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Auth\Events\Lockout;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Webkul\Customer\Models\Customer;
 
@@ -26,7 +28,7 @@ it('should let a customer sign in as often as they like while the password is ri
     foreach (range(1, 10) as $attempt) {
         auth()->guard('customer')->logout();
 
-        post(route('shop.customer.session.create'), [
+        post(route('shop.customer.session.password'), [
             'email' => $customer->email,
             'password' => 'right-password-1',
         ]);
@@ -36,12 +38,14 @@ it('should let a customer sign in as often as they like while the password is ri
 });
 
 it('should stop answering a run of wrong passwords', function () {
+    Event::fake([Lockout::class]);
+
     $customer = throttledCustomer('right-password-1');
 
     $response = null;
 
     foreach (range(1, 8) as $attempt) {
-        $response = post(route('shop.customer.session.create'), [
+        $response = post(route('shop.customer.session.password'), [
             'email' => $customer->email,
             'password' => 'definitely-wrong',
         ]);
@@ -49,21 +53,21 @@ it('should stop answering a run of wrong passwords', function () {
 
     $response->assertSessionHasErrors('email');
 
-    expect(session('errors')->first('email'))->toContain('Too many login attempts')
-        ->and(auth()->guard('customer')->check())->toBeFalse();
+    Event::assertDispatched(Lockout::class);
+    expect(auth()->guard('customer')->check())->toBeFalse();
 });
 
 it('should let the right password in again once the attempts are forgotten', function () {
     $customer = throttledCustomer('right-password-1');
 
     foreach (range(1, 3) as $attempt) {
-        post(route('shop.customer.session.create'), [
+        post(route('shop.customer.session.password'), [
             'email' => $customer->email,
             'password' => 'definitely-wrong',
         ]);
     }
 
-    post(route('shop.customer.session.create'), [
+    post(route('shop.customer.session.password'), [
         'email' => $customer->email,
         'password' => 'right-password-1',
     ]);
