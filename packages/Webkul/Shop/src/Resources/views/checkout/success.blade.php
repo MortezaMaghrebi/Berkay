@@ -5,7 +5,7 @@
 >
     <!-- Page Title -->
     <x-slot:title>
-		@lang('shop::app.checkout.success.thanks')
+        {{ trans(session('berkay.payment.confirmed') ? 'berkay::workflow.paid' : 'shop::app.checkout.success.thanks') }}
     </x-slot>
 
 	<!-- Page content -->
@@ -34,9 +34,15 @@
 				@endif
 			</p>
 
-			<p class="font-medium md:text-2xl">
-				@lang('shop::app.checkout.success.thanks')
-			</p>
+            @if (session('berkay.payment.confirmed'))
+                <section class="bk-payment-result" data-paid>
+                    <span aria-hidden="true">✓</span>
+                    <h1>{{ trans('berkay::workflow.paid') }}</h1>
+                    <p>{{ trans('berkay::app.payment-completed') }}</p>
+                </section>
+            @else
+                <p class="font-medium md:text-2xl">@lang('shop::app.checkout.success.thanks')</p>
+            @endif
 
 			<p class="text-xl text-zinc-500 max-md:text-center max-md:text-xs">
 				@if (! empty($order->checkout_message))

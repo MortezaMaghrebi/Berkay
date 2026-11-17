@@ -12,6 +12,7 @@ use Webkul\Product\Repositories\ProductCustomizableOptionRepository;
 use Webkul\Sales\Contracts\Order as OrderContract;
 use Webkul\Sales\Exceptions\InsufficientInventoryException;
 use Webkul\Sales\Generators\OrderSequencer;
+use Webkul\Sales\Models\Invoice;
 use Webkul\Sales\Models\Order;
 
 class OrderRepository extends Repository
@@ -36,6 +37,23 @@ class OrderRepository extends Repository
     public function model(): string
     {
         return OrderContract::class;
+    }
+
+    /** Find the most recent open order with an outstanding paid-invoice balance. */
+    public function latestUnpaidForCustomer(int $customerId, int $channelId): ?Order
+    {
+        return $this->model->newQuery()
+            ->where('customer_id', $customerId)
+            ->where('channel_id', $channelId)
+            ->whereIn('status', [Order::STATUS_PENDING, Order::STATUS_PENDING_PAYMENT, Order::STATUS_PROCESSING])
+            ->where('base_grand_total', '>', function ($query) {
+                $query->from('invoices')
+                    ->selectRaw('COALESCE(SUM(base_grand_total), 0) + 0.0001')
+                    ->whereColumn('invoices.order_id', 'orders.id')
+                    ->where('state', Invoice::STATUS_PAID);
+            })
+            ->latest('id')
+            ->first();
     }
 
     /**

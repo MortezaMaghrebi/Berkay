@@ -9,11 +9,21 @@
         <p>{{ trans('berkay::workflow.waiting') }}</p>
     @elseif ($progress['record']?->review === 'approved')
         <p>{{ trans('berkay::workflow.approved') }}</p>
-        @if (! $progress['paid'] && isset(\Webkul\Berkay\Services\BankGateways::METHODS[$provider]))
-            @include('berkay::shop.approved-payment-options')
-        @endif
     @else
         <p>{{ trans('berkay::workflow.autoApproved') }}</p>
+    @endif
+
+    @if (
+        ! $order->is_guest
+        && (int) auth()->guard('customer')->id() === (int) $order->customer_id
+        && ! $progress['ended']
+        && ! $progress['waiting']
+        && ! $progress['paid']
+        && $order->canInvoice()
+        && ! $order->invoices()->where('state', \Webkul\Sales\Models\Invoice::STATUS_PAID)->exists()
+        && (isset(\Webkul\Berkay\Services\BankGateways::METHODS[$provider]) || $order->payment?->method === 'moneytransfer')
+    )
+        @include('berkay::shop.approved-payment-options')
     @endif
 
     @if (! $progress['ended'] && ! $progress['waiting'] && ! $progress['paid'] && $order->payment?->method === 'moneytransfer')

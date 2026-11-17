@@ -147,6 +147,8 @@
 
         {!! view_render_event('bagisto.shop.layout.body.after') !!}
 
+        @include('berkay::shop.payment-notice')
+
         <!-- WebMCP Tool Registration For AI Agents -->
         <x-shop::layouts.webmcp />
 

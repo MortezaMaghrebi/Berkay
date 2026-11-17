@@ -2,6 +2,7 @@
 
 namespace Webkul\Berkay\Http\Controllers\Shop;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -23,6 +24,7 @@ use Webkul\Checkout\Contracts\Cart as CartContract;
 use Webkul\Checkout\Facades\Cart;
 use Webkul\Payment\Facades\Payment;
 use Webkul\Sales\Contracts\Order;
+use Webkul\Sales\Models\Invoice;
 use Webkul\Sales\Repositories\InvoiceRepository;
 use Webkul\Sales\Repositories\OrderRepository;
 use Webkul\Sales\Repositories\OrderTransactionRepository;
@@ -40,6 +42,19 @@ class OnlinePaymentController extends Controller
         protected BankGateways $banks,
         protected IranianMoney $money
     ) {}
+
+    /** Return a private reminder independently of shared storefront caches. */
+    public function notice(): JsonResponse
+    {
+        $customerId = auth()->guard('customer')->id();
+        $order = $customerId ? $this->orders->latestUnpaidForCustomer($customerId, core()->getCurrentChannel()->id) : null;
+
+        return response()->json(['order' => $order ? [
+            'id' => $order->id,
+            'label' => trans('berkay::workflow.order', ['number' => $order->increment_id]),
+            'url' => route('shop.customers.account.orders.view', $order->id),
+        ] : null])->header('Cache-Control', 'private, no-store');
+    }
 
     /** Freeze an agreed order and reserve its inventory before bank redirection. */
     public function start(OrderWorkflow $workflow, string $provider = 'zarinpal'): RedirectResponse|View
@@ -116,11 +131,11 @@ class OnlinePaymentController extends Controller
         } catch (Throwable $exception) {
             $this->logFailure($provider, 'start', $exception);
 
-            return redirect()->route('shop.checkout.cart.index')->with('error', trans('berkay::workflow.gatewayDisabled'));
+            return $this->paymentResult(false);
         }
     }
 
-    /** Open payment for an approved order owned by the signed-in customer. */
+    /** Open payment for a payable order owned by the signed-in customer. */
     public function payApproved(int $id, OrderWorkflow $workflow, Request $request): RedirectResponse|View
     {
         $order = $this->orders->findOrFail($id);
@@ -133,7 +148,7 @@ class OnlinePaymentController extends Controller
         );
         $methods = ['moneytransfer', ...array_map(fn ($name) => 'berkay_'.$name, array_keys(BankGateways::METHODS))];
         $requested = $request->validate(['method' => ['nullable', 'string', Rule::in($methods)]])['method'] ?? null;
-        if ($workflow->record($order)?->review !== 'approved') {
+        if ($workflow->waiting($order)) {
             return redirect()->route('shop.customers.account.orders.view', $order->id)
                 ->with('info', trans('berkay::workflow.waiting'));
         }
@@ -145,7 +160,13 @@ class OnlinePaymentController extends Controller
         try {
             return Cache::lock('berkay.payment.order.'.$order->id, 60)->block(5, function () use ($order, $workflow, $requested) {
                 $order = $order->fresh();
-                if ($workflow->ended($order) || $workflow->paid($order) || ! $order->canInvoice()) {
+                if (
+                    $workflow->waiting($order)
+                    || $workflow->ended($order)
+                    || $workflow->paid($order)
+                    || ! $order->canInvoice()
+                    || $order->invoices()->where('state', Invoice::STATUS_PAID)->exists()
+                ) {
                     return redirect()->route('shop.customers.account.orders.view', $order->id);
                 }
 
@@ -156,7 +177,7 @@ class OnlinePaymentController extends Controller
                 if (
                     filled($requested)
                     && $requested !== $method
-                    && ($attempt || $method === 'moneytransfer')
+                    && $attempt
                 ) {
                     return redirect()->route('shop.customers.account.orders.view', $order->id)
                         ->with('error', 'روش پرداخت این سفارش قبلاً ثبت شده است. از همان روش ادامه دهید.');
@@ -165,8 +186,7 @@ class OnlinePaymentController extends Controller
                 if ($attempt?->status === 'verified') {
                     $this->finalizePayment($attempt->id);
 
-                    return redirect()->route('shop.customers.account.orders.view', $order->id)
-                        ->with('success', trans('berkay::app.payment-completed'));
+                    return $this->paymentResult(true, $order);
                 }
 
                 if ($attempt && $attempt->status !== 'pending') {
@@ -174,8 +194,7 @@ class OnlinePaymentController extends Controller
                 }
 
                 if ($attempt?->provider === 'torobpay' && $this->recoverTorobPayment($attempt, $workflow)) {
-                    return redirect()->route('shop.customers.account.orders.view', $order->id)
-                        ->with('success', trans('berkay::app.payment-completed'));
+                    return $this->paymentResult(true, $order);
                 }
 
                 if (! $attempt) {
@@ -222,8 +241,7 @@ class OnlinePaymentController extends Controller
         } catch (Throwable $exception) {
             $this->logFailure($requested ? Str::after($requested, 'berkay_') : $provider, 'approved-order', $exception);
 
-            return redirect()->route('shop.customers.account.orders.view', $order->id)
-                ->with('error', trans('berkay::workflow.gatewayDisabled'));
+            return $this->paymentResult(false, $order);
         }
     }
 
@@ -288,18 +306,18 @@ class OnlinePaymentController extends Controller
             ) {
                 session()->flash('order_id', $attempt->order_id);
 
-                return redirect()->route('shop.checkout.onepage.success');
+                return redirect()->route('shop.checkout.onepage.success')->with('berkay.payment.confirmed', true);
             }
             if ($attempt->status === 'paid') {
-                return redirect()->route('shop.home.index')->with('success', trans('berkay::app.payment-completed'));
+                return $this->paymentResult(true, $order);
             }
         } catch (Throwable $exception) {
             $this->logFailure($provider, 'callback', $exception);
 
-            return $this->failed($token);
+            return $this->failed($token, $order);
         }
 
-        return $this->failed($token);
+        return $this->failed($token, $order);
     }
 
     /** Resume the same unpaid authority for the browser that initiated payment. */
@@ -313,7 +331,7 @@ class OnlinePaymentController extends Controller
                 if ($this->recoverTorobPayment($attempt, $workflow)) {
                     session()->flash('order_id', $attempt->order_id);
 
-                    return redirect()->route('shop.checkout.onepage.success');
+                    return redirect()->route('shop.checkout.onepage.success')->with('berkay.payment.confirmed', true);
                 }
             } catch (Throwable $exception) {
                 $this->logFailure('torobpay', 'resume', $exception);
@@ -328,19 +346,32 @@ class OnlinePaymentController extends Controller
     }
 
     /** Return a generic failure without disclosing customer or provider data. */
-    protected function failed(?string $token = null): RedirectResponse|View
+    protected function failed(?string $token = null, ?Order $order = null): View
     {
         if ($token && hash_equals((string) session('berkay.payment.token'), $token)) {
             $attempt = $this->attempts->findOneWhere(['token' => $token]);
 
-            return view('berkay::shop.payment-result', [
-                'token' => $token,
-                'canRetry' => $attempt?->status === 'pending' || ($attempt?->provider === 'torobpay' && $attempt->status === 'verified'),
-            ]);
+            return $this->paymentResult(
+                false,
+                $attempt ? $this->orders->find($attempt->order_id) : null,
+                $token,
+                $attempt?->status === 'pending' || ($attempt?->provider === 'torobpay' && $attempt->status === 'verified'),
+            );
         }
 
-        return redirect()->route('shop.checkout.cart.index')
-            ->with('error', trans('berkay::app.payment-not-completed'));
+        return $this->paymentResult(false, $order);
+    }
+
+    /** Only expose links to orders that belong to the current customer. */
+    protected function paymentResult(bool $paid, ?Order $order = null, ?string $token = null, bool $canRetry = false): View
+    {
+        $orderUrl = $order && auth()->guard('customer')->check()
+            && (int) $order->customer_id === (int) auth()->guard('customer')->id()
+            && (int) $order->channel_id === (int) core()->getCurrentChannel()->id
+            ? route('shop.customers.account.orders.view', $order->id)
+            : null;
+
+        return view('berkay::shop.payment-result', compact('paid', 'orderUrl', 'token', 'canRetry'));
     }
 
     /** Create the gateway authority and freeze the merchant context for verification. */

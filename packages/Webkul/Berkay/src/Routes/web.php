@@ -110,6 +110,10 @@ Route::middleware(['web', 'shop', 'customer', NoCacheMiddleware::class, 'throttl
     ->post('customer/account/orders/{id}/approved-payment', [OnlinePaymentController::class, 'payApproved'])
     ->whereNumber('id')->name('shop.berkay.zarinpal.approved');
 
+Route::middleware(['web', 'shop', NoCacheMiddleware::class, 'throttle:60,1'])
+    ->get('customer/order-payment-notice', [OnlinePaymentController::class, 'notice'])
+    ->name('shop.berkay.payment.notice');
+
 Route::middleware(['web', 'shop', NoCacheMiddleware::class, 'throttle:20,1'])->group(function () {
     Route::get('payments/zarinpal/resume/{token}', [OnlinePaymentController::class, 'resume'])->where('token', '[A-Za-z0-9]{64}')->name('shop.berkay.zarinpal.resume');
     Route::get('payments/zarinpal/start', [OnlinePaymentController::class, 'start'])->name('shop.berkay.zarinpal.start');
