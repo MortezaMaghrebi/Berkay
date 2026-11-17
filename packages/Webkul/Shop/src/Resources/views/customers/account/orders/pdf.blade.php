@@ -1,7 +1,11 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+@php
+    $direction = core()->getCurrentLocale()->direction;
+@endphp
+
+<!DOCTYPE html>
 <html
     lang="{{ app()->getLocale() }}"
-    dir="{{ core()->getCurrentLocale()->direction }}"
+    dir="{{ $direction }}"
 >
     <head>
         <meta
@@ -15,14 +19,37 @@
         />
 
         @php
+            $start = $direction === 'rtl' ? 'right' : 'left';
+            $end = $direction === 'rtl' ? 'left' : 'right';
+            $order = $invoice->order;
+            $brand = $direction === 'rtl' ? core()->getConfigData('berkay.store.identity.name') : null;
+            $brand = $brand ?: trans('berkay::app.brand');
+            $logo = core()->getConfigData('sales.invoice_settings.pdf_print_outs.logo');
+            $brandLogo = public_path('berkay/brand-logo.jpg');
+            $logoContent = null;
+            $logoType = null;
+
+            if ($logo && Storage::exists($logo)) {
+                $logoContent = Storage::get($logo);
+                $logoType = Storage::mimeType($logo);
+            } elseif (is_file($brandLogo)) {
+                $logoContent = file_get_contents($brandLogo);
+                $logoType = 'image/jpeg';
+            }
+
+            $logoSize = $logoContent ? @getimagesizefromstring($logoContent) : false;
+            $logoDimension = $logoSize && $logoSize[0] < $logoSize[1] * 1.25 ? 'height: 16mm' : 'width: 20mm';
             $fontPath = [];
 
-            if (app()->getLocale() == 'en' && $orderCurrencyCode == 'INR') {
+            if (
+                app()->getLocale() === 'en'
+                && $orderCurrencyCode === 'INR'
+            ) {
                 $fontFamily = [
                     'regular' => 'DejaVu Sans',
                     'bold'    => 'DejaVu Sans',
                 ];
-            }  else {
+            } else {
                 $fontFamily = [
                     'regular' => 'Arial, sans-serif',
                     'bold'    => 'Arial, sans-serif',
@@ -99,548 +126,386 @@
             @if (! empty($fontPath['bold']))
                 @font-face {
                     src: url({{ $fontPath['bold'] }}) format('truetype');
-                    font-family: {{ $fontFamily['bold'] }};
-                    font-style: bold;
+                    font-family: {{ $fontFamily['regular'] }};
+                    font-weight: bold;
                 }
             @endif
 
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-                font-family: {{ $fontFamily['regular'] }};
-            }
+            @page { margin: 13mm 14mm 15mm; }
 
             body {
-                font-size: 10px;
-                color: #091341;
-                font-family: "{{ $fontFamily['regular'] }}";
-            }
-
-            b, th {
-                font-family: "{{ $fontFamily['bold'] }}";
-            }
-
-            .page-content {
-                padding: 12px;
-            }
-
-            .page-header {
-                border-bottom: 1px solid #E9EFFC;
-                text-align: center;
-                font-size: 24px;
-                text-transform: uppercase;
-                color: #000DBB;
-                padding: 24px 0;
                 margin: 0;
-            }
-
-            .logo-container {
-                position: absolute;
-                top: 20px;
-                left: 20px;
-                width: 131px;
-                height: 30px;
-                overflow: hidden;
-            }
-
-            .logo-container.rtl {
-                left: auto;
-                right: 20px;
-            }
-
-            .logo-container img {
-                max-width: 131px;
-                max-height: 30px;
-                width: auto;
-                height: auto;
-            }
-
-            .page-header b {
-                display: inline-block;
-                vertical-align: middle;
-            }
-
-            .small-text {
-                font-size: 7px;
+                color: #2c2420;
+                font-family: {{ $fontFamily['regular'] }};
+                font-size: 10pt;
+                line-height: 1.5;
             }
 
             table {
                 width: 100%;
-                border-spacing: 1px 0;
-                border-collapse: separate;
-                margin-bottom: 16px;
+                border-collapse: collapse;
+                margin: 0 0 4mm;
             }
 
-            table thead th {
-                background-color: #E9EFFC;
-                color: #000DBB;
-                padding: 6px 18px;
-                text-align: left;
-            }
+            th, td { vertical-align: top; text-align: {{ $start }}; }
+            strong, th { font-weight: bold; }
+            .small-text { margin: 1mm 0 0; font-size: 8.5pt; color: #594d46; }
+            .amount { text-align: right; white-space: nowrap; }
+            .quantity { text-align: center; }
 
-            table.rtl thead tr th {
-                text-align: right;
-            }
+            .masthead { border-top: 2pt solid #69432d; border-bottom: .6pt solid #d2c3b6; }
+            .masthead td { padding: 4mm 0; vertical-align: middle; }
+            .masthead .logo { width: 24mm; text-align: {{ $end }}; }
+            .masthead h1 { margin: 0; color: #543420; font-size: 26pt; font-weight: bold; }
+            .masthead .brand { margin: 0; font-size: 13pt; font-weight: bold; }
 
-            table tbody td {
-                padding: 9px 18px;
-                border-bottom: 1px solid #E9EFFC;
-                text-align: left;
-                vertical-align: top;
-            }
+            .references { background-color: #f7f2ec; }
+            .references td { padding: 3mm 4mm; }
+            .reference-label { color: #594d46; font-size: 8.5pt; }
+            .reference-value { font-size: 11pt; font-weight: bold; }
 
-            table.rtl tbody tr td {
-                text-align: right;
-            }
+            .details th { padding: 1.5mm 3mm; background: #f7f2ec; color: #543420; }
+            .details td { padding: 2mm 3mm; border-bottom: .6pt solid #ded4ca; }
+            .origin td { padding: 0 3mm 2mm; }
 
-            .summary {
-                width: 100%;
-                display: inline-block;
-            }
+            .items th { padding: 2.6mm 2.5mm; background: #69432d; color: #fff; font-size: 9pt; }
+            .items td { padding: 2.8mm 2.5mm; border-bottom: .6pt solid #ded4ca; }
+            .items a { color: #543420; text-decoration: underline; }
+            .items td.sku { color: #594d46; font-size: 8.5pt; overflow-wrap: anywhere; }
 
-            .summary table {
-                float: right;
-                width: 250px;
-                padding-top: 5px;
-                padding-bottom: 5px;
-                background-color: #E9EFFC;
-                white-space: nowrap;
-            }
-
-            .summary table.rtl {
-                width: 280px;
-            }
-
-            .summary table.rtl {
-                margin-right: 480px;
-            }
-
-            .summary table td {
-                padding: 5px 10px;
-            }
-
-            .summary table td:nth-child(2) {
-                text-align: center;
-            }
-
-            .summary table td:nth-child(3) {
-                text-align: right;
-            }
+            .summary { width: 53%; margin-{{ $start }}: auto; margin-{{ $end }}: 0; page-break-inside: avoid; }
+            .summary td { padding: 1.5mm 3mm; border-bottom: .6pt solid #ded4ca; }
+            .summary .grand-total td { background: #eee1d5; color: #543420; font-size: 12pt; padding: 2.8mm 3mm; }
         </style>
     </head>
 
-    <body dir="{{ core()->getCurrentLocale()->direction }}">
-        <div class="logo-container {{ core()->getCurrentLocale()->direction }}">
-            @if (($logo = core()->getConfigData('sales.invoice_settings.pdf_print_outs.logo')) && Storage::exists($logo))
-                <img src="data:{{ Storage::mimeType($logo) }};base64,{{ base64_encode(Storage::get($logo)) }}"/>
-            @else
-                <img src="data:image/png;base64,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"/>
-            @endif
-        </div>
+    <body dir="{{ $direction }}">
+        <table class="masthead">
+            <tr>
+                <td>
+                    <h1>@lang('shop::app.customers.account.orders.invoice-pdf.invoice')</h1>
+                    <p class="brand">{{ $brand }}</p>
+                </td>
+                @if ($logoContent)
+                    <td class="logo">
+                        <img src="data:{{ $logoType }};base64,{{ base64_encode($logoContent) }}" style="{{ $logoDimension }};" alt="">
+                    </td>
+                @endif
+            </tr>
+        </table>
 
-        <div class="page">
-            <!-- Header -->
-            <div class="page-header">
-                <b>@lang('shop::app.customers.account.orders.invoice-pdf.invoice')</b>
-            </div>
+        <table class="references">
+            <tr>
+                @if (core()->getConfigData('sales.invoice_settings.pdf_print_outs.invoice_id'))
+                    <td>
+                        <div class="reference-label">@lang('shop::app.customers.account.orders.invoice-pdf.invoice-id')</div>
+                        <div class="reference-value" dir="ltr" style="text-align: {{ $start }};">#{{ $invoice->increment_id ?? $invoice->id }}</div>
+                    </td>
+                @endif
+                @if (core()->getConfigData('sales.invoice_settings.pdf_print_outs.order_id'))
+                    <td>
+                        <div class="reference-label">@lang('shop::app.customers.account.orders.invoice-pdf.order-id')</div>
+                        <div class="reference-value" dir="ltr" style="text-align: {{ $start }};">#{{ $order->increment_id }}</div>
+                    </td>
+                @endif
+                <td>
+                    <div class="reference-label">@lang('shop::app.customers.account.orders.invoice-pdf.date')</div>
+                    <div class="reference-value" dir="ltr" style="text-align: {{ $start }};">{{ core()->formatDate($invoice->created_at, 'd-m-Y') }}</div>
+                </td>
+                <td>
+                    <div class="reference-label">@lang('shop::app.customers.account.orders.invoice-pdf.order-date')</div>
+                    <div class="reference-value" dir="ltr" style="text-align: {{ $start }};">{{ core()->formatDate($order->created_at, 'd-m-Y') }}</div>
+                </td>
+            </tr>
+        </table>
 
-            <div class="page-content">
-                <!-- Invoice Information -->
-                <table class="{{ core()->getCurrentLocale()->direction }}">
-                    <tbody>
-                        <tr>
-                            @if (core()->getConfigData('sales.invoice_settings.pdf_print_outs.invoice_id'))
-                                <td style="width: 50%; padding: 2px 18px;border:none;">
-                                    <b>
-                                        @lang('shop::app.customers.account.orders.invoice-pdf.invoice-id'):
-                                    </b>
+        @php
+            $originCountry = core()->getConfigData('sales.shipping.origin.country');
+            $bankDetails = core()->getConfigData('sales.shipping.origin.bank_details');
+        @endphp
+
+        @if ($originCountry || $invoice->hasPaymentTerm() || $bankDetails)
+            <table class="origin">
+                <tr>
+                    @if ($originCountry)
+                        <td style="width: 50%;">
+                            <strong>{{ core()->getConfigData('sales.shipping.origin.store_name') ?: $brand }}</strong>
+                            <div>{{ core()->getConfigData('sales.shipping.origin.address') }}</div>
+                            <div>{{ core()->getConfigData('sales.shipping.origin.zipcode') . ' ' . core()->getConfigData('sales.shipping.origin.city') }}</div>
+                            <div>{{ core()->getConfigData('sales.shipping.origin.state') . ', ' . $originCountry }}</div>
+                        </td>
+                    @endif
+                    @if ($invoice->hasPaymentTerm() || $bankDetails)
+                        <td style="width: 50%;">
+                            @if ($invoice->hasPaymentTerm())
+                                <div>
+                                    <strong>@lang('shop::app.customers.account.orders.invoice-pdf.payment-terms')</strong>
+                                    {{ $invoice->getFormattedPaymentTerm() }}
+                                </div>
+                            @endif
+                            @if ($bankDetails)
+                                <div><strong>@lang('shop::app.customers.account.orders.invoice-pdf.bank-details')</strong></div>
+                                <div>{!! nl2br(e($bankDetails)) !!}</div>
+                            @endif
+                        </td>
+                    @endif
+                </tr>
+            </table>
+        @endif
+
+        @php
+            $addresses = array_filter([
+                'bill-to' => $order->billing_address,
+                'ship-to' => $order->shipping_address,
+            ]);
+        @endphp
+
+        @if ($addresses)
+            <table class="details">
+                <thead>
+                    <tr>
+                        @foreach ($addresses as $label => $address)
+                            <th scope="col" style="width: {{ 100 / count($addresses) }}%;">{{ trans('shop::app.customers.account.orders.invoice-pdf.' . $label) }}</th>
+                        @endforeach
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        @foreach ($addresses as $address)
+                            <td>
+                                <strong>{{ $address->name }}</strong>
+                                @if ($address->company_name)
+                                    <div>{{ $address->company_name }}</div>
+                                @endif
+                                <div>{!! nl2br(e($address->address)) !!}</div>
+                                <div>{{ trim($address->postcode . ' ' . $address->city) }}</div>
+                                <div>{{ implode(', ', array_filter([$address->state, core()->countryName($address->country)])) }}</div>
+                                @if ($address->phone)
+                                    <div>@lang('shop::app.customers.account.orders.invoice-pdf.phone'): <span dir="ltr">{{ $address->phone }}</span></div>
+                                @endif
+                            </td>
+                        @endforeach
+                    </tr>
+                </tbody>
+            </table>
+        @endif
+
+        <!-- Payment & Shipping Methods -->
+        <table class="details">
+            <thead>
+                <tr>
+                    <th scope="col">
+                        <b>
+                            @lang('shop::app.customers.account.orders.invoice-pdf.payment-method')
+                        </b>
+                    </th>
+
+                    @if ($order->shipping_address)
+                        <th scope="col" style="width: 50%;">
+                            <b>
+                                @lang('shop::app.customers.account.orders.invoice-pdf.shipping-method')
+                            </b>
+                        </th>
+                    @endif
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr>
+                    <td>
+                        {{ core()->getConfigData('sales.payment_methods.' . $order->payment->method . '.title') }}
+
+                        @php $additionalDetails = \Webkul\Payment\Payment::getAdditionalDetails($order->payment->method); @endphp
+
+                        @if (! empty($additionalDetails))
+                            <div class="row small-text">
+                                <span>{{ $additionalDetails['title'] }}:</span>
+
+                                <span>{{ $additionalDetails['value'] }}</span>
+                            </div>
+                        @endif
+                    </td>
+
+                    @if ($order->shipping_address)
+                        <td style="width: 50%">
+                            {{ $order->shipping_title }}
+                        </td>
+                    @endif
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Items -->
+        <table class="items">
+            <thead>
+                <tr>
+                    <th scope="col" class="sku" style="width: 17%;">
+                        @lang('shop::app.customers.account.orders.invoice-pdf.sku')
+                    </th>
+
+                    <th scope="col" style="width: 38%;">
+                        @lang('shop::app.customers.account.orders.invoice-pdf.product-name')
+                    </th>
+
+                    <th scope="col" class="amount" style="width: 19%;">
+                        @lang('shop::app.customers.account.orders.invoice-pdf.price')
+                    </th>
+
+                    <th scope="col" class="quantity" style="width: 7%;">
+                        @lang('shop::app.customers.account.orders.invoice-pdf.qty')
+                    </th>
+
+                    <th scope="col" class="amount" style="width: 19%;">
+                        @lang('shop::app.customers.account.orders.invoice-pdf.subtotal')
+                    </th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach ($invoice->items as $item)
+                    <tr>
+                        <td class="sku">
+                            {{ $item->getTypeInstance()->getOrderedItem($item)->sku }}
+                        </td>
+
+                        <td>
+                            <strong>{{ $item->name }}</strong>
+
+                            @if (isset($item->additional['attributes']))
+                                <div class="small-text">
+                                    @foreach ($item->additional['attributes'] as $attribute)
+                                        @if (
+                                            ! isset($attribute['attribute_type'])
+                                            || $attribute['attribute_type'] !== 'file'
+                                        )
+                                            <b>{{ $attribute['attribute_name'] }} : </b>{{ $attribute['option_label'] }}<br>
+                                        @else
+                                            {{ $attribute['attribute_name'] }} :
+
+                                            <a
+                                                href="{{ Storage::url($attribute['option_label']) }}"
+                                                download="{{ File::basename($attribute['option_label']) }}"
+                                            >
+                                                {{ File::basename($attribute['option_label']) }}
+                                            </a>
+
+                                            <br>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            @endif
+                        </td>
+
+                        <td class="amount">
+                            @if (core()->getConfigData('sales.taxes.sales.display_prices') == 'including_tax')
+                                {{ core()->formatPrice($item->price_incl_tax, $orderCurrencyCode) }}
+                            @elseif (core()->getConfigData('sales.taxes.sales.display_prices') == 'both')
+                                {{ core()->formatPrice($item->price_incl_tax, $orderCurrencyCode) }}
+
+                                <div class="small-text">
+                                    @lang('shop::app.customers.account.orders.invoice-pdf.excl-tax')
 
                                     <span>
-                                        #{{ $invoice->increment_id ?? $invoice->id }}
+                                        {{ core()->formatPrice($item->price, $orderCurrencyCode) }}
                                     </span>
-                                </td>
+                                </div>
+                            @else
+                                {{ core()->formatPrice($item->price, $orderCurrencyCode) }}
                             @endif
+                        </td>
 
-                            @if (core()->getConfigData('sales.invoice_settings.pdf_print_outs.order_id'))
-                                <td style="width: 50%; padding: 2px 18px;border:none;">
-                                    <b>
-                                        @lang('shop::app.customers.account.orders.invoice-pdf.order-id'):
-                                    </b>
+                        <td class="quantity">
+                            {{ $item->qty }}
+                        </td>
 
-                                    <span>
-                                        #{{ $invoice->order->increment_id }}
-                                    </span>
-                                </td>
-                            @endif
-                        </tr>
-
-                        <tr>
-                            <td style="width: 50%; padding: 2px 18px;border:none;">
-                                <b>
-                                    @lang('shop::app.customers.account.orders.invoice-pdf.date'):
-                                </b>
-
-                                <span>
-                                    {{ core()->formatDate($invoice->created_at, 'd-m-Y') }}
-                                </span>
-                            </td>
-
-                            <td style="width: 50%; padding: 2px 18px;border:none;">
-                                <b>
-                                    @lang('shop::app.customers.account.orders.invoice-pdf.order-date'):
-                                </b>
-
-                                <span>
-                                    {{ core()->formatDate($invoice->order->created_at, 'd-m-Y') }}
-                                </span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <!-- Invoice Information -->
-                <table class="{{ core()->getCurrentLocale()->direction }}">
-                    <tbody>
-                        <tr>
-                            @if (! empty(core()->getConfigData('sales.shipping.origin.country')))
-                                <td style="width: 50%; padding: 2px 18px;border:none;">
-                                    <b style="display: inline-block; margin-bottom: 4px;">
-                                        {{ core()->getConfigData('sales.shipping.origin.store_name') }}
-                                    </b>
-
-                                    <div>
-                                        <div>{{ core()->getConfigData('sales.shipping.origin.address') }}</div>
-
-                                        <div>{{ core()->getConfigData('sales.shipping.origin.zipcode') . ' ' . core()->getConfigData('sales.shipping.origin.city') }}</div>
-
-                                        <div>{{ core()->getConfigData('sales.shipping.origin.state') . ', ' . core()->getConfigData('sales.shipping.origin.country') }}</div>
-                                    </div>
-                                </td>
-                            @endif
-
-                            <td style="width: 50%; padding: 2px 18px;border:none;">
-                                @if ($invoice->hasPaymentTerm())
-                                    <div style="margin-bottom: 12px">
-                                        <b style="display: inline-block; margin-bottom: 4px;">
-                                            @lang('shop::app.customers.account.orders.invoice-pdf.payment-terms'):
-                                        </b>
-
-                                        <span>
-                                            {{ $invoice->getFormattedPaymentTerm() }}
-                                        </span>
-                                    </div>
-                                @endif
-
-                                @if (core()->getConfigData('sales.shipping.origin.bank_details'))
-                                    <div>
-                                        <b style="display: inline-block; margin-bottom: 4px;">
-                                            @lang('shop::app.customers.account.orders.invoice-pdf.bank-details'):
-                                        </b>
-
-                                        <div>
-                                            {!! nl2br(core()->getConfigData('sales.shipping.origin.bank_details')) !!}
-                                        </div>
-                                    </div>
-                                @endif
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <!-- Billing & Shipping Address -->
-                <table class="{{ core()->getCurrentLocale()->direction }}">
-                    <thead>
-                        <tr>
-                            @if ($invoice->order->billing_address)
-                                <th style="width: 50%;">
-                                    <b>
-                                        @lang('shop::app.customers.account.orders.invoice-pdf.bill-to')
-                                    </b>
-                                </th>
-                            @endif
-
-                            @if ($invoice->order->shipping_address)
-                                <th style="width: 50%">
-                                    <b>
-                                        @lang('shop::app.customers.account.orders.invoice-pdf.ship-to')
-                                    </b>
-                                </th>
-                            @endif
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        <tr>
-                            @if ($invoice->order->billing_address)
-                                <td style="width: 50%">
-                                    <div>{{ $invoice->order->billing_address->company_name ?? '' }}<div>
-
-                                    <div>{{ $invoice->order->billing_address->name }}</div>
-
-                                    <div>{{ $invoice->order->billing_address->address }}</div>
-
-                                    <div>{{ $invoice->order->billing_address->postcode . ' ' . $invoice->order->billing_address->city }}</div>
-
-                                    <div>{{ $invoice->order->billing_address->state . ', ' . core()->countryName($invoice->order->billing_address->country) }}</div>
-
-                                    <div>@lang('shop::app.customers.account.orders.invoice-pdf.phone'): {{ $invoice->order->billing_address->phone }}</div>
-                                </td>
-                            @endif
-
-                            @if ($invoice->order->shipping_address)
-                                <td style="width: 50%">
-                                    <div>{{ $invoice->order->shipping_address->company_name ?? '' }}<div>
-
-                                    <div>{{ $invoice->order->shipping_address->name }}</div>
-
-                                    <div>{{ $invoice->order->shipping_address->address }}</div>
-
-                                    <div>{{ $invoice->order->shipping_address->postcode . ' ' . $invoice->order->shipping_address->city }}</div>
-
-                                    <div>{{ $invoice->order->shipping_address->state . ', ' . core()->countryName($invoice->order->shipping_address->country) }}</div>
-
-                                    <div>@lang('shop::app.customers.account.orders.invoice-pdf.phone'): {{ $invoice->order->shipping_address->phone }}</div>
-                                </td>
-                            @endif
-                        </tr>
-                    </tbody>
-                </table>
-
-                <!-- Payment & Shipping Methods -->
-                <table class="{{ core()->getCurrentLocale()->direction }}">
-                    <thead>
-                        <tr>
-                            <th style="width: 50%">
-                                <b>
-                                    @lang('shop::app.customers.account.orders.invoice-pdf.payment-method')
-                                </b>
-                            </th>
-
-                            @if ($invoice->order->shipping_address)
-                                <th style="width: 50%">
-                                    <b>
-                                        @lang('shop::app.customers.account.orders.invoice-pdf.shipping-method')
-                                    </b>
-                                </th>
-                            @endif
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        <tr>
-                            <td style="width: 50%">
-                                {{ core()->getConfigData('sales.payment_methods.' . $invoice->order->payment->method . '.title') }}
-
-                                @php $additionalDetails = \Webkul\Payment\Payment::getAdditionalDetails($invoice->order->payment->method); @endphp
-
-                                @if (! empty($additionalDetails))
-                                    <div class="row small-text">
-                                        <span>{{ $additionalDetails['title'] }}:</span>
-
-                                        <span>{{ $additionalDetails['value'] }}</span>
-                                    </div>
-                                @endif
-                            </td>
-
-                            @if ($invoice->order->shipping_address)
-                                <td style="width: 50%">
-                                    {{ $invoice->order->shipping_title }}
-                                </td>
-                            @endif
-                        </tr>
-                    </tbody>
-                </table>
-
-                <!-- Items -->
-                <div class="items">
-                    <table class="{{ core()->getCurrentLocale()->direction }}">
-                        <thead>
-                            <tr>
-                                <th>
-                                    @lang('shop::app.customers.account.orders.invoice-pdf.sku')
-                                </th>
-
-                                <th>
-                                    @lang('shop::app.customers.account.orders.invoice-pdf.product-name')
-                                </th>
-
-                                <th>
-                                    @lang('shop::app.customers.account.orders.invoice-pdf.price')
-                                </th>
-
-                                <th>
-                                    @lang('shop::app.customers.account.orders.invoice-pdf.qty')
-                                </th>
-
-                                <th>
-                                    @lang('shop::app.customers.account.orders.invoice-pdf.subtotal')
-                                </th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            @foreach ($invoice->items as $item)
-                                <tr>
-                                    <td>
-                                        {{ $item->getTypeInstance()->getOrderedItem($item)->sku }}
-                                    </td>
-
-                                    <td>
-                                        {{ $item->name }}
-
-                                        @if (isset($item->additional['attributes']))
-                                            <div>
-                                                @foreach ($item->additional['attributes'] as $attribute)
-                                                    @if (
-                                                        ! isset($attribute['attribute_type'])
-                                                        || $attribute['attribute_type'] !== 'file'
-                                                    )
-                                                        <b>{{ $attribute['attribute_name'] }} : </b>{{ $attribute['option_label'] }}<br>
-                                                    @else
-                                                        {{ $attribute['attribute_name'] }} :
-
-                                                        <a
-                                                            href="{{ Storage::url($attribute['option_label']) }}"
-                                                            class="text-blue-600 hover:underline"
-                                                            download="{{ File::basename($attribute['option_label']) }}"
-                                                        >
-                                                            {{ File::basename($attribute['option_label']) }}
-                                                        </a>
-
-                                                        <br>
-                                                    @endif
-                                                @endforeach
-                                            </div>
-                                        @endif
-                                    </td>
-
-                                    <td>
-                                        @if (core()->getConfigData('sales.taxes.sales.display_prices') == 'including_tax')
-                                            {{ core()->formatPrice($item->price_incl_tax, $orderCurrencyCode) }}
-                                        @elseif (core()->getConfigData('sales.taxes.sales.display_prices') == 'both')
-                                            {{ core()->formatPrice($item->price_incl_tax, $orderCurrencyCode) }}
-
-                                            <div class="small-text">
-                                                @lang('shop::app.customers.account.orders.invoice-pdf.excl-tax')
-
-                                                <span>
-                                                    {{ core()->formatPrice($item->price, $orderCurrencyCode) }}
-                                                </span>
-                                            </div>
-                                        @else
-                                            {{ core()->formatPrice($item->price, $orderCurrencyCode) }}
-                                        @endif
-                                    </td>
-
-                                    <td>
-                                        {{ $item->qty }}
-                                    </td>
-
-                                    <td>
-                                        @if (core()->getConfigData('sales.taxes.sales.display_subtotal') == 'including_tax')
-                                            {{ core()->formatPrice($item->total_incl_tax, $orderCurrencyCode) }}
-                                        @elseif (core()->getConfigData('sales.taxes.sales.display_subtotal') == 'both')
-                                            {{ core()->formatPrice($item->total_incl_tax, $orderCurrencyCode) }}
-
-                                            <div class="small-text">
-                                                @lang('shop::app.customers.account.orders.invoice-pdf.excl-tax')
-
-                                                <span>
-                                                    {{ core()->formatPrice($item->total, $orderCurrencyCode) }}
-                                                </span>
-                                            </div>
-                                        @else
-                                            {{ core()->formatPrice($item->total, $orderCurrencyCode) }}
-                                        @endif
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Summary Table -->
-                <div class="summary">
-                    <table class="{{ core()->getCurrentLocale()->direction }}">
-                        <tbody>
+                        <td class="amount">
                             @if (core()->getConfigData('sales.taxes.sales.display_subtotal') == 'including_tax')
-                                <tr>
-                                    <td>@lang('shop::app.customers.account.orders.invoice-pdf.subtotal')</td>
-                                    <td>-</td>
-                                    <td>{{ core()->formatPrice($invoice->sub_total_incl_tax, $orderCurrencyCode) }}</td>
-                                </tr>
+                                {{ core()->formatPrice($item->total_incl_tax, $orderCurrencyCode) }}
                             @elseif (core()->getConfigData('sales.taxes.sales.display_subtotal') == 'both')
-                                <tr>
-                                    <td>@lang('shop::app.customers.account.orders.invoice-pdf.subtotal-incl-tax')</td>
-                                    <td>-</td>
-                                    <td>{{ core()->formatPrice($invoice->sub_total_incl_tax, $orderCurrencyCode) }}</td>
-                                </tr>
+                                {{ core()->formatPrice($item->total_incl_tax, $orderCurrencyCode) }}
 
-                                <tr>
-                                    <td>@lang('shop::app.customers.account.orders.invoice-pdf.subtotal-excl-tax')</td>
-                                    <td>-</td>
-                                    <td>{{ core()->formatPrice($invoice->sub_total, $orderCurrencyCode) }}</td>
-                                </tr>
+                                <div class="small-text">
+                                    @lang('shop::app.customers.account.orders.invoice-pdf.excl-tax')
+
+                                    <span>
+                                        {{ core()->formatPrice($item->total, $orderCurrencyCode) }}
+                                    </span>
+                                </div>
                             @else
-                                <tr>
-                                    <td>@lang('shop::app.customers.account.orders.invoice-pdf.subtotal')</td>
-                                    <td>-</td>
-                                    <td>{{ core()->formatPrice($invoice->sub_total, $orderCurrencyCode) }}</td>
-                                </tr>
+                                {{ core()->formatPrice($item->total, $orderCurrencyCode) }}
                             @endif
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
 
-                            @if (core()->getConfigData('sales.taxes.sales.display_shipping_amount') == 'including_tax')
-                                <tr>
-                                    <td>@lang('shop::app.customers.account.orders.invoice-pdf.shipping-handling')</td>
-                                    <td>-</td>
-                                    <td>{{ core()->formatPrice($invoice->shipping_amount_incl_tax, $orderCurrencyCode) }}</td>
-                                </tr>
-                            @elseif (core()->getConfigData('sales.taxes.sales.display_shipping_amount') == 'both')
-                                <tr>
-                                    <td>@lang('shop::app.customers.account.orders.invoice-pdf.shipping-handling-incl-tax')</td>
-                                    <td>-</td>
-                                    <td>{{ core()->formatPrice($invoice->shipping_amount_incl_tax, $orderCurrencyCode) }}</td>
-                                </tr>
+        <!-- Summary Table -->
+        <table class="summary" align="{{ $end }}">
+            <tbody>
+                @if (core()->getConfigData('sales.taxes.sales.display_subtotal') == 'including_tax')
+                    <tr>
+                        <td>@lang('shop::app.customers.account.orders.invoice-pdf.subtotal')</td>
+                        <td class="amount">{{ core()->formatPrice($invoice->sub_total_incl_tax, $orderCurrencyCode) }}</td>
+                    </tr>
+                @elseif (core()->getConfigData('sales.taxes.sales.display_subtotal') == 'both')
+                    <tr>
+                        <td>@lang('shop::app.customers.account.orders.invoice-pdf.subtotal-incl-tax')</td>
+                        <td class="amount">{{ core()->formatPrice($invoice->sub_total_incl_tax, $orderCurrencyCode) }}</td>
+                    </tr>
 
-                                <tr>
-                                    <td>@lang('shop::app.customers.account.orders.invoice-pdf.shipping-handling-excl-tax')</td>
-                                    <td>-</td>
-                                    <td>{{ core()->formatPrice($invoice->shipping_amount, $orderCurrencyCode) }}</td>
-                                </tr>
-                            @else
-                                <tr>
-                                    <td>@lang('shop::app.customers.account.orders.invoice-pdf.shipping-handling')</td>
-                                    <td>-</td>
-                                    <td>{{ core()->formatPrice($invoice->shipping_amount, $orderCurrencyCode) }}</td>
-                                </tr>
-                            @endif
+                    <tr>
+                        <td>@lang('shop::app.customers.account.orders.invoice-pdf.subtotal-excl-tax')</td>
+                        <td class="amount">{{ core()->formatPrice($invoice->sub_total, $orderCurrencyCode) }}</td>
+                    </tr>
+                @else
+                    <tr>
+                        <td>@lang('shop::app.customers.account.orders.invoice-pdf.subtotal')</td>
+                        <td class="amount">{{ core()->formatPrice($invoice->sub_total, $orderCurrencyCode) }}</td>
+                    </tr>
+                @endif
 
-                            <tr>
-                                <td>@lang('shop::app.customers.account.orders.invoice-pdf.tax')</td>
-                                <td>-</td>
-                                <td>{{ core()->formatPrice($invoice->tax_amount, $orderCurrencyCode) }}</td>
-                            </tr>
+                @if (core()->getConfigData('sales.taxes.sales.display_shipping_amount') == 'including_tax')
+                    <tr>
+                        <td>@lang('shop::app.customers.account.orders.invoice-pdf.shipping-handling')</td>
+                        <td class="amount">{{ core()->formatPrice($invoice->shipping_amount_incl_tax, $orderCurrencyCode) }}</td>
+                    </tr>
+                @elseif (core()->getConfigData('sales.taxes.sales.display_shipping_amount') == 'both')
+                    <tr>
+                        <td>@lang('shop::app.customers.account.orders.invoice-pdf.shipping-handling-incl-tax')</td>
+                        <td class="amount">{{ core()->formatPrice($invoice->shipping_amount_incl_tax, $orderCurrencyCode) }}</td>
+                    </tr>
 
-                            <tr>
-                                <td>@lang('shop::app.customers.account.orders.invoice-pdf.discount')</td>
-                                <td>-</td>
-                                <td>{{ core()->formatPrice($invoice->discount_amount, $orderCurrencyCode) }}</td>
-                            </tr>
+                    <tr>
+                        <td>@lang('shop::app.customers.account.orders.invoice-pdf.shipping-handling-excl-tax')</td>
+                        <td class="amount">{{ core()->formatPrice($invoice->shipping_amount, $orderCurrencyCode) }}</td>
+                    </tr>
+                @else
+                    <tr>
+                        <td>@lang('shop::app.customers.account.orders.invoice-pdf.shipping-handling')</td>
+                        <td class="amount">{{ core()->formatPrice($invoice->shipping_amount, $orderCurrencyCode) }}</td>
+                    </tr>
+                @endif
 
-                            <tr>
-                                <td style="border-top: 1px solid #FFFFFF;">
-                                    <b>@lang('shop::app.customers.account.orders.invoice-pdf.grand-total')</b>
-                                </td>
-                                <td style="border-top: 1px solid #FFFFFF;">-</td>
-                                <td style="border-top: 1px solid #FFFFFF;">
-                                    <b>{{ core()->formatPrice($invoice->grand_total, $orderCurrencyCode) }}</b>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+                <tr>
+                    <td>@lang('shop::app.customers.account.orders.invoice-pdf.tax')</td>
+                    <td class="amount">{{ core()->formatPrice($invoice->tax_amount, $orderCurrencyCode) }}</td>
+                </tr>
+
+                <tr>
+                    <td>@lang('shop::app.customers.account.orders.invoice-pdf.discount')</td>
+                    <td class="amount">{{ core()->formatPrice($invoice->discount_amount, $orderCurrencyCode) }}</td>
+                </tr>
+
+                <tr class="grand-total">
+                    <td>
+                        <b>@lang('shop::app.customers.account.orders.invoice-pdf.grand-total')</b>
+                    </td>
+                    <td class="amount">
+                        <b>{{ core()->formatPrice($invoice->grand_total, $orderCurrencyCode) }}</b>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </body>
 </html>
