@@ -1,5 +1,5 @@
 @php
-    $labels = ['terminal_id' => 'شمارهٔ پایانه', 'username' => 'نام کاربری', 'password' => 'رمز پایانه', 'acceptor_id' => 'شمارهٔ پذیرنده', 'public_key' => 'کلید عمومی (PEM)'];
+    $labels = ['terminal_id' => 'شمارهٔ پایانه', 'username' => 'نام کاربری', 'password' => 'رمز پذیرنده', 'acceptor_id' => 'شمارهٔ پذیرنده', 'public_key' => 'کلید عمومی (PEM)', 'client_id' => 'Client ID', 'client_secret' => 'Client Secret'];
 @endphp
 
 @foreach ($bankStates as $bank => $state)

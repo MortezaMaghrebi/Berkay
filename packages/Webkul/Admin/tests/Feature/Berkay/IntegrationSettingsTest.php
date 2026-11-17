@@ -43,6 +43,20 @@ it('stores bank terminal settings encrypted and keeps blank credentials on later
         ->assertSee('بانک ملت')->assertSee('بانک تجارت');
 });
 
+it('keeps TorobPay merchant credentials when changing activation', function () {
+    $this->loginAsAdmin();
+    $url = route('admin.berkay.integrations.payment.update', 'torobpay');
+    $this->put($url, ['enabled' => 1, 'client_id' => 'client', 'client_secret' => 'test-secret', 'username' => 'seller', 'password' => 'test-password'])
+        ->assertSessionHasNoErrors()->assertRedirect();
+    $this->put($url, ['enabled' => 0, 'client_secret' => '', 'password' => ''])
+        ->assertSessionHasNoErrors()->assertRedirect();
+
+    expect(app(IntegrationSettings::class)->get('torobpay.client_secret'))->toBe('test-secret')
+        ->and(app(IntegrationSettings::class)->get('torobpay.enabled'))->toBeFalse();
+    $this->get(route('admin.berkay.integrations.index'))->assertOk()
+        ->assertSee('پرداخت اقساطی با ترب‌پی')->assertDontSee('test-secret')->assertDontSee('test-password');
+});
+
 it('saves payment settings while unconfigured terminals remain unavailable', function () {
     $this->loginAsAdmin();
     config(['berkay.zarinpal.merchant_id' => null]);

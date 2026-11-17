@@ -2,6 +2,7 @@
 
 use Webkul\Berkay\Payment\IranKish;
 use Webkul\Berkay\Payment\Mellat;
+use Webkul\Berkay\Payment\TorobPay;
 use Webkul\Berkay\Payment\Zarinpal;
 
 return [
@@ -16,4 +17,5 @@ return [
     ],
     'berkay_mellat' => ['class' => Mellat::class, 'code' => 'berkay_mellat', 'title' => 'بانک ملت (به‌پرداخت)', 'sort' => 2, 'logo' => 'mellat'],
     'berkay_irankish' => ['class' => IranKish::class, 'code' => 'berkay_irankish', 'title' => 'بانک تجارت (ایران‌کیش)', 'sort' => 3, 'logo' => 'tejarat'],
+    'berkay_torobpay' => ['class' => TorobPay::class, 'code' => 'berkay_torobpay', 'title' => 'پرداخت اقساطی با ترب‌پی', 'sort' => 4, 'logo' => 'torobpay'],
 ];

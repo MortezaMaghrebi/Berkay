@@ -40,6 +40,13 @@ class BankPaymentSettingsRequest extends FormRequest
                 }],
             ],
             'moneytransfer' => ['instructions' => ['present', 'nullable', 'string', 'max:1500']],
+            'torobpay' => [
+                'enabled' => ['required', 'boolean'],
+                'client_id' => ['nullable', 'string', 'max:128', 'regex:/^[^:\\x00-\\x20]+$/D'],
+                'client_secret' => ['nullable', 'string', 'max:128'],
+                'username' => ['nullable', 'string', 'max:128'],
+                'password' => ['nullable', 'string', 'max:128'],
+            ],
         };
     }
 

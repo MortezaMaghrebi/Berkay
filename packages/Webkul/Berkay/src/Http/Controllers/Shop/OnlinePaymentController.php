@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Throwable;
 use Webkul\Berkay\Listeners\OrderSmsListener;
@@ -15,10 +16,13 @@ use Webkul\Berkay\Repositories\PaymentAttemptRepository;
 use Webkul\Berkay\Services\BankGateways;
 use Webkul\Berkay\Services\IranianMoney;
 use Webkul\Berkay\Services\OrderWorkflow;
+use Webkul\Berkay\Services\TorobPayGateway;
 use Webkul\Berkay\Services\ZarinpalGateway;
 use Webkul\Berkay\Shipping\ShippingQuote;
+use Webkul\Checkout\Contracts\Cart as CartContract;
 use Webkul\Checkout\Facades\Cart;
 use Webkul\Payment\Facades\Payment;
+use Webkul\Sales\Contracts\Order;
 use Webkul\Sales\Repositories\InvoiceRepository;
 use Webkul\Sales\Repositories\OrderRepository;
 use Webkul\Sales\Repositories\OrderTransactionRepository;
@@ -91,7 +95,7 @@ class OnlinePaymentController extends Controller
                     return $this->failed();
                 }
 
-                [$token, $context, $authority] = $this->authorizePayment($provider, $amount);
+                [$token, $context, $authority] = $this->authorizePayment($provider, $amount, $cart);
                 $order = $this->orders->create((new OrderResource($cart))->jsonSerialize());
                 $attempt = $this->attempts->create([
                     'token' => $token,
@@ -127,7 +131,8 @@ class OnlinePaymentController extends Controller
             && (isset(BankGateways::METHODS[$provider]) || $order->payment?->method === 'moneytransfer'),
             404
         );
-        $requested = $request->validate(['method' => ['nullable', 'string', 'in:berkay_zarinpal,berkay_mellat,berkay_irankish,moneytransfer']])['method'] ?? null;
+        $methods = ['moneytransfer', ...array_map(fn ($name) => 'berkay_'.$name, array_keys(BankGateways::METHODS))];
+        $requested = $request->validate(['method' => ['nullable', 'string', Rule::in($methods)]])['method'] ?? null;
         if ($workflow->record($order)?->review !== 'approved') {
             return redirect()->route('shop.customers.account.orders.view', $order->id)
                 ->with('info', trans('berkay::workflow.waiting'));
@@ -168,6 +173,11 @@ class OnlinePaymentController extends Controller
                     return redirect()->route('shop.customers.account.orders.view', $order->id);
                 }
 
+                if ($attempt?->provider === 'torobpay' && $this->recoverTorobPayment($attempt, $workflow)) {
+                    return redirect()->route('shop.customers.account.orders.view', $order->id)
+                        ->with('success', trans('berkay::app.payment-completed'));
+                }
+
                 if (! $attempt) {
                     $selected = $requested ?? $method;
 
@@ -188,7 +198,7 @@ class OnlinePaymentController extends Controller
 
                     $provider = Str::after($selected, 'berkay_');
                     $amount = $this->money->toRial($order->base_grand_total, $order->base_currency_code);
-                    [$token, $context, $authority] = $this->authorizePayment($provider, $amount);
+                    [$token, $context, $authority] = $this->authorizePayment($provider, $amount, $order);
                     $attempt = DB::transaction(function () use ($order, $selected, $provider, $token, $context, $authority, $amount) {
                         $order->payment()->update(['method' => $selected]);
 
@@ -225,34 +235,47 @@ class OnlinePaymentController extends Controller
         [$authorityKey, $statusKey, $success] = match ($provider) {
             'mellat' => ['RefId', 'ResCode', '0'],
             'irankish' => ['token', 'responseCode', '00'],
+            'torobpay' => ['transactionId', 'state', 'OK'],
             default => ['Authority', 'Status', 'OK'],
         };
         $authority = request()->input($authorityKey);
         $order = $this->orders->findOrFail($attempt->order_id);
+        $expected = $provider === 'torobpay' ? ($attempt->gateway_context['transaction_id'] ?? '') : $attempt->authority;
 
         if (
             ! is_string($authority)
-            || ! hash_equals($attempt->authority, $authority)
+            || $expected === ''
+            || ! hash_equals($expected, $authority)
             || $workflow->waiting($order)
         ) {
             return $this->failed();
         }
 
         try {
-            $attempt = Cache::lock('berkay.payment.attempt.'.$attempt->id, 90)->block(5, function () use ($attempt, $provider, $statusKey, $success) {
+            $attempt = Cache::lock('berkay.payment.attempt.'.$attempt->id, 90)->block(5, function () use ($attempt, $provider, $statusKey, $success, $workflow) {
                 $current = $this->attempts->findOrFail($attempt->id);
 
                 if ($current->status === 'pending') {
+                    $order = $this->orders->findOrFail($current->order_id);
                     if (
                         request()->input($statusKey) !== $success
-                        || ! $this->orders->findOrFail($current->order_id)->canInvoice()
+                        || ! $order->canInvoice()
+                        || ($provider === 'torobpay' && (
+                            ! $this->banks->gateway($provider)->matchesAmount(request()->input('amount'), $current->amount_rial)
+                            || $workflow->ended($order)
+                            || $order->payment?->method !== 'berkay_torobpay'
+                            || $this->money->toRial($order->base_grand_total, $order->base_currency_code) !== $current->amount_rial
+                        ))
                     ) {
                         return $current;
                     }
 
-                    $receipt = $this->banks->gateway($provider)->verify($current->authority, $current->amount_rial, $current->gateway_context, request()->only([
-                        'SaleOrderId', 'SaleReferenceId', 'requestId', 'RequestId', 'acceptorId', 'amount', 'retrievalReferenceNumber', 'systemTraceAuditNumber',
-                    ]));
+                    $gateway = $this->banks->gateway($provider);
+                    $receipt = $gateway instanceof TorobPayGateway
+                        ? $gateway->verify($current->authority, $current->amount_rial, $current->gateway_context)
+                        : $gateway->verify($current->authority, $current->amount_rial, $current->gateway_context, request()->only([
+                            'SaleOrderId', 'SaleReferenceId', 'requestId', 'RequestId', 'acceptorId', 'amount', 'retrievalReferenceNumber', 'systemTraceAuditNumber',
+                        ]));
                     $current = $this->attempts->recordVerification($current->id, $receipt);
                 }
 
@@ -280,11 +303,25 @@ class OnlinePaymentController extends Controller
     }
 
     /** Resume the same unpaid authority for the browser that initiated payment. */
-    public function resume(string $token): RedirectResponse|View
+    public function resume(string $token, OrderWorkflow $workflow): RedirectResponse|View
     {
         abort_unless(hash_equals((string) session('berkay.payment.token'), $token), 403);
-        $attempt = $this->attempts->findOneWhere(['token' => $token, 'status' => 'pending']);
+        $attempt = $this->attempts->findOneByField('token', $token);
         abort_unless($attempt, 404);
+        if ($attempt->provider === 'torobpay') {
+            try {
+                if ($this->recoverTorobPayment($attempt, $workflow)) {
+                    session()->flash('order_id', $attempt->order_id);
+
+                    return redirect()->route('shop.checkout.onepage.success');
+                }
+            } catch (Throwable $exception) {
+                $this->logFailure('torobpay', 'resume', $exception);
+
+                return $this->failed($token);
+            }
+        }
+        abort_unless($attempt->status === 'pending', 404);
         abort_unless($this->orders->findOrFail($attempt->order_id)->canInvoice(), 409);
 
         return $this->openBank($attempt);
@@ -298,7 +335,7 @@ class OnlinePaymentController extends Controller
 
             return view('berkay::shop.payment-result', [
                 'token' => $token,
-                'canRetry' => $attempt?->status === 'pending',
+                'canRetry' => $attempt?->status === 'pending' || ($attempt?->provider === 'torobpay' && $attempt->status === 'verified'),
             ]);
         }
 
@@ -307,7 +344,7 @@ class OnlinePaymentController extends Controller
     }
 
     /** Create the gateway authority and freeze the merchant context for verification. */
-    protected function authorizePayment(string $provider, int $amount): array
+    protected function authorizePayment(string $provider, int $amount, CartContract|Order $source): array
     {
         $token = Str::random(64);
         $gateway = $this->banks->gateway($provider);
@@ -316,7 +353,46 @@ class OnlinePaymentController extends Controller
             ? route('shop.berkay.zarinpal.callback', $token)
             : route('shop.berkay.bank.callback', [$token, $provider]);
 
+        if ($gateway instanceof TorobPayGateway) {
+            [$authority, $context['redirect_url']] = $gateway->purchase($amount, $callback, $context, $source);
+
+            return [$token, $context, $authority];
+        }
+
         return [$token, $context, $gateway->purchase($amount, $callback, $context)];
+    }
+
+    /** Reconcile a settled or verified TorobPay token when the customer resumes. */
+    protected function recoverTorobPayment($attempt, OrderWorkflow $workflow): bool
+    {
+        return Cache::lock('berkay.payment.attempt.'.$attempt->id, 90)->block(5, function () use ($attempt, $workflow) {
+            $current = $this->attempts->findOrFail($attempt->id);
+            $order = $this->orders->findOrFail($current->order_id);
+
+            if ($current->status === 'paid') {
+                return true;
+            }
+
+            if (
+                $workflow->waiting($order)
+                || $workflow->ended($order)
+                || ! $order->canInvoice()
+                || $order->payment?->method !== 'berkay_torobpay'
+                || $this->money->toRial($order->base_grand_total, $order->base_currency_code) !== $current->amount_rial
+            ) {
+                throw new \RuntimeException('The TorobPay order requires reconciliation.');
+            }
+
+            if ($current->status === 'pending') {
+                $receipt = $this->banks->gateway('torobpay')->verify($current->authority, $current->amount_rial, $current->gateway_context, recoverOnly: true);
+                if ($receipt === null) {
+                    return false;
+                }
+                $this->attempts->recordVerification($current->id, $receipt);
+            }
+
+            return $this->finalizePayment($current->id)->status === 'paid';
+        });
     }
 
     /** Reconcile a verified payment with the saved order exactly once. */
@@ -355,6 +431,11 @@ class OnlinePaymentController extends Controller
     protected function openBank($attempt): RedirectResponse|View
     {
         $gateway = $this->banks->gateway($attempt->provider);
+
+        if ($gateway instanceof TorobPayGateway) {
+            return redirect()->away($gateway->redirectUrl($attempt->gateway_context['redirect_url'] ?? null))
+                ->header('Referrer-Policy', 'no-referrer');
+        }
 
         if ($gateway instanceof ZarinpalGateway) {
             return redirect()->away($gateway->redirectUrl($attempt->authority, $attempt->gateway_context))

@@ -5,6 +5,7 @@ use Webkul\Berkay\Repositories\PaymentAttemptRepository;
 use Webkul\Berkay\Services\IntegrationSettings;
 use Webkul\Berkay\Services\MellatGateway;
 use Webkul\Berkay\Services\OrderWorkflow;
+use Webkul\Berkay\Services\TorobPayGateway;
 use Webkul\Checkout\Models\Cart;
 use Webkul\Core\Repositories\CoreConfigRepository;
 use Webkul\Customer\Models\Customer;
@@ -20,6 +21,71 @@ beforeEach(function () {
         'sales.checkout.shopping_cart.allow_guest_checkout' => 1,
     ]);
     Http::preventStrayRequests();
+});
+
+it('sends a TorobPay order in rials and only invoices after authenticated settlement', function () {
+    $settings = app(IntegrationSettings::class);
+    foreach (['enabled' => true, 'client_id' => 'client', 'client_secret' => 'secret', 'username' => 'seller', 'password' => 'password'] as $key => $value) {
+        $settings->put('torobpay.'.$key, $value);
+    }
+
+    $host = 'cpg.torobpay.com/api/online/';
+    $amount = null;
+    $handoff = 'https://pay.torob.com/payment/demo';
+    $transaction = ['successful' => true, 'response' => ['transactionId' => 'provider-receipt']];
+    Http::fake([
+        $host.'v1/oauth/token' => Http::response(['access_token' => 'provider-auth']),
+        $host.'payment/v1/token' => function ($request) use (&$amount, $handoff) {
+            $amount = $request['amount'];
+
+            return Http::response(['successful' => true, 'response' => ['paymentToken' => 'credit-token', 'paymentPageUrl' => $handoff]]);
+        },
+        $host.'payment/v1/status*' => function () use (&$amount) {
+            return Http::response(['successful' => true, 'response' => ['status' => 'PENDING', 'amount' => $amount]]);
+        },
+        $host.'payment/v1/verify' => Http::response($transaction),
+        $host.'payment/v1/settle' => Http::response($transaction),
+    ]);
+
+    $this->actingAs(Customer::factory()->create(['phone' => '09123456789']), 'customer');
+    $product = $this->createSimpleProduct(['price' => ['float_value' => 250000], 'special_price' => ['float_value' => null]]);
+    $this->prepareCartForCheckout($product, paymentMethod: 'berkay_torobpay', quantity: 2);
+    $this->get(route('shop.berkay.bank.start', 'torobpay'))->assertRedirect($handoff);
+
+    $attempt = app(PaymentAttemptRepository::class)->findOneByField('authority', 'credit-token');
+    expect($attempt->amount_rial)->toBe($amount)
+        ->and($attempt->status)->toBe('pending');
+    Http::assertSent(fn ($request) => str_ends_with($request->url(), '/payment/v1/token')
+        && $request['paymentMethodTypeDto'] === 'ONLINE_CREDIT'
+        && $request['registration_phone_number'] === '09123456789'
+        && $request['cartList'][0]['cartItems'][0]['count'] === 2
+        && $request['cartList'][0]['cartItems'][0]['amount'] === 2500000);
+
+    $url = route('shop.berkay.bank.callback', [$attempt->token, 'torobpay']);
+    $callback = ['transactionId' => $attempt->gateway_context['transaction_id'], 'state' => 'OK', 'amount' => (string) $amount];
+    $this->post($url, array_replace($callback, ['amount' => '1']))->assertViewIs('berkay::shop.payment-result');
+    Http::assertSentCount(2);
+
+    $this->post($url, $callback)->assertRedirect(route('shop.checkout.onepage.success'));
+    $this->post($url, $callback)->assertRedirect(route('shop.checkout.onepage.success'));
+    Http::assertSentCount(6);
+    expect($attempt->fresh()->status)->toBe('paid')
+        ->and($attempt->fresh()->receipt)->toBe('torobpay:provider-receipt')
+        ->and(Invoice::query()->where('order_id', $attempt->order_id)->count())->toBe(1);
+});
+
+it('recovers a settled TorobPay token without calling verify or settle again', function () {
+    $status = ['successful' => true, 'response' => ['status' => 'SETTLE', 'amount' => 2500000, 'transactionId' => 'recovered']];
+    Http::fake([
+        'cpg.torobpay.com/api/online/v1/oauth/token' => Http::response(['access_token' => 'provider-auth']),
+        'cpg.torobpay.com/api/online/payment/v1/status*' => Http::response($status),
+    ]);
+
+    $gateway = app(TorobPayGateway::class);
+    $context = ['client_id' => 'client', 'client_secret' => 'secret', 'username' => 'seller', 'password' => 'password'];
+    expect($gateway->verify('old-token', 2500000, $context, recoverOnly: true))->toBe('torobpay:recovered');
+    expect(fn () => $gateway->verify('old-token', 2500001, $context, recoverOnly: true))->toThrow(RuntimeException::class);
+    Http::assertSentCount(4);
 });
 
 it('places and invoices a bank-confirmed order exactly once across repeated callbacks', function () {

@@ -83,7 +83,7 @@ Route::middleware(['web', 'admin', NoCacheMiddleware::class])
         Route::get('integrations', [IntegrationController::class, 'index'])->name('admin.berkay.integrations.index');
         Route::put('integrations', [IntegrationController::class, 'update'])->name('admin.berkay.integrations.update');
         Route::put('integrations/payment/{provider}', [IntegrationController::class, 'updatePayment'])
-            ->whereIn('provider', ['mellat', 'irankish', 'moneytransfer'])->name('admin.berkay.integrations.payment.update');
+            ->whereIn('provider', ['mellat', 'irankish', 'torobpay', 'moneytransfer'])->name('admin.berkay.integrations.payment.update');
         Route::get('torob-products', [TorobProductsController::class, 'index'])->name('admin.berkay.torob_products.index');
         Route::put('torob-products', [TorobProductsController::class, 'update'])->name('admin.berkay.torob_products.update');
         Route::put('torob-products/mode', [TorobProductsController::class, 'mode'])->name('admin.berkay.torob_products.mode');
@@ -115,10 +115,10 @@ Route::middleware(['web', 'shop', NoCacheMiddleware::class, 'throttle:20,1'])->g
     Route::get('payments/zarinpal/start', [OnlinePaymentController::class, 'start'])->name('shop.berkay.zarinpal.start');
     Route::get('payments/zarinpal/callback/{token}', [OnlinePaymentController::class, 'callback'])->where('token', '[A-Za-z0-9]{64}')->name('shop.berkay.zarinpal.callback');
     Route::get('payments/bank/{provider}/start', [OnlinePaymentController::class, 'start'])
-        ->whereIn('provider', ['mellat', 'irankish'])->name('shop.berkay.bank.start');
+        ->whereIn('provider', ['mellat', 'irankish', 'torobpay'])->name('shop.berkay.bank.start');
     Route::post('payments/bank/callback/{token}/{provider}', [OnlinePaymentController::class, 'callback'])
         ->withoutMiddleware(PreventRequestForgery::class)
-        ->where('token', '[A-Za-z0-9]{64}')->whereIn('provider', ['mellat', 'irankish'])->name('shop.berkay.bank.callback');
+        ->where('token', '[A-Za-z0-9]{64}')->whereIn('provider', ['mellat', 'irankish', 'torobpay'])->name('shop.berkay.bank.callback');
 });
 
 Route::middleware(['web', 'admin', NoCacheMiddleware::class])->prefix(config('app.admin_url').'/berkay')

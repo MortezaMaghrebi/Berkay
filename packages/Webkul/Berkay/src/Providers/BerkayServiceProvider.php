@@ -34,7 +34,7 @@ class BerkayServiceProvider extends ServiceProvider
 
                 return $entry;
             }, config('acl'))]);
-            $allowed = ['berkay_zarinpal', 'berkay_mellat', 'berkay_irankish', 'cashondelivery', 'moneytransfer'];
+            $allowed = ['berkay_zarinpal', 'berkay_mellat', 'berkay_irankish', 'berkay_torobpay', 'cashondelivery', 'moneytransfer'];
             $carriers = [
                 'berkay_post' => ['class' => Post::class],
                 'berkay_freight' => ['class' => Freight::class],
