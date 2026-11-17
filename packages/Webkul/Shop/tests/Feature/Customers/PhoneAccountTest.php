@@ -37,7 +37,7 @@ it('signs in a customer by Iranian mobile and rejects a wrong code', function ()
     Http::assertSent(fn (Request $request) => $request['receptor'] === $customer->phone && $request['template'] === 'berkay-login');
     $code = Http::recorded()->first()[0]['token'];
 
-    post(route('shop.berkay.phone.login.verify'), ['code' => $code === '1234' ? '1235' : '1234'])
+    post(route('shop.berkay.phone.login.verify'), ['code' => $code === '123456' ? '123457' : '123456'])
         ->assertSessionHasErrors('code');
     assertGuest('customer');
 
@@ -45,6 +45,39 @@ it('signs in a customer by Iranian mobile and rejects a wrong code', function ()
     assertAuthenticatedAs($customer, 'customer');
     expect($customer->fresh()->is_verified)->toBeTrue();
     expect(session()->has('berkay.phone.challenge'))->toBeFalse();
+});
+
+it('locks SMS attempts across resends and unlocks after ten minutes', function () {
+    $customer = Customer::factory()->create([
+        'phone' => '09990000129',
+        'channel_id' => core()->getCurrentChannel()->id,
+        'status' => true,
+    ]);
+    Http::fake(['api.kavenegar.com/*' => Http::response(['return' => ['status' => 200]])]);
+    $send = route('shop.customer.session.create');
+    $verify = route('shop.berkay.phone.login.verify');
+    $recipient = ['phone' => $customer->phone];
+
+    post($send, $recipient)->assertSessionHasNoErrors();
+    $code = Http::recorded()->last()[0]['token'];
+    foreach (range(1, 4) as $_) {
+        post($verify, ['code' => $code === '111111' ? '222222' : '111111'])->assertSessionHasErrors('code');
+    }
+
+    $this->travel(61)->seconds();
+    post($send, $recipient)->assertSessionHasNoErrors();
+    $code = Http::recorded()->last()[0]['token'];
+    post($verify, ['code' => $code === '111111' ? '222222' : '111111'])
+        ->assertSessionHasErrors(['code' => trans('auth.throttle', ['seconds' => 600])]);
+    post($verify, ['code' => $code])->assertSessionHasErrors('code');
+    post($send, $recipient)->assertSessionHasErrors('phone');
+    Http::assertSentCount(2);
+    assertGuest('customer');
+
+    $this->travel(601)->seconds();
+    post($send, $recipient)->assertSessionHasNoErrors();
+    post($verify, ['code' => Http::recorded()->last()[0]['token']])->assertSessionHasNoErrors();
+    assertAuthenticatedAs($customer, 'customer');
 });
 
 it('registers a phone-only account after verification', function () {
@@ -77,7 +110,7 @@ it('completes a new account from login without sending a second code', function 
 
     post(route('shop.customer.session.create'), ['phone' => $phone])->assertRedirect();
     $code = Http::recorded()->first()[0]['token'];
-    expect($code)->toMatch('/^[0-9]{4}$/');
+    expect($code)->toMatch('/^[0-9]{6}$/');
 
     post(route('shop.berkay.phone.login.verify'), ['code' => $code])
         ->assertRedirect(route('shop.customers.register.index'));

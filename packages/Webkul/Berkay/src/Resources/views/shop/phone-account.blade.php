@@ -78,7 +78,7 @@
             <form method="post" class="bk-form" action="{{ route($verifyRoute, $params) }}">
                 @csrf
                 @php($length = $challenge['length'] ?? 6)
-                <div class="bk-otp" data-otp>
+                <div class="bk-otp" data-otp @if ($purpose === 'login') data-auto-submit @endif>
                     <div data-otp-fallback>
                         <label for="code">{{ trans('berkay::sms.code') }}</label>
                         <input id="code" name="code" dir="ltr" inputmode="numeric" autocomplete="one-time-code" minlength="{{ $length }}" maxlength="{{ $length }}" autofocus required>
@@ -86,7 +86,7 @@
                     <fieldset hidden dir="ltr">
                         <legend class="sr-only">{{ trans('berkay::sms.code') }}</legend>
                         @for ($digit = 1; $digit <= $length; $digit++)
-                            <input type="text" inputmode="numeric" maxlength="1" pattern="[0-9]" autocomplete="{{ $digit === 1 ? 'one-time-code' : 'off' }}"
+                            <input type="text" inputmode="numeric" pattern="[0-9]" autocomplete="{{ $digit === 1 ? 'one-time-code' : 'off' }}"
                                 aria-label="{{ trans('berkay::sms.code-digit', ['position' => $digit, 'length' => $length]) }}" disabled>
                         @endfor
                     </fieldset>

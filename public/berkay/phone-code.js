@@ -4,6 +4,8 @@ function enhanceCodeEntry(group) {
     const code = group.querySelector('[name="code"]');
     const boxes = group.querySelector('fieldset');
     const fields = Array.from(boxes.querySelectorAll('input'));
+    const form = group.closest('form');
+    let submitting = false;
 
     function syncCode() {
         code.value = fields.map(field => field.value).join('');
@@ -29,7 +31,11 @@ function enhanceCodeEntry(group) {
             fields[index + offset].value = digit;
         });
         syncCode();
-        if (index + part.length < fields.length) focus(index + part.length);
+        if (group.hasAttribute('data-auto-submit') && fields.every(field => field.value.length === 1)) {
+            if (!submitting) form.requestSubmit();
+        } else if (index + part.length < fields.length) {
+            focus(index + part.length);
+        }
     }
 
     fields.forEach((field, index) => {
@@ -57,7 +63,16 @@ function enhanceCodeEntry(group) {
         });
     });
 
-    group.closest('form').addEventListener('submit', syncCode);
+    form.addEventListener('submit', event => {
+        if (submitting) {
+            event.preventDefault();
+            return;
+        }
+
+        syncCode();
+        submitting = true;
+    });
+    window.addEventListener('pageshow', () => { submitting = false; });
     const prefilled = code.value;
     code.type = 'hidden';
     code.required = false;
