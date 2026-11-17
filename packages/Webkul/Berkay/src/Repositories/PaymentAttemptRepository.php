@@ -4,6 +4,7 @@ namespace Webkul\Berkay\Repositories;
 
 use Illuminate\Support\Facades\DB;
 use Webkul\Berkay\Contracts\PaymentAttempt;
+use Webkul\Berkay\Models\PaymentAttempt as PaymentAttemptModel;
 use Webkul\Core\Eloquent\Repository;
 
 class PaymentAttemptRepository extends Repository
@@ -12,6 +13,16 @@ class PaymentAttemptRepository extends Repository
     public function model(): string
     {
         return PaymentAttempt::class;
+    }
+
+    /** Get the newest payment attempt that can still affect the order. */
+    public function currentForOrder(int $orderId): ?PaymentAttemptModel
+    {
+        return $this->model->newQuery()
+            ->where('order_id', $orderId)
+            ->where('status', '!=', 'retired')
+            ->latest('id')
+            ->first();
     }
 
     /** Persist a bank receipt before local invoice finalization is attempted. */

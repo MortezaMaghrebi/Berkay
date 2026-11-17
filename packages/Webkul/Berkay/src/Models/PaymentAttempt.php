@@ -18,4 +18,16 @@ class PaymentAttempt extends Model implements PaymentAttemptContract
 
     /** Keep frozen provider credentials out of model serialization. */
     protected $hidden = ['gateway_context', 'token'];
+
+    /** Identify unsettled Zarinpal attempts that can be checked before switching. */
+    public function isPendingZarinpal(): bool
+    {
+        return $this->provider === 'zarinpal' && $this->status === 'pending';
+    }
+
+    /** Recheck aging Zarinpal authorities before redirecting the customer. */
+    public function needsZarinpalRecheck(): bool
+    {
+        return $this->isPendingZarinpal() && $this->created_at->lte(now()->subMinutes(30));
+    }
 }

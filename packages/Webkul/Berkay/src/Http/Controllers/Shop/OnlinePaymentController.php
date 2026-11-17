@@ -13,6 +13,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Throwable;
 use Webkul\Berkay\Listeners\OrderSmsListener;
+use Webkul\Berkay\Models\PaymentAttempt;
 use Webkul\Berkay\Repositories\PaymentAttemptRepository;
 use Webkul\Berkay\Services\BankGateways;
 use Webkul\Berkay\Services\IranianMoney;
@@ -158,7 +159,7 @@ class OnlinePaymentController extends Controller
         }
 
         try {
-            return Cache::lock('berkay.payment.order.'.$order->id, 60)->block(5, function () use ($order, $workflow, $requested) {
+            return Cache::lock('berkay.payment.order.'.$order->id, 120)->block(5, function () use ($order, $workflow, $requested) {
                 $order = $order->fresh();
                 if (
                     $workflow->waiting($order)
@@ -170,9 +171,22 @@ class OnlinePaymentController extends Controller
                     return redirect()->route('shop.customers.account.orders.view', $order->id);
                 }
 
-                $attempt = $this->attempts->findOneWhere(['order_id' => $order->id]);
+                $attempt = $this->attempts->currentForOrder($order->id);
                 $method = $order->payment->method;
                 $provider = $attempt?->provider ?? Str::after($method, 'berkay_');
+
+                if (
+                    $attempt?->isPendingZarinpal()
+                    && ($attempt->needsZarinpalRecheck() || ($requested !== null && $requested !== $method))
+                ) {
+                    $attempt = $this->reconcileZarinpal($attempt);
+                    if ($attempt->status === 'paid') {
+                        return $this->paymentResult(true, $order);
+                    }
+                    if ($attempt->status === 'retired') {
+                        $attempt = null;
+                    }
+                }
 
                 if (
                     filled($requested)
@@ -215,23 +229,7 @@ class OnlinePaymentController extends Controller
                         return redirect(route('shop.customers.account.orders.view', $order->id).'#bank-transfer');
                     }
 
-                    $provider = Str::after($selected, 'berkay_');
-                    $amount = $this->money->toRial($order->base_grand_total, $order->base_currency_code);
-                    [$token, $context, $authority] = $this->authorizePayment($provider, $amount, $order);
-                    $attempt = DB::transaction(function () use ($order, $selected, $provider, $token, $context, $authority, $amount) {
-                        $order->payment()->update(['method' => $selected]);
-
-                        return $this->attempts->create([
-                            'token' => $token,
-                            'order_id' => $order->id,
-                            'cart_id' => $order->cart_id,
-                            'provider' => $provider,
-                            'authority' => $authority,
-                            'amount_rial' => $amount,
-                            'gateway_context' => $context,
-                            'status' => 'pending',
-                        ]);
-                    });
+                    $attempt = $this->createOrderAttempt($order, $selected);
                 }
 
                 session()->put('berkay.payment.token', $attempt->token);
@@ -320,12 +318,22 @@ class OnlinePaymentController extends Controller
         return $this->failed($token, $order);
     }
 
-    /** Resume the same unpaid authority for the browser that initiated payment. */
+    /** Resume payment for the browser that initiated it. */
     public function resume(string $token, OrderWorkflow $workflow): RedirectResponse|View
     {
         abort_unless(hash_equals((string) session('berkay.payment.token'), $token), 403);
         $attempt = $this->attempts->findOneByField('token', $token);
         abort_unless($attempt, 404);
+        if ($attempt->needsZarinpalRecheck()) {
+            $order = $this->orders->findOrFail($attempt->order_id);
+            if (
+                ! $order->is_guest
+                && (int) $order->customer_id === auth()->guard('customer')->id()
+                && (int) $order->channel_id === core()->getCurrentChannel()->id
+            ) {
+                return redirect()->route('shop.customers.account.orders.view', $order->id);
+            }
+        }
         if ($attempt->provider === 'torobpay') {
             try {
                 if ($this->recoverTorobPayment($attempt, $workflow)) {
@@ -372,6 +380,49 @@ class OnlinePaymentController extends Controller
             : null;
 
         return view('berkay::shop.payment-result', compact('paid', 'orderUrl', 'token', 'canRetry'));
+    }
+
+    /** Create an independent gateway attempt with its own callback token. */
+    protected function createOrderAttempt(Order $order, string $method): PaymentAttempt
+    {
+        $provider = Str::after($method, 'berkay_');
+        $amount = $this->money->toRial($order->base_grand_total, $order->base_currency_code);
+        [$token, $context, $authority] = $this->authorizePayment($provider, $amount, $order);
+
+        return DB::transaction(function () use ($order, $method, $provider, $token, $context, $authority, $amount) {
+            if ($order->payment->method !== $method) {
+                $order->payment()->update(['method' => $method]);
+            }
+
+            return $this->attempts->create([
+                'token' => $token,
+                'order_id' => $order->id,
+                'cart_id' => $order->cart_id,
+                'provider' => $provider,
+                'authority' => $authority,
+                'amount_rial' => $amount,
+                'gateway_context' => $context,
+                'status' => 'pending',
+            ]);
+        });
+    }
+
+    /** Reconcile the original Zarinpal transaction before allowing another payment. */
+    protected function reconcileZarinpal(PaymentAttempt $attempt): PaymentAttempt
+    {
+        return Cache::lock('berkay.payment.attempt.'.$attempt->id, 90)->block(5, function () use ($attempt) {
+            $current = $this->attempts->findOrFail($attempt->id);
+            if ($current->status === 'pending') {
+                $receipt = $this->banks->gateway('zarinpal')->reconcile($current->authority, $current->amount_rial, $current->gateway_context);
+                if ($receipt === null) {
+                    return $this->attempts->update(['status' => 'retired'], $current->id);
+                }
+
+                $this->attempts->recordVerification($current->id, $receipt);
+            }
+
+            return $this->finalizePayment($current->id);
+        });
     }
 
     /** Create the gateway authority and freeze the merchant context for verification. */

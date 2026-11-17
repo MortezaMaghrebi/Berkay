@@ -1,8 +1,11 @@
 @php
-    $attempt = app(\Webkul\Berkay\Repositories\PaymentAttemptRepository::class)->findOneWhere(['order_id' => $order->id]);
-    $methods = $attempt ? collect() : collect(\Webkul\Payment\Facades\Payment::getPaymentMethods());
-    $methods = $methods->filter(fn ($method) => $method['method'] === 'moneytransfer'
-        || isset(\Webkul\Berkay\Services\BankGateways::METHODS[\Illuminate\Support\Str::after($method['method'], 'berkay_')]))->values();
+    $attempt = app(\Webkul\Berkay\Repositories\PaymentAttemptRepository::class)->currentForOrder($order->id);
+    $canChoose = ! $attempt || $attempt->isPendingZarinpal();
+    $methods = collect(\Webkul\Payment\Facades\Payment::getPaymentMethods())
+        ->filter(fn ($method) => $canChoose
+            ? ($method['method'] === 'moneytransfer' || isset(\Webkul\Berkay\Services\BankGateways::METHODS[\Illuminate\Support\Str::after($method['method'], 'berkay_')]))
+            : $method['method'] === $order->payment->method)
+        ->values();
     $selected = $methods->contains('method', $order->payment->method) ? $order->payment->method : $methods->first()['method'] ?? null;
 @endphp
 
@@ -17,7 +20,7 @@
         </header>
         <form method="post" action="{{ route('shop.berkay.zarinpal.approved', $order->id) }}" class="bk-approved-payment">
             @csrf
-            @unless ($attempt)
+            @if ($methods->isNotEmpty())
                 <fieldset class="bk-checkout-address-list">
                     <legend>{{ trans('shop::app.customers.account.orders.view.payment-method') }}</legend>
                     @foreach ($methods as $method)
@@ -30,8 +33,8 @@
                         </label>
                     @endforeach
                 </fieldset>
-            @endunless
-            @if ($attempt || $order->payment->method === 'moneytransfer')
+            @endif
+            @if (! $canChoose)
                 <p>{{ trans('berkay::app.payment-pending-info') }}</p>
             @endif
             <button class="bk-button" type="submit">{{ trans('berkay::workflow.pay') }}</button>

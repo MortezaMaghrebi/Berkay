@@ -395,8 +395,15 @@ it('recovers an approved order whose bank payment was verified before invoicing'
 
 it('lets an approved order choose an available gateway and preserves an existing bank attempt', function () {
     $authority = str_repeat('R', 36);
-    Http::fake(['sandbox.zarinpal.com/pg/v4/payment/request.json' => Http::response(['data' => ['code' => 100, 'authority' => $authority]])]);
-    $this->setConfig('berkay.workshop.review.amount_limit', 100_000);
+    Http::fake([
+        'sandbox.zarinpal.com/pg/v4/payment/request.json' => Http::response(['data' => ['code' => 100, 'authority' => $authority]]),
+        'sandbox.zarinpal.com/pg/v4/payment/verify.json' => Http::response(['errors' => ['code' => -51]]),
+        'sandbox.zarinpal.com/pg/v4/payment/inquiry.json' => Http::response(['data' => ['code' => 100, 'status' => 'IN_BANK']]),
+    ]);
+    $this->setConfig([
+        'berkay.workshop.review.amount_limit' => 100_000,
+        'sales.payment_methods.moneytransfer.active' => 1,
+    ]);
     $this->loginAsCustomer();
     $product = $this->createSimpleProduct(['price' => ['float_value' => 250000], 'special_price' => ['float_value' => null]]);
     $cartId = $this->prepareCartForCheckout($product, paymentMethod: 'berkay_zarinpal');
@@ -413,10 +420,11 @@ it('lets an approved order choose an available gateway and preserves an existing
     $this->get($view)->assertOk()->assertSee('data-open-payment=', false)->assertSee('value="berkay_zarinpal"', false)
         ->assertSee('berkay/payment-logos/zarinpal.svg')->assertDontSee('value="berkay_mellat"', false);
     $this->post($action, ['method' => 'berkay_zarinpal'])->assertRedirect('https://sandbox.zarinpal.com/pg/StartPay/'.$authority);
-    $this->post($action, ['method' => 'moneytransfer'])->assertRedirect($view)->assertSessionHas('error');
+    $this->get($view)->assertOk()->assertSee('value="moneytransfer"', false);
+    $this->post($action, ['method' => 'moneytransfer'])->assertOk()->assertViewHas('paid', false);
 
     expect($order->fresh()->payment->method)->toBe('berkay_zarinpal');
-    Http::assertSentCount(1);
+    Http::assertSentCount(3);
 });
 
 it('reminds only the owner of an unpaid order and offers online payment without manual review', function () {
@@ -446,3 +454,63 @@ it('reminds only the owner of an unpaid order and offers online payment without 
     $this->loginAsCustomer();
     $this->getJson($notice)->assertOk()->assertJsonPath('order', null);
 });
+
+it('reconciles an old Zarinpal authority before renewing or changing the payment method', function (array $verification, ?string $inquiry, string $method, string $outcome) {
+    $this->setConfig([
+        'berkay.workshop.review.amount_limit' => 100_000_000,
+        'sales.payment_methods.moneytransfer.active' => 1,
+    ]);
+    $this->loginAsCustomer();
+    $oldAuthority = str_repeat('X', 36);
+    $newAuthority = str_repeat('Y', 36);
+    $baseUrl = 'sandbox.zarinpal.com/pg/v4/payment/';
+    Http::fake([
+        $baseUrl.'request.json' => Http::sequence()
+            ->push(['data' => ['code' => 100, 'authority' => $oldAuthority]])
+            ->push(['data' => ['code' => 100, 'authority' => $newAuthority]]),
+        $baseUrl.'verify.json' => Http::response($verification),
+        $baseUrl.'inquiry.json' => Http::response(['data' => ['code' => 100, 'status' => $inquiry]]),
+    ]);
+    $product = $this->createSimpleProduct(['price' => ['float_value' => 250000], 'special_price' => ['float_value' => null]]);
+    $cartId = $this->prepareCartForCheckout($product, paymentMethod: 'berkay_zarinpal');
+    $this->get(route('shop.berkay.zarinpal.start'))
+        ->assertRedirect('https://sandbox.zarinpal.com/pg/StartPay/'.$oldAuthority);
+
+    $order = Order::query()->where('cart_id', $cartId)->firstOrFail();
+    $attempts = app(PaymentAttemptRepository::class);
+    $original = $attempts->currentForOrder($order->id);
+    $original->created_at = now()->subDays(2);
+    $original->save();
+
+    $view = route('shop.customers.account.orders.view', $order->id);
+    $this->get($view)->assertOk()->assertSee('value="berkay_zarinpal"', false)->assertSee('value="moneytransfer"', false);
+    $response = $this->post(route('shop.berkay.zarinpal.approved', $order->id), ['method' => $method]);
+
+    if ($outcome === 'renewed') {
+        $response->assertRedirect('https://sandbox.zarinpal.com/pg/StartPay/'.$newAuthority);
+        $replacement = $attempts->currentForOrder($order->id);
+        expect($replacement->token)->not->toBe($original->token)
+            ->and($replacement->amount_rial)->toBe($original->amount_rial)
+            ->and($original->fresh()->status)->toBe('retired');
+        $this->get(route('shop.berkay.zarinpal.callback', [$original->token, 'Authority' => $oldAuthority, 'Status' => 'OK']))
+            ->assertViewHas('paid', false);
+        expect($order->invoices()->count())->toBe(0);
+    } elseif ($outcome === 'transferred') {
+        $response->assertRedirect($view.'#bank-transfer');
+        expect($attempts->currentForOrder($order->id))->toBeNull()
+            ->and($order->fresh()->payment->method)->toBe('moneytransfer');
+    } else {
+        $paid = $outcome === 'paid';
+        $response->assertOk()->assertViewHas('paid', $paid);
+        expect($original->fresh()->status)->toBe($paid ? 'paid' : 'pending')
+            ->and($order->invoices()->count())->toBe($paid ? 1 : 0);
+    }
+
+    $requests = 2 + (int) ($inquiry !== null) + (int) ($outcome === 'renewed');
+    Http::assertSentCount($requests);
+})->with([
+    'archived authority receives a new link' => [['errors' => ['code' => -54]], null, 'berkay_zarinpal', 'renewed'],
+    'failed authority permits a different method' => [['errors' => ['code' => -51]], 'FAILED', 'moneytransfer', 'transferred'],
+    'payment already settled without callback' => [['data' => ['code' => 101, 'ref_id' => 66554423]], null, 'moneytransfer', 'paid'],
+    'another payment remains active at the bank' => [['errors' => ['code' => -51]], 'IN_BANK', 'moneytransfer', 'blocked'],
+]);

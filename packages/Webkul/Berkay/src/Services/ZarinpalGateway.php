@@ -37,23 +37,36 @@ class ZarinpalGateway
     public function verify(string $authority, int $amountRial, ?array $context = null, array $callback = []): string
     {
         $context ??= $this->context();
-        $response = $this->call('verify', [
-            'merchant_id' => $context['merchant_id'],
-            'authority' => $authority,
-            'amount' => $amountRial,
-        ], $context);
 
-        $receipt = $response['data']['ref_id'] ?? null;
+        return $this->receipt($this->verificationResponse($authority, $amountRial, $context));
+    }
 
-        if (
-            ! in_array((int) ($response['data']['code'] ?? 0), [100, 101], true)
-            || ! is_scalar($receipt)
-            || ! preg_match('/^[0-9]{1,100}$/', (string) $receipt)
-        ) {
-            throw new RuntimeException('Payment was not verified.');
+    /** Reconcile a successful payment or allow replacement of a closed authority. */
+    public function reconcile(string $authority, int $amountRial, array $context): ?string
+    {
+        $response = $this->verificationResponse($authority, $amountRial, $context);
+        $code = (int) ($response['errors']['code'] ?? $response['data']['code'] ?? 0);
+
+        if ($code === -54) {
+            return null;
         }
 
-        return (string) $receipt;
+        if ($code === -51) {
+            $inquiry = $this->call('inquiry', [
+                'merchant_id' => $context['merchant_id'],
+                'authority' => $authority,
+            ], $context);
+
+            if (
+                (int) ($inquiry['errors']['code'] ?? 0) === -54
+                || ((int) ($inquiry['data']['code'] ?? 0) === 100
+                    && in_array($inquiry['data']['status'] ?? null, ['FAILED', 'REVERSED'], true))
+            ) {
+                return null;
+            }
+        }
+
+        return $this->receipt($response);
     }
 
     /** Return an allowlisted provider redirect target. */
@@ -73,6 +86,32 @@ class ZarinpalGateway
         ];
     }
 
+    /** Submit the original authority and exact amount for verification. */
+    protected function verificationResponse(string $authority, int $amountRial, array $context): array
+    {
+        return $this->call('verify', [
+            'merchant_id' => $context['merchant_id'],
+            'authority' => $authority,
+            'amount' => $amountRial,
+        ], $context);
+    }
+
+    /** Extract a receipt only from a successful verification. */
+    protected function receipt(array $response): string
+    {
+        $receipt = $response['data']['ref_id'] ?? null;
+
+        if (
+            ! in_array((int) ($response['data']['code'] ?? 0), [100, 101], true)
+            || ! is_scalar($receipt)
+            || ! preg_match('/^[0-9]{1,100}$/', (string) $receipt)
+        ) {
+            throw new RuntimeException('Payment was not verified.');
+        }
+
+        return (string) $receipt;
+    }
+
     /** Use verified TLS and bounded timeouts without exposing merchant credentials. */
     protected function call(string $action, array $data, array $context): array
     {
@@ -84,7 +123,13 @@ class ZarinpalGateway
 
             $body = $response->json();
 
-            if (! $response->successful() || ! is_array($body)) {
+            if (
+                ! is_array($body)
+                || (! $response->successful() && ! (
+                    $response->clientError()
+                    && in_array((int) ($body['errors']['code'] ?? 0), [-51, -54], true)
+                ))
+            ) {
                 Log::warning('Zarinpal returned an unsuccessful HTTP response.', ['operation' => $action, 'http_status' => $response->status()]);
 
                 throw new RuntimeException;
